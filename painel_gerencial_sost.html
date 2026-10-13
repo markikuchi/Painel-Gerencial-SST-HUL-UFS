@@ -280,6 +280,24 @@
   .btn-abrir svg { width: 14px; height: 14px; flex-shrink: 0; }
   .btn-sem-link { font-size: .7rem; color: #cbd5e1; }
 
+  .btn-voltar {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .35rem .75rem;
+    border-radius: 6px;
+    font-size: .8rem;
+    font-weight: 500;
+    font-family: inherit;
+    color: rgba(255,255,255,.7);
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.12);
+    cursor: pointer;
+    text-decoration: none;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .btn-voltar:hover { background: rgba(255,255,255,.15); color: #fff; }
   .footer { text-align: center; padding: 1rem; color: var(--sub); font-size: .7rem; }
 
   @media (max-width: 900px) {
@@ -311,8 +329,11 @@
     <h1>Painel Gerencial SOST/SEG</h1>
     <div class="sub">Hospital Universitário de Lagarto · EBSERH</div>
   </div>
-  <div class="meta">
-    <div id="metaAtualiz">Carregando...</div>
+  <div style="display:flex;align-items:center;gap:.75rem;">
+    <a class="btn-voltar" href="index.html">&#8249; Hub</a>
+    <div class="meta">
+      <div id="metaAtualiz">Carregando...</div>
+    </div>
   </div>
 </div>
 
@@ -815,15 +836,6 @@ async function init() {
     }
 
     EMPREGADOS = tableToObjects(tblEmp);
-
-    /* DEBUG: mostra colunas da planilha no console (F12) */
-    if (EMPREGADOS.length > 0) {
-      console.log('[PAINEL DEBUG] Colunas encontradas:', Object.keys(EMPREGADOS[0]));
-      console.log('[PAINEL DEBUG] Primeiro empregado completo:', JSON.stringify(EMPREGADOS[0]));
-      var comLink = EMPREGADOS.filter(function(e){ return getLink(e); });
-      console.log('[PAINEL DEBUG] Empregados com link detectado:', comLink.length);
-      if (comLink.length > 0) console.log('[PAINEL DEBUG] Exemplo com link:', JSON.stringify(comLink[0]));
-    }
 
     if (Object.keys(RESUMO).length === 0 && EMPREGADOS.length > 0) {
       calcResumoLocal();
