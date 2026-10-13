@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel Gerencial SOST/SEG</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f0f2f7;
+    --card: #ffffff;
+    --az: #1a2744;
+    --azm: #2c5282;
+    --azl: #ebf4ff;
+    --green: #276749;
+    --greenl: #f0fdf4;
+    --red: #c0392b;
+    --redl: #fef2f2;
+    --amber: #d97706;
+    --amberl: #fffbeb;
+    --purple: #6d28d9;
+    --purplel: #f5f3ff;
+    --borda: #e2e8f0;
+    --txt: #1a202c;
+    --sub: #64748b;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--txt);
+    min-height: 100vh;
+  }
+
+  .header {
+    background: linear-gradient(135deg, var(--az) 0%, #2d3a56 100%);
+    color: #fff;
+    padding: .75rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: .5rem;
+  }
+  .header h1 { font-size: 1.1rem; font-weight: 600; letter-spacing: -.01em; }
+  .header .sub { color: rgba(255,255,255,.65); font-size: .8rem; }
+  .header .meta { text-align: right; font-size: .75rem; color: rgba(255,255,255,.5); }
+
+  .nav-prog {
+    background: var(--card);
+    border-bottom: 1px solid var(--borda);
+    padding: .35rem 1.5rem;
+    display: flex;
+    gap: .5rem;
+    overflow-x: auto;
+  }
+  .nav-prog .prog-tab {
+    padding: .3rem .7rem;
+    border-radius: 6px;
+    font-size: .78rem;
+    cursor: pointer;
+    white-space: nowrap;
+    color: var(--sub);
+    background: transparent;
+    border: 1px solid transparent;
+    font-family: inherit;
+    transition: all .15s;
+  }
+  .nav-prog .prog-tab:hover { background: var(--azl); color: var(--azm); }
+  .nav-prog .prog-tab.on { background: var(--azm); color: #fff; border-color: var(--azm); }
+
+  /* Busca integrada na linha de filtros */
+  .filtro-busca {
+    flex: 1 1 300px;
+    min-width: 200px;
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+  }
+  .filtro-busca .search-icon { color: var(--sub); font-size: 1rem; flex-shrink: 0; }
+  .filtro-busca input {
+    flex: 1;
+    font-family: inherit;
+    font-size: .85rem;
+    padding: .3rem .5rem;
+    border: 1px solid var(--borda);
+    border-radius: 6px;
+    background: #f8fafc;
+    color: var(--txt);
+    transition: border-color .15s;
+  }
+  .filtro-busca input:focus {
+    outline: none;
+    border-color: var(--azm);
+    box-shadow: 0 0 0 2px rgba(44,82,130,.12);
+    background: #fff;
+  }
+  .filtro-busca input::placeholder { color: #94a3b8; }
+  .filtro-busca .search-count { font-size: .75rem; color: var(--sub); white-space: nowrap; }
+
+  .main { padding: .75rem 1.5rem; }
+
+  .loading { text-align: center; padding: 3rem; color: var(--sub); }
+  .loading .spin { display: inline-block; width: 2rem; height: 2rem; border: 3px solid var(--borda); border-top-color: var(--azm); border-radius: 50%; animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error-box { background: var(--redl); color: var(--red); padding: 1rem 1.5rem; border-radius: var(--radius); border: 1px solid #fecaca; margin-bottom: 1rem; }
+
+  .cards { display: grid; grid-template-columns: repeat(6, 1fr); gap: .5rem; margin-bottom: .75rem; }
+  .card-stat {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: .6rem .75rem;
+    border: 1px solid var(--borda);
+    text-align: center;
+    transition: box-shadow .15s;
+  }
+  .card-stat:hover { box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+  .card-stat .num { font-size: 1.6rem; font-weight: 700; line-height: 1.1; }
+  .card-stat .label { font-size: .65rem; color: var(--sub); margin-top: .2rem; font-weight: 500; text-transform: uppercase; letter-spacing: .03em; }
+  .card-stat.az .num { color: var(--azm); }
+  .card-stat.green .num { color: var(--green); }
+  .card-stat.red .num { color: var(--red); }
+  .card-stat.amber .num { color: var(--amber); }
+  .card-stat.purple .num { color: var(--purple); }
+
+  .section { margin-bottom: .75rem; }
+  .section-title {
+    font-size: .8rem;
+    font-weight: 600;
+    color: var(--az);
+    margin-bottom: .5rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--borda); }
+
+  .dist-grid { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .dist-item {
+    background: var(--card);
+    border-radius: 8px;
+    padding: .5rem .75rem;
+    border: 2px solid var(--borda);
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    cursor: pointer;
+    transition: all .15s;
+    user-select: none;
+    flex: 1;
+    min-width: 180px;
+  }
+  .dist-item:hover { border-color: var(--azm); background: var(--azl); }
+  .dist-item.active { border-color: var(--azm); background: var(--azl); box-shadow: 0 0 0 2px rgba(44,82,130,.2); }
+  .dist-item .di-info { flex: 1; }
+  .dist-item .di-label { font-size: .8rem; font-weight: 500; }
+  .dist-item .di-bar { height: 3px; background: var(--borda); border-radius: 2px; margin-top: .3rem; }
+  .dist-item .di-bar-fill { height: 100%; border-radius: 2px; transition: width .3s; }
+  .dist-item .di-val { font-size: 1.3rem; font-weight: 700; color: var(--azm); }
+
+  .bar-med { background: #3b82f6; }
+  .bar-max { background: #ef4444; }
+  .bar-per { background: #f97316; }
+  .bar-rv  { background: #dc2626; }
+  .bar-jud { background: #8b5cf6; }
+  .bar-sem { background: #94a3b8; }
+
+  .filtros {
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1px solid var(--borda);
+    padding: .5rem .75rem;
+    margin-bottom: .5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    align-items: center;
+  }
+  .filtro-group { display: flex; align-items: center; gap: .25rem; }
+  .filtro-group label { font-size: .7rem; color: var(--sub); font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+  .filtro-group select {
+    font-family: inherit;
+    font-size: .8rem;
+    padding: .25rem .4rem;
+    border: 1px solid var(--borda);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--txt);
+  }
+  .filtro-group select:focus { outline: none; border-color: var(--azm); }
+  .filtro-limpar {
+    font-size: .75rem;
+    color: var(--azm);
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-family: inherit;
+    padding: .2rem .5rem;
+    border-radius: 4px;
+  }
+  .filtro-limpar:hover { background: var(--azl); }
+  .filtro-ativo-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    background: var(--azl);
+    color: var(--azm);
+    font-size: .75rem;
+    font-weight: 600;
+    padding: .2rem .5rem;
+    border-radius: 4px;
+  }
+  .filtro-ativo-tag .x {
+    cursor: pointer;
+    font-weight: 700;
+    font-size: .85rem;
+    line-height: 1;
+    padding: 0 .15rem;
+    border-radius: 3px;
+  }
+  .filtro-ativo-tag .x:hover { background: rgba(44,82,130,.2); }
+
+  .table-wrap {
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1px solid var(--borda);
+    overflow-x: auto;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: .82rem; table-layout: fixed; }
+  thead { background: #f8fafc; position: sticky; top: 0; z-index: 1; }
+  th { padding: .5rem .6rem; text-align: left; font-weight: 600; color: var(--sub); font-size: .7rem; text-transform: uppercase; letter-spacing: .04em; border-bottom: 2px solid var(--borda); white-space: nowrap; cursor: pointer; user-select: none; }
+  th:hover { color: var(--azm); }
+  th .sort-arrow { font-size: .6rem; margin-left: .2rem; }
+  td { padding: .4rem .6rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; word-wrap: break-word; overflow-wrap: break-word; }
+  tr:hover td { background: #f8fafc; }
+  .mono { font-family: 'IBM Plex Mono', monospace; font-size: .78rem; }
+
+  .badge { display: inline-block; padding: .1rem .4rem; border-radius: 4px; font-size: .7rem; font-weight: 600; }
+  .b-venc { background: var(--redl); color: var(--red); }
+  .b-vence { background: var(--amberl); color: var(--amber); }
+  .b-dia { background: var(--greenl); color: var(--green); }
+  .b-inativo { background: #f1f5f9; color: #94a3b8; }
+
+  .tag-adic { display: inline-block; padding: .1rem .4rem; border-radius: 4px; font-size: .7rem; font-weight: 500; }
+  .tag-med { background: #dbeafe; color: #1e40af; }
+  .tag-max { background: #fecaca; color: #991b1b; }
+  .tag-per { background: #fed7aa; color: #9a3412; }
+  .tag-rv  { background: #fca5a5; color: #7c2d12; }
+  .tag-jud { background: var(--purplel); color: var(--purple); }
+  .tag-sem { background: #f1f5f9; color: #64748b; }
+
+  .sit-ativo { color: var(--green); font-weight: 600; }
+  .sit-inativo { color: #94a3b8; }
+  .sit-licenca { color: var(--amber); }
+
+  /* Empregado */
+  .emp-nome { font-weight: 600; }
+
+  /* Botão Abrir (link OneDrive) */
+  .btn-abrir {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    padding: .2rem .5rem;
+    border-radius: 5px;
+    font-size: .75rem;
+    font-weight: 600;
+    font-family: inherit;
+    color: var(--azm);
+    background: var(--azl);
+    border: 1px solid rgba(44,82,130,.2);
+    cursor: pointer;
+    text-decoration: none;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .btn-abrir:hover { background: var(--azm); color: #fff; }
+  .btn-abrir svg { width: 14px; height: 14px; flex-shrink: 0; }
+  .btn-sem-link { font-size: .7rem; color: #cbd5e1; }
+
+  .footer { text-align: center; padding: 1rem; color: var(--sub); font-size: .7rem; }
+
+  @media (max-width: 900px) {
+    .cards { grid-template-columns: repeat(3, 1fr); }
+    .dist-item { min-width: 150px; }
+  }
+  @media (max-width: 640px) {
+    .header { padding: .6rem 1rem; }
+    .main { padding: .5rem .75rem; }
+    .filtro-busca { flex: 1 1 100%; }
+    .cards { grid-template-columns: repeat(2, 1fr); }
+    .filtros { flex-direction: column; align-items: stretch; }
+    .dist-item { min-width: 100%; }
+  }
+
+  @media print {
+    body { background: #fff; }
+    .header { background: var(--az); print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    .nav-prog, .filtros { display: none; }
+    .card-stat { break-inside: avoid; }
+    table { font-size: .7rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>Painel Gerencial SOST/SEG</h1>
+    <div class="sub">Hospital Universitário de Lagarto · EBSERH</div>
+  </div>
+  <div class="meta">
+    <div id="metaAtualiz">Carregando...</div>
+  </div>
+</div>
+
+<div class="nav-prog">
+  <button class="prog-tab on" data-prog="adicionais">Adicionais de Risco</button>
+</div>
+
+<!-- Busca movida para dentro dos filtros -->
+
+<div class="main">
+  <div id="loading" class="loading">
+    <div class="spin"></div>
+    <p style="margin-top:1rem">Carregando dados da planilha...</p>
+  </div>
+
+  <div id="errorBox" class="error-box" style="display:none"></div>
+
+  <div id="conteudo" style="display:none">
+    <div class="cards" id="cardsResumo"></div>
+
+    <div class="section">
+      <div class="section-title">Distribuição por tipo de adicional (clique para filtrar)</div>
+      <div class="dist-grid" id="distAdic"></div>
+    </div>
+
+    <!-- Filtros: Busca, Unidade, Cargo, Posto, Situação, Revisitação -->
+    <div class="filtros" id="searchBar" style="display:none">
+      <div class="filtro-group filtro-busca">
+        <span class="search-icon">&#128269;</span>
+        <input type="text" id="fBusca" placeholder="Buscar por nome ou SIAPE..." oninput="aplicaFiltros()">
+        <span class="search-count" id="filtroCount"></span>
+      </div>
+      <div id="filtroAtivoTag" style="display:none"></div>
+      <div class="filtro-group">
+        <label>Unidade:</label>
+        <select id="fUnidade" onchange="aplicaFiltros()">
+          <option value="todos">Todas as unidades</option>
+        </select>
+      </div>
+      <div class="filtro-group">
+        <label>Cargo:</label>
+        <select id="fCargo" onchange="aplicaFiltros()">
+          <option value="todos">Todos os cargos</option>
+        </select>
+      </div>
+      <div class="filtro-group">
+        <label>Posto:</label>
+        <select id="fPosto" onchange="aplicaFiltros()">
+          <option value="todos">Todos</option>
+        </select>
+      </div>
+      <div class="filtro-group">
+        <label>Situação:</label>
+        <select id="fSit" onchange="aplicaFiltros()">
+          <option value="todos">Todos</option>
+          <option value="ATIVO" selected>Ativos</option>
+          <option value="NÃO ATIVO">Não ativos</option>
+          <option value="LICENÇA">Licença</option>
+        </select>
+      </div>
+      <div class="filtro-group">
+        <label>Revisitação:</label>
+        <select id="fRev" onchange="aplicaFiltros()">
+          <option value="todos">Todos</option>
+          <option value="Vencida">Vencida</option>
+          <option value="Vencendo">Vencendo</option>
+          <option value="Em dia">Em dia</option>
+        </select>
+      </div>
+      <button class="filtro-limpar" onclick="limparFiltros()">Limpar filtros</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="sortBy('nome')" style="width:18%">Empregado <span class="sort-arrow" id="sort-nome"></span></th>
+            <th onclick="sortBy('siape')" style="width:5%">SIAPE <span class="sort-arrow" id="sort-siape"></span></th>
+            <th onclick="sortBy('cargo')" style="width:11%">Cargo <span class="sort-arrow" id="sort-cargo"></span></th>
+            <th onclick="sortBy('unidade')" style="width:17%">Unidade <span class="sort-arrow" id="sort-unidade"></span></th>
+            <th onclick="sortBy('posto')" style="width:14%">Posto <span class="sort-arrow" id="sort-posto"></span></th>
+            <th onclick="sortBy('adicional')" style="width:10%">Adicional <span class="sort-arrow" id="sort-adicional"></span></th>
+            <th onclick="sortBy('percentual')" style="width:3%">% <span class="sort-arrow" id="sort-percentual"></span></th>
+            <th onclick="sortBy('situacao')" style="width:5%">Situação <span class="sort-arrow" id="sort-situacao"></span></th>
+            <th onclick="sortBy('data_revisitacao')" style="width:7%">Revisitação <span class="sort-arrow" id="sort-data_revisitacao"></span></th>
+            <th onclick="sortBy('status_revisitacao')" style="width:5%">Status <span class="sort-arrow" id="sort-status_revisitacao"></span></th>
+            <th style="cursor:default;width:4%">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  Painel Gerencial SOST/SEG · USOST · Hospital Universitário de Lagarto · EBSERH
+</div>
+
+<script>
+/* ========== CONFIGURAÇÃO ========== */
+const SPREADSHEET_ID = '1BAcopQ8Jacx4Q8ojBuU-2MpGH85NUKzi73xd6rmo2rQ';
+const GID_RESUMO = 0;
+const GID_EMPREGADOS = 1435671513;
+
+/* ========== ESTADO ========== */
+let RESUMO = {};
+let EMPREGADOS = [];
+let FILTRADOS = [];
+let SORT_COL = 'nome';
+let SORT_ASC = true;
+let FILTRO_ADIC = 'todos';
+
+/* ========== FETCH VIA GOOGLE VISUALIZATION API (JSONP) ========== */
+let _cbCounter = 0;
+
+function loadSheet(gid) {
+  return new Promise((resolve, reject) => {
+    const cbName = '_gvizCb' + (++_cbCounter) + '_' + Date.now();
+    const timeout = setTimeout(() => {
+      delete window[cbName];
+      if (script.parentNode) script.remove();
+      reject(new Error('Timeout ao carregar dados (gid=' + gid + ')'));
+    }, 15000);
+
+    window[cbName] = function(resp) {
+      clearTimeout(timeout);
+      delete window[cbName];
+      if (script.parentNode) script.remove();
+      if (resp.status === 'error') {
+        reject(new Error((resp.errors || []).map(e => e.message).join(', ')));
+        return;
+      }
+      resolve(resp.table);
+    };
+
+    const script = document.createElement('script');
+    script.src = 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID +
+      '/gviz/tq?tqx=responseHandler:' + cbName + '&gid=' + gid;
+    script.onerror = () => {
+      clearTimeout(timeout);
+      delete window[cbName];
+      reject(new Error('Falha de rede ao carregar aba (gid=' + gid + ')'));
+    };
+    document.head.appendChild(script);
+  });
+}
+
+/* ========== PARSER DE DATA gviz ========== */
+function parseGvizDate(val) {
+  if (!val) return '';
+  var str = String(val);
+  var m = str.match(/^Date\((\d{4}),(\d{1,2}),(\d{1,2})\)$/);
+  if (m) {
+    var year = m[1];
+    var month = String(parseInt(m[2]) + 1).padStart(2, '0');
+    var day = m[3].padStart(2, '0');
+    return day + '/' + month + '/' + year;
+  }
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) return str;
+  return str;
+}
+
+function tableToObjects(table) {
+  var headers = table.cols.map(function(c) { return (c.label || c.id || '').toLowerCase().trim(); });
+  var dateColIndices = {};
+  table.cols.forEach(function(c, i) {
+    if (c.type === 'date' || c.type === 'datetime') dateColIndices[i] = true;
+  });
+
+  return table.rows
+    .filter(function(row) { return row.c && row.c.some(function(cell) { return cell && cell.v != null; }); })
+    .map(function(row) {
+      var obj = {};
+      headers.forEach(function(h, i) {
+        var cell = row.c[i];
+        if (cell && cell.v != null) {
+          if (dateColIndices[i]) {
+            obj[h] = parseGvizDate(String(cell.v));
+          } else {
+            obj[h] = String(cell.v);
+          }
+        } else {
+          obj[h] = '';
+        }
+      });
+      return obj;
+    });
+}
+
+/* ========== MAPA DE ADICIONAL ========== */
+var ADIC_MAP = [
+  { key: 'Insalubridade grau médio', label: 'Insalubridade grau médio (20%)', bar: 'bar-med' },
+  { key: 'Insalubridade grau máximo', label: 'Insalubridade grau máximo (40%)', bar: 'bar-max' },
+  { key: 'Periculosidade', label: 'Periculosidade (30%)', bar: 'bar-per' },
+  { key: 'Risco de vida', label: 'Risco de vida (40%)', bar: 'bar-rv' },
+  { key: 'Judicial grau máximo', label: 'Judicial grau máximo', bar: 'bar-jud' },
+  { key: 'Judicial sem caracterização', label: 'Judicial sem caract.', bar: 'bar-jud' },
+  { key: 'Sem caracterização', label: 'Sem caracterização', bar: 'bar-sem' },
+];
+
+/* ========== SVG ícone link externo ========== */
+var SVG_LINK = '<svg viewBox="0 0 20 20" fill="currentColor"><path d="M11 3a1 1 0 10 0 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"/><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"/></svg>';
+
+/* ========== RENDER ========== */
+function esc(s) {
+  if (!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function fmtPct(v) {
+  if (!v && v !== 0) return '';
+  var n = parseFloat(v);
+  if (isNaN(n)) return esc(String(v));
+  if (n > 0 && n < 1) n = Math.round(n * 100);
+  return n + '%';
+}
+
+function tit(s) {
+  if (!s) return '';
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
+
+function renderResumo(data) {
+  if (!data || !data.total) return;
+  var cards = [
+    { num: data.total, label: 'Total', cls: 'az' },
+    { num: data.ativos, label: 'Ativos', cls: 'green' },
+    { num: data.rev_vencida, label: 'Rev. vencida', cls: 'red' },
+    { num: data.rev_vencendo, label: 'Vencendo (90d)', cls: 'amber' },
+    { num: data.rev_em_dia, label: 'Em dia', cls: 'green' },
+    { num: data.judiciais, label: 'Judiciais', cls: 'purple' },
+  ];
+  document.getElementById('cardsResumo').innerHTML = cards.map(function(c) {
+    return '<div class="card-stat ' + c.cls + '"><div class="num">' + c.num + '</div><div class="label">' + c.label + '</div></div>';
+  }).join('');
+  document.getElementById('metaAtualiz').textContent = 'Atualizado: ' + (data.data_atualizacao || '—');
+}
+
+function renderDistribuicao() {
+  var ativos = EMPREGADOS.filter(function(e) { return e.situacao === 'ATIVO'; });
+  var contagem = {};
+  ADIC_MAP.forEach(function(a) { contagem[a.key] = 0; });
+  ativos.forEach(function(e) {
+    if (contagem[e.adicional] !== undefined) contagem[e.adicional]++;
+  });
+  var maxVal = Math.max.apply(null, Object.values(contagem).concat([1]));
+
+  document.getElementById('distAdic').innerHTML = ADIC_MAP.map(function(a) {
+    var val = contagem[a.key] || 0;
+    var isActive = FILTRO_ADIC === a.key;
+    return '<div class="dist-item ' + (isActive ? 'active' : '') + '" onclick="filtrarPorAdic(\'' + a.key + '\')" title="Clique para filtrar: ' + a.label + '">' +
+      '<div class="di-info"><div class="di-label">' + a.label + '</div>' +
+      '<div class="di-bar"><div class="di-bar-fill ' + a.bar + '" style="width:' + (val/maxVal*100).toFixed(0) + '%"></div></div></div>' +
+      '<div class="di-val">' + val + '</div></div>';
+  }).join('');
+}
+
+function filtrarPorAdic(key) {
+  FILTRO_ADIC = (FILTRO_ADIC === key) ? 'todos' : key;
+  renderDistribuicao();
+  atualizaTagFiltro();
+  aplicaFiltros();
+}
+
+function atualizaTagFiltro() {
+  var el = document.getElementById('filtroAtivoTag');
+  if (FILTRO_ADIC === 'todos') {
+    el.style.display = 'none';
+    el.innerHTML = '';
+  } else {
+    el.style.display = 'inline-flex';
+    el.innerHTML = '<span class="filtro-ativo-tag">Adicional: ' + FILTRO_ADIC + ' <span class="x" onclick="filtrarPorAdic(\'' + FILTRO_ADIC + '\')">&times;</span></span>';
+  }
+}
+
+function tagAdic(adic) {
+  var map = {
+    'Insalubridade grau médio': 'tag-med',
+    'Insalubridade grau máximo': 'tag-max',
+    'Periculosidade': 'tag-per',
+    'Risco de vida': 'tag-rv',
+    'Judicial grau máximo': 'tag-jud',
+    'Judicial sem caracterização': 'tag-jud',
+    'Sem caracterização': 'tag-sem',
+  };
+  return map[adic] || 'tag-sem';
+}
+
+function badgeRev(status) {
+  var map = { 'Vencida': 'b-venc', 'Vencendo': 'b-vence', 'Em dia': 'b-dia', 'Inativo': 'b-inativo', 'Sem data': 'b-inativo' };
+  return map[status] || 'b-inativo';
+}
+
+function sitClass(sit) {
+  if (sit === 'ATIVO') return 'sit-ativo';
+  if (sit === 'LICENÇA') return 'sit-licenca';
+  return 'sit-inativo';
+}
+
+/* Detecta link OneDrive/SharePoint em qualquer coluna do empregado */
+function getLink(emp) {
+  var keys = Object.keys(emp);
+  /* campo direto */
+  if (emp.docs && String(emp.docs).trim()) return String(emp.docs).trim();
+  if (emp.link_onedrive && String(emp.link_onedrive).trim()) return String(emp.link_onedrive).trim();
+  /* 1a passada: coluna cujo NOME contenha palavras-chave */
+  var keywords = ['link', 'onedrive', 'url', 'pasta', 'sharepoint', 'drive', 'arquivo', 'documento', 'docs'];
+  for (var i = 0; i < keys.length; i++) {
+    var k = keys[i].toLowerCase();
+    for (var j = 0; j < keywords.length; j++) {
+      if (k.indexOf(keywords[j]) >= 0) {
+        var v = (emp[keys[i]] || '').toString().trim();
+        if (v) return v; /* retorna qualquer valor, mesmo sem http */
+      }
+    }
+  }
+  /* 2a passada: qualquer coluna cujo VALOR pareça uma URL */
+  for (var i = 0; i < keys.length; i++) {
+    var v = (emp[keys[i]] || '').toString().trim();
+    if (v && (v.indexOf('http') === 0 || v.indexOf('//') === 0 || v.indexOf('sharepoint') >= 0 || v.indexOf('onedrive') >= 0)) return v;
+  }
+  return '';
+}
+
+function renderTabela(dados) {
+  var tbody = document.getElementById('tbody');
+  if (!dados.length) {
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:2rem;color:var(--sub)">Nenhum empregado encontrado com esses filtros.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = dados.map(function(e) {
+    // Coluna Empregado: só o nome
+    var empCell = '<td><div class="emp-nome">' + esc(e.nome) + '</div></td>';
+    // Coluna Ações (link OneDrive) - SEMPRE aparece
+    var link = getLink(e);
+    var acaoCell;
+    if (link) {
+      acaoCell = '<td><a href="' + esc(link) + '" target="_blank" rel="noopener" class="btn-abrir">' + SVG_LINK + ' Abrir</a></td>';
+    } else {
+      acaoCell = '<td><span class="btn-sem-link">—</span></td>';
+    }
+
+    return '<tr>' +
+      empCell +
+      '<td class="mono">' + esc(e.siape) + '</td>' +
+      '<td>' + tit(e.cargo) + '</td>' +
+      '<td style="font-size:.78rem">' + tit(e.unidade || '') + '</td>' +
+      '<td>' + esc(e.posto) + '</td>' +
+      '<td><span class="tag-adic ' + tagAdic(e.adicional) + '">' + esc(e.adicional) + '</span></td>' +
+      '<td class="mono">' + fmtPct(e.percentual) + '</td>' +
+      '<td><span class="' + sitClass(e.situacao) + '">' + tit(e.situacao) + '</span></td>' +
+      '<td class="mono">' + (e.data_revisitacao || '—') + '</td>' +
+      '<td><span class="badge ' + badgeRev(e.status_revisitacao) + '">' + esc(e.status_revisitacao) + '</span></td>' +
+      acaoCell +
+    '</tr>';
+  }).join('');
+}
+
+/* ========== POPULA FILTROS ========== */
+function populaFiltrosDinamicos() {
+  // Unidades
+  var unidades = [];
+  var uniSet = {};
+  EMPREGADOS.forEach(function(e) {
+    var u = (e.unidade || '').trim();
+    if (u && !uniSet[u]) { uniSet[u] = true; unidades.push(u); }
+  });
+  unidades.sort(function(a, b) { return a.localeCompare(b, 'pt-BR'); });
+  var selUni = document.getElementById('fUnidade');
+  unidades.forEach(function(u) {
+    var opt = document.createElement('option');
+    opt.value = u;
+    opt.textContent = tit(u);
+    selUni.appendChild(opt);
+  });
+
+  // Cargos
+  var cargos = [];
+  var cargoSet = {};
+  EMPREGADOS.forEach(function(e) {
+    var c = (e.cargo || '').trim();
+    if (c && !cargoSet[c]) { cargoSet[c] = true; cargos.push(c); }
+  });
+  cargos.sort(function(a, b) { return a.localeCompare(b, 'pt-BR'); });
+  var selCargo = document.getElementById('fCargo');
+  cargos.forEach(function(c) {
+    var opt = document.createElement('option');
+    opt.value = c;
+    opt.textContent = tit(c);
+    selCargo.appendChild(opt);
+  });
+
+  // Postos
+  var postos = [];
+  var postoSet = {};
+  EMPREGADOS.forEach(function(e) {
+    var p = (e.posto || '').trim();
+    if (p && !postoSet[p]) { postoSet[p] = true; postos.push(p); }
+  });
+  postos.sort(function(a, b) { return a.localeCompare(b, 'pt-BR'); });
+  var selPosto = document.getElementById('fPosto');
+  postos.forEach(function(p) {
+    var opt = document.createElement('option');
+    opt.value = p;
+    opt.textContent = p;
+    selPosto.appendChild(opt);
+  });
+}
+
+/* ========== FILTROS ========== */
+function aplicaFiltros() {
+  var fUnidade = document.getElementById('fUnidade').value;
+  var fCargo = document.getElementById('fCargo').value;
+  var fPosto = document.getElementById('fPosto').value;
+  var fSit = document.getElementById('fSit').value;
+  var fRev = document.getElementById('fRev').value;
+  var fBusca = document.getElementById('fBusca').value.toLowerCase().trim();
+
+  FILTRADOS = EMPREGADOS.filter(function(e) {
+    if (FILTRO_ADIC !== 'todos' && e.adicional !== FILTRO_ADIC) return false;
+    if (fUnidade !== 'todos' && (e.unidade || '') !== fUnidade) return false;
+    if (fCargo !== 'todos' && (e.cargo || '') !== fCargo) return false;
+    if (fPosto !== 'todos' && e.posto !== fPosto) return false;
+    if (fSit !== 'todos' && e.situacao !== fSit) return false;
+    if (fRev !== 'todos' && e.status_revisitacao !== fRev) return false;
+    if (fBusca && (e.nome || '').toLowerCase().indexOf(fBusca) < 0 && (e.siape || '').indexOf(fBusca) < 0) return false;
+    return true;
+  });
+
+  ordenar();
+  renderTabela(FILTRADOS);
+  document.getElementById('filtroCount').textContent = FILTRADOS.length + ' de ' + EMPREGADOS.length + ' empregado(s)';
+}
+
+function limparFiltros() {
+  FILTRO_ADIC = 'todos';
+  document.getElementById('fUnidade').value = 'todos';
+  document.getElementById('fCargo').value = 'todos';
+  document.getElementById('fPosto').value = 'todos';
+  document.getElementById('fSit').value = 'todos';
+  document.getElementById('fRev').value = 'todos';
+  document.getElementById('fBusca').value = '';
+  renderDistribuicao();
+  atualizaTagFiltro();
+  aplicaFiltros();
+}
+
+/* ========== SORT ========== */
+function sortBy(col) {
+  if (SORT_COL === col) {
+    SORT_ASC = !SORT_ASC;
+  } else {
+    SORT_COL = col;
+    SORT_ASC = true;
+  }
+  document.querySelectorAll('.sort-arrow').forEach(function(el) { el.textContent = ''; });
+  var arrow = document.getElementById('sort-' + col);
+  if (arrow) arrow.textContent = SORT_ASC ? '▲' : '▼';
+  ordenar();
+  renderTabela(FILTRADOS);
+}
+
+function ordenar() {
+  var col = SORT_COL;
+  var dir = SORT_ASC ? 1 : -1;
+  FILTRADOS.sort(function(a, b) {
+    var va = (a[col] || '').toString();
+    var vb = (b[col] || '').toString();
+    var na = parseFloat(va.replace('%', ''));
+    var nb = parseFloat(vb.replace('%', ''));
+    if (!isNaN(na) && !isNaN(nb)) return (na - nb) * dir;
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(va)) {
+      var da = va.split('/').reverse().join('');
+      var db = (vb || '').split('/').reverse().join('');
+      return da.localeCompare(db) * dir;
+    }
+    return va.localeCompare(vb, 'pt-BR') * dir;
+  });
+}
+
+/* ========== BOOT ========== */
+async function init() {
+  var loading = document.getElementById('loading');
+  var errorBox = document.getElementById('errorBox');
+  var conteudo = document.getElementById('conteudo');
+
+  try {
+    var results = await Promise.all([
+      loadSheet(GID_RESUMO),
+      loadSheet(GID_EMPREGADOS)
+    ]);
+    var tblResumo = results[0];
+    var tblEmp = results[1];
+
+    var resumoRows = tableToObjects(tblResumo);
+    if (resumoRows.length > 0) {
+      RESUMO = resumoRows[0];
+    }
+
+    EMPREGADOS = tableToObjects(tblEmp);
+
+    /* DEBUG: mostra colunas da planilha no console (F12) */
+    if (EMPREGADOS.length > 0) {
+      console.log('[PAINEL DEBUG] Colunas encontradas:', Object.keys(EMPREGADOS[0]));
+      console.log('[PAINEL DEBUG] Primeiro empregado completo:', JSON.stringify(EMPREGADOS[0]));
+      var comLink = EMPREGADOS.filter(function(e){ return getLink(e); });
+      console.log('[PAINEL DEBUG] Empregados com link detectado:', comLink.length);
+      if (comLink.length > 0) console.log('[PAINEL DEBUG] Exemplo com link:', JSON.stringify(comLink[0]));
+    }
+
+    if (Object.keys(RESUMO).length === 0 && EMPREGADOS.length > 0) {
+      calcResumoLocal();
+    }
+
+    loading.style.display = 'none';
+    conteudo.style.display = 'block';
+    document.getElementById('searchBar').style.display = 'flex';
+
+    renderResumo(RESUMO);
+    renderDistribuicao();
+    if (EMPREGADOS.length > 0) {
+      populaFiltrosDinamicos();
+      aplicaFiltros();
+    }
+
+  } catch (err) {
+    loading.style.display = 'none';
+    errorBox.style.display = 'block';
+    errorBox.innerHTML =
+      '<strong>Erro ao carregar dados</strong><br>' +
+      esc(err.message) + '<br><br>' +
+      '<strong>Possíveis causas:</strong><br>' +
+      '• A planilha não está compartilhada (Compartilhar > Qualquer pessoa com o link)<br>' +
+      '• A planilha não está publicada na web<br>' +
+      '• Problemas de conexão com a internet<br><br>' +
+      '<strong>Dica:</strong> Verifique se a planilha está publicada E compartilhada como "Qualquer pessoa com o link".';
+  }
+}
+
+function calcResumoLocal() {
+  var ativos = EMPREGADOS.filter(function(e) { return e.situacao === 'ATIVO'; });
+  RESUMO = {
+    data_atualizacao: new Date().toLocaleString('pt-BR'),
+    total: EMPREGADOS.length,
+    ativos: ativos.length,
+    inativos: EMPREGADOS.filter(function(e) { return e.situacao === 'NÃO ATIVO'; }).length,
+    licenca: EMPREGADOS.filter(function(e) { return e.situacao === 'LICENÇA'; }).length,
+    rev_vencida: ativos.filter(function(e) { return e.status_revisitacao === 'Vencida'; }).length,
+    rev_vencendo: ativos.filter(function(e) { return e.status_revisitacao === 'Vencendo'; }).length,
+    rev_em_dia: ativos.filter(function(e) { return e.status_revisitacao === 'Em dia'; }).length,
+    judiciais: EMPREGADOS.filter(function(e) { return (e.judicial || '').toLowerCase() === 'sim'; }).length,
+    insalub_medio: ativos.filter(function(e) { return e.adicional === 'Insalubridade grau médio'; }).length,
+    insalub_maximo: ativos.filter(function(e) { return e.adicional === 'Insalubridade grau máximo'; }).length,
+    periculosidade: ativos.filter(function(e) { return e.adicional === 'Periculosidade'; }).length,
+    risco_vida: ativos.filter(function(e) { return e.adicional === 'Risco de vida'; }).length,
+    judicial_gm: ativos.filter(function(e) { return e.adicional === 'Judicial grau máximo'; }).length,
+    judicial_sc: ativos.filter(function(e) { return e.adicional === 'Judicial sem caracterização'; }).length,
+    sem_caracterizacao: ativos.filter(function(e) { return e.adicional === 'Sem caracterização'; }).length,
+  };
+}
+
+init();
+</script>
+
+</body>
+</html>
