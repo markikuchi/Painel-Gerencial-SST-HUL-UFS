@@ -6,6 +6,7 @@
 <title>Painel Gerencial SOST/SEG</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   :root {
     --bg: #f0f2f7;
@@ -280,6 +281,36 @@
   .btn-abrir svg { width: 14px; height: 14px; flex-shrink: 0; }
   .btn-sem-link { font-size: .7rem; color: #cbd5e1; }
 
+  /* ── Gráficos ── */
+  .graficos-area {
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+  }
+  .grafico-card {
+    background: var(--card);
+    border: 1px solid var(--borda);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+  }
+  .grafico-titulo {
+    font-size: .7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--sub);
+    margin-bottom: .6rem;
+  }
+  .grafico-wrap {
+    position: relative;
+    width: 100%;
+  }
+  .grafico-wrap canvas { width: 100% !important; }
+  .grafico-row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+  @media (max-width: 768px) {
+    .grafico-row { grid-template-columns: 1fr; }
+  }
+
   .btn-voltar {
     display: inline-flex;
     align-items: center;
@@ -338,7 +369,8 @@
 </div>
 
 <div class="nav-prog">
-  <button class="prog-tab on" data-prog="adicionais">Adicionais de Risco</button>
+  <button class="prog-tab on" onclick="switchView('dados')">Dados</button>
+  <button class="prog-tab" onclick="switchView('graficos')">Gráficos</button>
 </div>
 
 <!-- Busca movida para dentro dos filtros -->
@@ -406,6 +438,8 @@
       <button class="filtro-limpar" onclick="limparFiltros()">Limpar filtros</button>
     </div>
 
+    <!-- === VISTA DADOS === -->
+    <div id="viewDados">
     <div class="table-wrap">
       <table>
         <thead>
@@ -426,6 +460,32 @@
         <tbody id="tbody"></tbody>
       </table>
     </div>
+    </div>
+
+    <!-- === VISTA GRÁFICOS === -->
+    <div id="viewGraficos" style="display:none">
+      <div class="graficos-area">
+        <div class="grafico-row">
+          <div class="grafico-card">
+            <div class="grafico-titulo">Por Tipo de Adicional</div>
+            <div class="grafico-wrap"><canvas id="chartAdicionais"></canvas></div>
+          </div>
+          <div class="grafico-card">
+            <div class="grafico-titulo">Revisitações</div>
+            <div class="grafico-wrap"><canvas id="chartRevisitacao"></canvas></div>
+          </div>
+        </div>
+        <div class="grafico-card">
+          <div class="grafico-titulo">Top 10 Unidades (Ativos)</div>
+          <div class="grafico-wrap"><canvas id="chartUnidade"></canvas></div>
+        </div>
+        <div class="grafico-card">
+          <div class="grafico-titulo">Top 10 Cargos (Ativos)</div>
+          <div class="grafico-wrap"><canvas id="chartCargo"></canvas></div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -886,6 +946,170 @@ function calcResumoLocal() {
     judicial_sc: ativos.filter(function(e) { return e.adicional === 'Judicial sem caracterização'; }).length,
     sem_caracterizacao: ativos.filter(function(e) { return e.adicional === 'Sem caracterização'; }).length,
   };
+}
+
+/* ========== TROCA DE VISTA ========== */
+let VIEW_ATUAL = 'dados';
+let CHARTS_RENDERED = false;
+let chartInstances = {};
+
+function switchView(view) {
+  VIEW_ATUAL = view;
+  var tabs = document.querySelectorAll('.nav-prog .prog-tab');
+  tabs.forEach(function(t, i) {
+    t.classList.toggle('on', (i === 0 && view === 'dados') || (i === 1 && view === 'graficos'));
+  });
+
+  var secDist = document.querySelector('.section');
+  var searchBar = document.getElementById('searchBar');
+
+  if (view === 'dados') {
+    document.getElementById('viewDados').style.display = '';
+    document.getElementById('viewGraficos').style.display = 'none';
+    if (secDist) secDist.style.display = '';
+    if (searchBar) searchBar.style.display = 'flex';
+  } else {
+    document.getElementById('viewDados').style.display = 'none';
+    document.getElementById('viewGraficos').style.display = '';
+    if (secDist) secDist.style.display = 'none';
+    if (searchBar) searchBar.style.display = 'none';
+    if (!CHARTS_RENDERED && EMPREGADOS.length > 0) {
+      renderGraficos();
+      CHARTS_RENDERED = true;
+    }
+  }
+}
+
+/* ========== CONFIGURAÇÃO GLOBAL CHART.JS ========== */
+Chart.defaults.font.family = "'IBM Plex Sans', system-ui, sans-serif";
+Chart.defaults.font.size = 11;
+Chart.defaults.color = '#64748b';
+Chart.defaults.plugins.legend.display = false;
+
+var CORES_ADIC = {
+  'Insalubridade grau médio':    '#3b82f6',
+  'Insalubridade grau máximo':   '#ef4444',
+  'Periculosidade':              '#f97316',
+  'Risco de vida':               '#dc2626',
+  'Judicial grau máximo':        '#8b5cf6',
+  'Judicial sem caracterização': '#a78bfa',
+  'Sem caracterização':          '#94a3b8',
+};
+
+var CORES_REV = { 'Vencida': '#ef4444', 'Vencendo': '#f59e0b', 'Em dia': '#22c55e', 'Sem data': '#cbd5e1' };
+
+function destroyChart(id) {
+  if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; }
+}
+
+function barH(canvasId, labels, valores, cores, maxItems) {
+  if (maxItems) { labels = labels.slice(0, maxItems); valores = valores.slice(0, maxItems); if (Array.isArray(cores)) cores = cores.slice(0, maxItems); }
+  var h = Math.max(120, labels.length * 26 + 30);
+  var wrap = document.getElementById(canvasId).parentElement;
+  wrap.style.height = h + 'px';
+  destroyChart(canvasId);
+  chartInstances[canvasId] = new Chart(document.getElementById(canvasId), {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{ data: valores, backgroundColor: cores, borderRadius: 3, barPercentage: .7 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+      layout: { padding: { right: 35 } },
+      scales: {
+        x: { display: false, beginAtZero: true },
+        y: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#475569' } }
+      },
+      plugins: {
+        tooltip: { callbacks: { label: function(ctx) { return ctx.raw + ' empregado(s)'; } } }
+      }
+    },
+    plugins: [{
+      id: 'valorNaBarra',
+      afterDatasetsDraw: function(chart) {
+        var ctx = chart.ctx;
+        ctx.font = "600 11px 'IBM Plex Sans', sans-serif";
+        ctx.fillStyle = '#475569';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        chart.data.datasets[0].data.forEach(function(v, i) {
+          var meta = chart.getDatasetMeta(0).data[i];
+          if (meta) ctx.fillText(v, meta.x + 6, meta.y);
+        });
+      }
+    }]
+  });
+}
+
+/* ========== RENDERIZAR GRÁFICOS ========== */
+function renderGraficos() {
+  var ativos = EMPREGADOS.filter(function(e) { return e.situacao === 'ATIVO'; });
+
+  // 1. Tipo de Adicional
+  (function() {
+    var cont = {};
+    ADIC_MAP.forEach(function(a) { cont[a.key] = 0; });
+    ativos.forEach(function(e) { if (cont[e.adicional] !== undefined) cont[e.adicional]++; });
+    var items = ADIC_MAP.filter(function(a) { return cont[a.key] > 0; })
+      .map(function(a) { return { l: a.key, v: cont[a.key], c: CORES_ADIC[a.key] || '#94a3b8' }; })
+      .sort(function(a,b) { return b.v - a.v; });
+    barH('chartAdicionais',
+      items.map(function(i){return i.l}),
+      items.map(function(i){return i.v}),
+      items.map(function(i){return i.c})
+    );
+  })();
+
+  // 2. Revisitações
+  (function() {
+    var cont = { 'Vencida': 0, 'Vencendo': 0, 'Em dia': 0, 'Sem data': 0 };
+    ativos.forEach(function(e) {
+      var st = e.status_revisitacao || '';
+      if (st === 'Vencida') cont['Vencida']++;
+      else if (st === 'Vencendo') cont['Vencendo']++;
+      else if (st === 'Em dia') cont['Em dia']++;
+      else cont['Sem data']++;
+    });
+    var order = ['Vencida', 'Vencendo', 'Em dia', 'Sem data'];
+    barH('chartRevisitacao',
+      order,
+      order.map(function(k){return cont[k]}),
+      order.map(function(k){return CORES_REV[k]})
+    );
+  })();
+
+  // 3. Top 10 Unidades
+  (function() {
+    var cont = {};
+    ativos.forEach(function(e) {
+      var u = tit(e.unidade || 'Sem unidade');
+      cont[u] = (cont[u] || 0) + 1;
+    });
+    var items = Object.entries(cont).sort(function(a,b){return b[1]-a[1]});
+    barH('chartUnidade',
+      items.map(function(i){return i[0]}),
+      items.map(function(i){return i[1]}),
+      '#3b82f6',
+      10
+    );
+  })();
+
+  // 4. Top 10 Cargos
+  (function() {
+    var cont = {};
+    ativos.forEach(function(e) {
+      var c = tit(e.cargo || 'Sem cargo');
+      cont[c] = (cont[c] || 0) + 1;
+    });
+    var items = Object.entries(cont).sort(function(a,b){return b[1]-a[1]});
+    barH('chartCargo',
+      items.map(function(i){return i[0]}),
+      items.map(function(i){return i[1]}),
+      '#14b8a6',
+      10
+    );
+  })();
 }
 
 init();
