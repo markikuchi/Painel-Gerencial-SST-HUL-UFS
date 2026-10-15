@@ -295,13 +295,17 @@ function renderAll(){
   /* Anos */
   var anos={};ACIDENTES.forEach(function(a){var y=extrairAno(a.data);if(y)anos[y]=true});
   var sel=document.getElementById('filtroAno'),cur=sel.value;
+  var anosOrdenados=Object.keys(anos).sort();
+  /* Na primeira carga (valor ainda é "todos"), seleciona o ano mais recente */
+  if(cur==='todos'&&!renderAll._jaAbriu&&anosOrdenados.length){cur=anosOrdenados[anosOrdenados.length-1];renderAll._jaAbriu=true}
   sel.innerHTML='<option value="todos" style="background:#fff;color:#1a202c">Todos os anos</option>';
-  Object.keys(anos).sort().forEach(function(y){sel.innerHTML+='<option value="'+y+'" style="background:#fff;color:#1a202c"'+(y===cur?' selected':'')+'>'+y+'</option>'});
+  anosOrdenados.forEach(function(y){sel.innerHTML+='<option value="'+y+'" style="background:#fff;color:#1a202c"'+(y===cur?' selected':'')+'>'+y+'</option>'});
+  if(cur!=='todos')sel.value=cur;
 
   var acids=ACIDENTES;
-  if(anoSel!=='todos')acids=ACIDENTES.filter(function(a){return extrairAno(a.data)===anoSel});
+  if(cur!=='todos')acids=ACIDENTES.filter(function(a){return extrairAno(a.data)===cur});
 
-  renderKPIs(acids,anoSel);
+  renderKPIs(acids,cur);
   renderDistTipo(acids);
   renderTaxas();
   renderReinc();
