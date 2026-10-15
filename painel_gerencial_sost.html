@@ -444,16 +444,17 @@
       <table>
         <thead>
           <tr>
-            <th onclick="sortBy('nome')" style="width:18%">Empregado <span class="sort-arrow" id="sort-nome"></span></th>
+            <th onclick="sortBy('nome')" style="width:16%">Empregado <span class="sort-arrow" id="sort-nome"></span></th>
             <th onclick="sortBy('siape')" style="width:5%">SIAPE <span class="sort-arrow" id="sort-siape"></span></th>
-            <th onclick="sortBy('cargo')" style="width:11%">Cargo <span class="sort-arrow" id="sort-cargo"></span></th>
-            <th onclick="sortBy('unidade')" style="width:17%">Unidade <span class="sort-arrow" id="sort-unidade"></span></th>
-            <th onclick="sortBy('posto')" style="width:14%">Posto <span class="sort-arrow" id="sort-posto"></span></th>
-            <th onclick="sortBy('adicional')" style="width:10%">Adicional <span class="sort-arrow" id="sort-adicional"></span></th>
+            <th onclick="sortBy('cargo')" style="width:10%">Cargo <span class="sort-arrow" id="sort-cargo"></span></th>
+            <th onclick="sortBy('unidade')" style="width:14%">Unidade <span class="sort-arrow" id="sort-unidade"></span></th>
+            <th onclick="sortBy('posto')" style="width:11%">Posto <span class="sort-arrow" id="sort-posto"></span></th>
+            <th onclick="sortBy('adicional')" style="width:9%">Adicional <span class="sort-arrow" id="sort-adicional"></span></th>
             <th onclick="sortBy('percentual')" style="width:3%">% <span class="sort-arrow" id="sort-percentual"></span></th>
             <th onclick="sortBy('situacao')" style="width:5%">Situação <span class="sort-arrow" id="sort-situacao"></span></th>
-            <th onclick="sortBy('data_revisitacao')" style="width:7%">Revisitação <span class="sort-arrow" id="sort-data_revisitacao"></span></th>
+            <th onclick="sortBy('data_revisitacao')" style="width:6%">Revisitação <span class="sort-arrow" id="sort-data_revisitacao"></span></th>
             <th onclick="sortBy('status_revisitacao')" style="width:5%">Status <span class="sort-arrow" id="sort-status_revisitacao"></span></th>
+            <th onclick="sortBy('sei')" style="width:8%">SEI <span class="sort-arrow" id="sort-sei"></span></th>
             <th style="cursor:default;width:4%">Ações</th>
           </tr>
         </thead>
@@ -617,6 +618,11 @@ function tit(s) {
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 }
 
+function titWords(s) {
+  if (!s) return '';
+  return s.split(/\s+/).map(function(w) { return tit(w); }).join(' ');
+}
+
 function renderResumo(data) {
   if (!data || !data.total) return;
   var cards = [
@@ -722,7 +728,7 @@ function getLink(emp) {
 function renderTabela(dados) {
   var tbody = document.getElementById('tbody');
   if (!dados.length) {
-    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:2rem;color:var(--sub)">Nenhum empregado encontrado com esses filtros.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:2rem;color:var(--sub)">Nenhum empregado encontrado com esses filtros.</td></tr>';
     return;
   }
 
@@ -743,12 +749,13 @@ function renderTabela(dados) {
       '<td class="mono">' + esc(e.siape) + '</td>' +
       '<td>' + tit(e.cargo) + '</td>' +
       '<td style="font-size:.78rem">' + tit(e.unidade || '') + '</td>' +
-      '<td>' + esc(e.posto) + '</td>' +
+      '<td>' + titWords(e.posto) + '</td>' +
       '<td><span class="tag-adic ' + tagAdic(e.adicional) + '">' + esc(e.adicional) + '</span></td>' +
       '<td class="mono">' + fmtPct(e.percentual) + '</td>' +
       '<td><span class="' + sitClass(e.situacao) + '">' + tit(e.situacao) + '</span></td>' +
       '<td class="mono">' + (e.data_revisitacao || '—') + '</td>' +
       '<td><span class="badge ' + badgeRev(e.status_revisitacao) + '">' + esc(e.status_revisitacao) + '</span></td>' +
+      '<td class="mono" style="font-size:.75rem;white-space:nowrap">' + esc(e.sei || '') + '</td>' +
       acaoCell +
     '</tr>';
   }).join('');
@@ -800,7 +807,7 @@ function populaFiltrosDinamicos() {
   postos.forEach(function(p) {
     var opt = document.createElement('option');
     opt.value = p;
-    opt.textContent = p;
+    opt.textContent = titWords(p);
     selPosto.appendChild(opt);
   });
 }

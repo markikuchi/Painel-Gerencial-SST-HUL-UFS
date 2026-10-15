@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monitoramento de Laudos - Painel Gerencial SOST/SEG</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f0f2f7;
+    --card: #ffffff;
+    --az: #1a2744;
+    --azm: #2c5282;
+    --azl: #ebf4ff;
+    --green: #276749;
+    --greenl: #f0fdf4;
+    --red: #c0392b;
+    --redl: #fef2f2;
+    --amber: #d97706;
+    --amberl: #fffbeb;
+    --purple: #6d28d9;
+    --purplel: #f5f3ff;
+    --borda: #e2e8f0;
+    --txt: #1a202c;
+    --sub: #64748b;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--txt);
+    min-height: 100vh;
+  }
+
+  .header {
+    background: linear-gradient(135deg, var(--az) 0%, #2d3a56 100%);
+    color: #fff;
+    padding: .75rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: .5rem;
+  }
+  .header h1 { font-size: 1.1rem; font-weight: 600; letter-spacing: -.01em; }
+  .header .sub { color: rgba(255,255,255,.65); font-size: .8rem; }
+  .header .meta { text-align: right; font-size: .75rem; color: rgba(255,255,255,.5); }
+
+  .nav-prog {
+    background: var(--card);
+    border-bottom: 1px solid var(--borda);
+    padding: .35rem 1.5rem;
+    display: flex;
+    gap: .5rem;
+    overflow-x: auto;
+  }
+  .nav-prog .prog-tab {
+    padding: .3rem .7rem;
+    border-radius: 6px;
+    font-size: .78rem;
+    cursor: pointer;
+    white-space: nowrap;
+    color: var(--sub);
+    background: transparent;
+    border: 1px solid transparent;
+    font-family: inherit;
+    transition: all .15s;
+  }
+  .nav-prog .prog-tab:hover { background: var(--azl); color: var(--azm); }
+  .nav-prog .prog-tab.on { background: var(--azm); color: #fff; border-color: var(--azm); }
+
+  .filtro-busca {
+    flex: 1 1 300px;
+    min-width: 200px;
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+  }
+  .filtro-busca .search-icon { color: var(--sub); font-size: 1rem; flex-shrink: 0; }
+  .filtro-busca input {
+    flex: 1;
+    font-family: inherit;
+    font-size: .85rem;
+    padding: .3rem .5rem;
+    border: 1px solid var(--borda);
+    border-radius: 6px;
+    background: #f8fafc;
+    color: var(--txt);
+    transition: border-color .15s;
+  }
+  .filtro-busca input:focus {
+    outline: none;
+    border-color: var(--azm);
+    box-shadow: 0 0 0 2px rgba(44,82,130,.12);
+    background: #fff;
+  }
+  .filtro-busca input::placeholder { color: #94a3b8; }
+  .filtro-busca .search-count { font-size: .75rem; color: var(--sub); white-space: nowrap; }
+
+  .main { padding: .75rem 1.5rem; }
+
+  .loading { text-align: center; padding: 3rem; color: var(--sub); }
+  .loading .spin { display: inline-block; width: 2rem; height: 2rem; border: 3px solid var(--borda); border-top-color: var(--azm); border-radius: 50%; animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error-box { background: var(--redl); color: var(--red); padding: 1rem 1.5rem; border-radius: var(--radius); border: 1px solid #fecaca; margin-bottom: 1rem; }
+
+  .cards { display: grid; grid-template-columns: repeat(6, 1fr); gap: .5rem; margin-bottom: .75rem; }
+  .card-stat {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: .6rem .75rem;
+    border: 1px solid var(--borda);
+    text-align: center;
+    transition: box-shadow .15s;
+  }
+  .card-stat:hover { box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+  .card-stat .num { font-size: 1.6rem; font-weight: 700; line-height: 1.1; }
+  .card-stat .label { font-size: .65rem; color: var(--sub); margin-top: .2rem; font-weight: 500; text-transform: uppercase; letter-spacing: .03em; }
+  .card-stat.az .num { color: var(--azm); }
+  .card-stat.green .num { color: var(--green); }
+  .card-stat.red .num { color: var(--red); }
+  .card-stat.amber .num { color: var(--amber); }
+  .card-stat.purple .num { color: var(--purple); }
+
+  .section { margin-bottom: .75rem; }
+  .section-title {
+    font-size: .8rem;
+    font-weight: 600;
+    color: var(--az);
+    margin-bottom: .5rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--borda); }
+
+  .dist-grid { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .dist-item {
+    background: var(--card);
+    border-radius: 8px;
+    padding: .5rem .75rem;
+    border: 2px solid var(--borda);
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    cursor: pointer;
+    transition: all .15s;
+    user-select: none;
+    flex: 1;
+    min-width: 150px;
+  }
+  .dist-item:hover { border-color: var(--azm); background: var(--azl); }
+  .dist-item.active { border-color: var(--azm); background: var(--azl); box-shadow: 0 0 0 2px rgba(44,82,130,.2); }
+  .dist-item .di-info { flex: 1; }
+  .dist-item .di-label { font-size: .8rem; font-weight: 500; }
+  .dist-item .di-bar { height: 3px; background: var(--borda); border-radius: 2px; margin-top: .3rem; }
+  .dist-item .di-bar-fill { height: 100%; border-radius: 2px; transition: width .3s; }
+  .dist-item .di-val { font-size: 1.3rem; font-weight: 700; color: var(--azm); }
+
+  .bar-regular  { background: #22c55e; }
+  .bar-atencao  { background: #f59e0b; }
+  .bar-revisao  { background: #ef4444; }
+  .bar-revisado { background: #8b5cf6; }
+  .bar-pendente { background: #94a3b8; }
+  .bar-gm       { background: #ef4444; }
+  .bar-peric    { background: #f97316; }
+
+  .filtros {
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1px solid var(--borda);
+    padding: .5rem .75rem;
+    margin-bottom: .5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    align-items: center;
+  }
+  .filtro-group { display: flex; align-items: center; gap: .25rem; }
+  .filtro-group label { font-size: .7rem; color: var(--sub); font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+  .filtro-group select {
+    font-family: inherit;
+    font-size: .8rem;
+    padding: .25rem .4rem;
+    border: 1px solid var(--borda);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--txt);
+  }
+  .filtro-group select:focus { outline: none; border-color: var(--azm); }
+  .filtro-limpar {
+    font-size: .75rem;
+    color: var(--azm);
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-family: inherit;
+    padding: .2rem .5rem;
+    border-radius: 4px;
+  }
+  .filtro-limpar:hover { background: var(--azl); }
+  .filtro-ativo-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    background: var(--azl);
+    color: var(--azm);
+    font-size: .75rem;
+    font-weight: 600;
+    padding: .2rem .5rem;
+    border-radius: 4px;
+  }
+  .filtro-ativo-tag .x {
+    cursor: pointer;
+    font-weight: 700;
+    font-size: .85rem;
+    line-height: 1;
+    padding: 0 .15rem;
+    border-radius: 3px;
+  }
+  .filtro-ativo-tag .x:hover { background: rgba(44,82,130,.2); }
+
+  .table-wrap {
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1px solid var(--borda);
+    overflow-x: auto;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: .82rem; table-layout: fixed; }
+  thead { background: #f8fafc; position: sticky; top: 0; z-index: 1; }
+  th { padding: .5rem .6rem; text-align: left; font-weight: 600; color: var(--sub); font-size: .7rem; text-transform: uppercase; letter-spacing: .04em; border-bottom: 2px solid var(--borda); white-space: nowrap; cursor: pointer; user-select: none; }
+  th:hover { color: var(--azm); }
+  th .sort-arrow { font-size: .6rem; margin-left: .2rem; }
+  td { padding: .55rem .6rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; word-wrap: break-word; overflow-wrap: break-word; }
+  tr:hover td { background: #f8fafc; }
+  tr:nth-child(even) td { background: #fafbfc; }
+  tr:nth-child(even):hover td { background: #f1f5f9; }
+  .mono { font-family: 'IBM Plex Mono', monospace; font-size: .78rem; }
+
+  .badge { display: inline-block; padding: .1rem .4rem; border-radius: 4px; font-size: .7rem; font-weight: 600; }
+  .b-regular  { background: var(--greenl); color: var(--green); }
+  .b-atencao  { background: var(--amberl); color: var(--amber); }
+  .b-revisao  { background: var(--redl); color: var(--red); }
+  .b-revisado { background: var(--purplel); color: var(--purple); }
+  .b-pendente { background: #f1f5f9; color: #64748b; }
+
+  .tag-prog { display: inline-block; padding: .1rem .4rem; border-radius: 4px; font-size: .7rem; font-weight: 500; }
+  .tag-gm   { background: #fecaca; color: #991b1b; }
+  .tag-per  { background: #fed7aa; color: #9a3412; }
+
+
+  .tag-epi { display: inline-block; padding: .1rem .4rem; border-radius: 4px; font-size: .7rem; font-weight: 500; }
+  .te-ok      { background: var(--greenl); color: var(--green); }
+  .te-atencao { background: var(--amberl); color: var(--amber); }
+  .te-pend    { background: var(--redl); color: var(--red); }
+  .te-sem     { background: #f1f5f9; color: #94a3b8; }
+
+  /* mg bar inline */
+  .mg-wrap { display: flex; align-items: center; gap: .35rem; }
+  .mg-bar-bg {
+    width: 48px; height: 6px;
+    background: var(--borda);
+    border-radius: 3px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .mg-bar-fill { height: 100%; border-radius: 3px; transition: width .3s; }
+  .mg-fill-ok   { background: #22c55e; }
+  .mg-fill-warn { background: #f59e0b; }
+  .mg-fill-high { background: #ef4444; }
+  .mg-text { font-size: .75rem; font-weight: 600; white-space: nowrap; }
+
+  .emp-nome { font-weight: 600; }
+
+  /* Graficos */
+  .graficos-area { display: flex; flex-direction: column; gap: .75rem; }
+  .grafico-card {
+    background: var(--card);
+    border: 1px solid var(--borda);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+  }
+  .grafico-titulo {
+    font-size: .7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--sub);
+    margin-bottom: .6rem;
+  }
+  .grafico-wrap { position: relative; width: 100%; }
+  .grafico-wrap canvas { width: 100% !important; }
+  .grafico-row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+  @media (max-width: 768px) { .grafico-row { grid-template-columns: 1fr; } }
+
+  .btn-voltar {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .35rem .75rem;
+    border-radius: 6px;
+    font-size: .8rem;
+    font-weight: 500;
+    font-family: inherit;
+    color: rgba(255,255,255,.7);
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.12);
+    cursor: pointer;
+    text-decoration: none;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .btn-voltar:hover { background: rgba(255,255,255,.15); color: #fff; }
+  .footer { text-align: center; padding: 1rem; color: var(--sub); font-size: .7rem; }
+
+  @media (max-width: 900px) {
+    .cards { grid-template-columns: repeat(3, 1fr); }
+    .dist-item { min-width: 130px; }
+  }
+  @media (max-width: 640px) {
+    .header { padding: .6rem 1rem; }
+    .main { padding: .5rem .75rem; }
+    .filtro-busca { flex: 1 1 100%; }
+    .cards { grid-template-columns: repeat(2, 1fr); }
+    .filtros { flex-direction: column; align-items: stretch; }
+    .dist-item { min-width: 100%; }
+  }
+
+  @media print {
+    body { background: #fff; }
+    .header { background: var(--az); print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    .nav-prog, .filtros { display: none; }
+    .card-stat { break-inside: avoid; }
+    table { font-size: .7rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>Monitoramento de Laudos</h1>
+    <div class="sub">Insalubridade Grau Maximo e Periculosidade por Radiacao Ionizante</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:.75rem;">
+    <a class="btn-voltar" href="index.html">&#8249; Hub</a>
+    <div class="meta">
+      <div id="metaAtualiz">Carregando...</div>
+    </div>
+  </div>
+</div>
+
+<div class="nav-prog">
+  <button class="prog-tab on" onclick="switchView('dados')">Dados</button>
+  <button class="prog-tab" onclick="switchView('graficos')">Graficos</button>
+</div>
+
+<div class="main">
+  <div id="loading" class="loading">
+    <div class="spin"></div>
+    <p style="margin-top:1rem">Carregando dados da planilha...</p>
+  </div>
+
+  <div id="errorBox" class="error-box" style="display:none"></div>
+
+  <div id="conteudo" style="display:none">
+    <div class="cards" id="cardsResumo"></div>
+
+    <div class="section">
+      <div class="section-title">Distribuicao por nivel de monitoramento (clique para filtrar)</div>
+      <div class="dist-grid" id="distNivel"></div>
+    </div>
+
+    <div class="filtros" id="searchBar" style="display:none">
+      <div class="filtro-group filtro-busca">
+        <span class="search-icon">&#128269;</span>
+        <input type="text" id="fBusca" placeholder="Buscar por nome ou SIAPE..." oninput="aplicaFiltros()">
+        <span class="search-count" id="filtroCount"></span>
+      </div>
+      <div id="filtroAtivoTag" style="display:none"></div>
+      <div class="filtro-group">
+        <label>Programa:</label>
+        <select id="fPrograma" onchange="aplicaFiltros()">
+          <option value="todos">Todos</option>
+          <option value="Grau Maximo">Grau Maximo</option>
+          <option value="Periculosidade">Periculosidade</option>
+        </select>
+      </div>
+      <div class="filtro-group">
+        <label>Nivel:</label>
+        <select id="fNivel" onchange="aplicaFiltros()">
+          <option value="todos">Todos</option>
+          <option value="Regular">Regular</option>
+          <option value="Atencao">Atencao</option>
+          <option value="Revisao">Revisao</option>
+          <option value="Revisado">Revisado</option>
+          <option value="Pendente">Pendente</option>
+        </select>
+      </div>
+      <div class="filtro-group">
+        <label>EPI:</label>
+        <select id="fEpi" onchange="aplicaFiltros()">
+          <option value="todos">Todos</option>
+          <option value="OK">OK</option>
+          <option value="Atencao">Atencao</option>
+          <option value="Pendente">Pendente</option>
+          <option value="Sem dado">Sem dado</option>
+        </select>
+      </div>
+      <div class="filtro-group">
+        <label>Unidade:</label>
+        <select id="fUnidade" onchange="aplicaFiltros()">
+          <option value="todos">Todas</option>
+        </select>
+      </div>
+      <button class="filtro-limpar" onclick="limparFiltros()">Limpar filtros</button>
+    </div>
+
+    <!-- === VISTA DADOS === -->
+    <div id="viewDados">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="sortBy('nome')" style="width:22%">Empregado <span class="sort-arrow" id="sort-nome"></span></th>
+            <th onclick="sortBy('siape')" style="width:7%">SIAPE <span class="sort-arrow" id="sort-siape"></span></th>
+            <th onclick="sortBy('cargo')" style="width:13%">Cargo <span class="sort-arrow" id="sort-cargo"></span></th>
+            <th onclick="sortBy('unidade')" style="width:18%">Unidade <span class="sort-arrow" id="sort-unidade"></span></th>
+            <th onclick="sortBy('programa')" style="width:9%">Programa <span class="sort-arrow" id="sort-programa"></span></th>
+            <th onclick="sortBy('mg')" style="width:10%">mg/12 <span class="sort-arrow" id="sort-mg"></span></th>
+            <th onclick="sortBy('nivel')" style="width:9%">Nivel <span class="sort-arrow" id="sort-nivel"></span></th>
+            <th onclick="sortBy('epi_status')" style="width:12%">EPI <span class="sort-arrow" id="sort-epi_status"></span></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    </div>
+
+    <!-- === VISTA GRAFICOS === -->
+    <div id="viewGraficos" style="display:none">
+      <div class="graficos-area">
+        <div class="grafico-row">
+          <div class="grafico-card">
+            <div class="grafico-titulo">Por Programa</div>
+            <div class="grafico-wrap"><canvas id="chartPrograma"></canvas></div>
+          </div>
+          <div class="grafico-card">
+            <div class="grafico-titulo">Por Nivel de Monitoramento</div>
+            <div class="grafico-wrap"><canvas id="chartNivel"></canvas></div>
+          </div>
+        </div>
+        <div class="grafico-row">
+          <div class="grafico-card">
+            <div class="grafico-titulo">Status de EPI</div>
+            <div class="grafico-wrap"><canvas id="chartEpi"></canvas></div>
+          </div>
+          <div class="grafico-card">
+            <div class="grafico-titulo">Top 10 Unidades</div>
+            <div class="grafico-wrap"><canvas id="chartUnidade"></canvas></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="footer">
+  Painel Gerencial SOST/SEG &middot; USOST &middot; Hospital Universitario de Lagarto &middot; EBSERH
+</div>
+
+<script>
+/* ========== CONFIGURACAO ========== */
+/*
+  INSTRUCOES DE CONFIGURACAO:
+  1. Crie duas novas abas na planilha Google Sheets (ID abaixo):
+     - "MON_RESUMO" (resumo consolidado)
+     - "MON_EMPREGADOS" (dados por empregado)
+  2. Anote o GID de cada aba (visivel na URL ao abrir a aba)
+  3. Substitua os valores abaixo pelos GIDs reais
+  4. Publique a planilha na web (Arquivo > Compartilhar > Publicar na web)
+
+  Colunas esperadas em MON_EMPREGADOS:
+  nome | siape | cargo | unidade | programa | mg | janela | nivel |
+  status_laudo | laudo_sei | laudo_vigencia | epi_status | epi_ultima_retirada | link
+
+  Colunas esperadas em MON_RESUMO:
+  data_atualizacao | total | grau_maximo | periculosidade | com_laudo |
+  revisao_indicada | epi_irregular
+*/
+var SPREADSHEET_ID = '1BAcopQ8Jacx4Q8ojBuU-2MpGH85NUKzi73xd6rmo2rQ';
+var GID_RESUMO = 1172972390;
+var GID_EMPREGADOS = 1912994825;
+
+/* ========== ESTADO ========== */
+var RESUMO = {};
+var EMPREGADOS = [];
+var FILTRADOS = [];
+var SORT_COL = 'nome';
+var SORT_ASC = true;
+var FILTRO_NIVEL = 'todos';
+
+/* ========== FETCH VIA GOOGLE VISUALIZATION API (JSONP) ========== */
+var _cbCounter = 0;
+
+function loadSheet(gid) {
+  return new Promise(function(resolve, reject) {
+    var cbName = '_gvizCb' + (++_cbCounter) + '_' + Date.now();
+    var timeout = setTimeout(function() {
+      delete window[cbName];
+      if (script.parentNode) script.remove();
+      reject(new Error('Timeout ao carregar dados (gid=' + gid + ')'));
+    }, 15000);
+
+    window[cbName] = function(resp) {
+      clearTimeout(timeout);
+      delete window[cbName];
+      if (script.parentNode) script.remove();
+      if (resp.status === 'error') {
+        reject(new Error((resp.errors || []).map(function(e){return e.message}).join(', ')));
+        return;
+      }
+      resolve(resp.table);
+    };
+
+    var script = document.createElement('script');
+    script.src = 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID +
+      '/gviz/tq?tqx=responseHandler:' + cbName + '&gid=' + gid;
+    script.onerror = function() {
+      clearTimeout(timeout);
+      delete window[cbName];
+      reject(new Error('Falha de rede ao carregar aba (gid=' + gid + ')'));
+    };
+    document.head.appendChild(script);
+  });
+}
+
+/* ========== PARSER DE DATA gviz ========== */
+function parseGvizDate(val) {
+  if (!val) return '';
+  var str = String(val);
+  var m = str.match(/^Date\((\d{4}),(\d{1,2}),(\d{1,2})\)$/);
+  if (m) {
+    var year = m[1];
+    var month = String(parseInt(m[2]) + 1).padStart(2, '0');
+    var day = m[3].padStart(2, '0');
+    return day + '/' + month + '/' + year;
+  }
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) return str;
+  return str;
+}
+
+function tableToObjects(table) {
+  var headers = table.cols.map(function(c) { return (c.label || c.id || '').toLowerCase().trim(); });
+  var dateColIndices = {};
+  table.cols.forEach(function(c, i) {
+    if (c.type === 'date' || c.type === 'datetime') dateColIndices[i] = true;
+  });
+
+  return table.rows
+    .filter(function(row) { return row.c && row.c.some(function(cell) { return cell && cell.v != null; }); })
+    .map(function(row) {
+      var obj = {};
+      headers.forEach(function(h, i) {
+        var cell = row.c[i];
+        if (cell && cell.v != null) {
+          if (dateColIndices[i]) {
+            obj[h] = parseGvizDate(String(cell.v));
+          } else {
+            obj[h] = String(cell.v);
+          }
+        } else {
+          obj[h] = '';
+        }
+      });
+      return obj;
+    });
+}
+
+/* ========== MAPAS ========== */
+var NIVEL_MAP = [
+  { key: 'Regular',  label: 'Regular',  bar: 'bar-regular'  },
+  { key: 'Atencao',  label: 'Atencao',  bar: 'bar-atencao'  },
+  { key: 'Revisao',  label: 'Revisao',  bar: 'bar-revisao'  },
+  { key: 'Revisado', label: 'Revisado', bar: 'bar-revisado' },
+  { key: 'Pendente', label: 'Pendente', bar: 'bar-pendente' },
+];
+
+/* ========== RENDER ========== */
+function esc(s) {
+  if (!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function tit(s) {
+  if (!s) return '';
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
+
+function renderResumo(data) {
+  if (!data || !data.total) return;
+  var cards = [
+    { num: data.total,              label: 'Monitorados',       cls: 'az'     },
+    { num: data.grau_maximo || 0,   label: 'Grau Maximo',       cls: 'red'    },
+    { num: data.periculosidade || 0,label: 'Periculosidade',    cls: 'amber'  },
+    { num: data.com_laudo || 0,     label: 'Com laudo',         cls: 'green'  },
+    { num: data.revisao_indicada||0,label: 'Revisao indicada',  cls: 'red'    },
+    { num: data.epi_irregular || 0, label: 'EPI irregular',     cls: 'purple' },
+  ];
+  document.getElementById('cardsResumo').innerHTML = cards.map(function(c) {
+    return '<div class="card-stat ' + c.cls + '"><div class="num">' + c.num + '</div><div class="label">' + c.label + '</div></div>';
+  }).join('');
+  document.getElementById('metaAtualiz').textContent = 'Atualizado: ' + (data.data_atualizacao || '—');
+}
+
+function renderDistribuicao() {
+  var contagem = {};
+  NIVEL_MAP.forEach(function(n) { contagem[n.key] = 0; });
+  EMPREGADOS.forEach(function(e) {
+    var niv = normNivel(e.nivel);
+    if (contagem[niv] !== undefined) contagem[niv]++;
+  });
+  var maxVal = Math.max.apply(null, Object.values(contagem).concat([1]));
+
+  document.getElementById('distNivel').innerHTML = NIVEL_MAP.map(function(n) {
+    var val = contagem[n.key] || 0;
+    var isActive = FILTRO_NIVEL === n.key;
+    return '<div class="dist-item ' + (isActive ? 'active' : '') + '" onclick="filtrarPorNivel(\'' + n.key + '\')" title="Clique para filtrar: ' + n.label + '">' +
+      '<div class="di-info"><div class="di-label">' + n.label + '</div>' +
+      '<div class="di-bar"><div class="di-bar-fill ' + n.bar + '" style="width:' + (val/maxVal*100).toFixed(0) + '%"></div></div></div>' +
+      '<div class="di-val">' + val + '</div></div>';
+  }).join('');
+}
+
+function normNivel(niv) {
+  if (!niv) return 'Pendente';
+  var n = niv.trim();
+  /* normaliza acentos e variantes */
+  var map = {
+    'regular': 'Regular',
+    'atencao': 'Atencao', 'atenção': 'Atencao', 'Atenção': 'Atencao',
+    'revisao': 'Revisao', 'revisão': 'Revisao', 'Revisão': 'Revisao',
+    'revisado': 'Revisado',
+    'pendente': 'Pendente',
+  };
+  return map[n] || map[n.toLowerCase()] || n;
+}
+
+function filtrarPorNivel(key) {
+  FILTRO_NIVEL = (FILTRO_NIVEL === key) ? 'todos' : key;
+  renderDistribuicao();
+  atualizaTagFiltro();
+  aplicaFiltros();
+}
+
+function atualizaTagFiltro() {
+  var el = document.getElementById('filtroAtivoTag');
+  if (FILTRO_NIVEL === 'todos') {
+    el.style.display = 'none';
+    el.innerHTML = '';
+  } else {
+    el.style.display = 'inline-flex';
+    el.innerHTML = '<span class="filtro-ativo-tag">Nivel: ' + FILTRO_NIVEL + ' <span class="x" onclick="filtrarPorNivel(\'' + FILTRO_NIVEL + '\')">&times;</span></span>';
+  }
+}
+
+function badgeNivel(niv) {
+  var map = { 'Regular': 'b-regular', 'Atencao': 'b-atencao', 'Revisao': 'b-revisao', 'Revisado': 'b-revisado', 'Pendente': 'b-pendente' };
+  return map[niv] || 'b-pendente';
+}
+
+function tagPrograma(prog) {
+  if (!prog) return '<span class="tag-prog tag-gm">—</span>';
+  if (prog.indexOf('Grau') >= 0 || prog.indexOf('grau') >= 0 || prog.indexOf('maximo') >= 0 || prog.indexOf('Maximo') >= 0) {
+    return '<span class="tag-prog tag-gm">Grau Max.</span>';
+  }
+  if (prog.indexOf('Peric') >= 0 || prog.indexOf('peric') >= 0) {
+    return '<span class="tag-prog tag-per">Periculosidade</span>';
+  }
+  return '<span class="tag-prog tag-gm">' + esc(prog) + '</span>';
+}
+
+function tagEpi(status, ultRet) {
+  var dt = (ultRet && ultRet !== '') ? '<br><span style="font-size:.7rem;color:#666">' + esc(ultRet) + '</span>' : '';
+  if (!status) return '<span class="tag-epi te-sem">Sem dado</span>';
+  var s = status.trim().toLowerCase();
+  if (s === 'ok') return '<span class="tag-epi te-ok">OK</span>' + dt;
+  if (s === 'atencao' || s === 'atenção') return '<span class="tag-epi te-atencao">Atencao</span>' + dt;
+  if (s === 'pendente') return '<span class="tag-epi te-pend">Pendente</span>' + dt;
+  return '<span class="tag-epi te-sem">' + esc(status) + '</span>' + dt;
+}
+
+function renderMg(mg, janela) {
+  var m = parseInt(mg, 10) || 0;
+  var j = parseInt(janela, 10) || 12;
+  var pct = j > 0 ? (m / j * 100) : 0;
+  var cls = 'mg-fill-ok';
+  if (pct < 50) cls = 'mg-fill-warn';
+  if (pct >= 75) cls = 'mg-fill-high';
+  return '<div class="mg-wrap">' +
+    '<div class="mg-bar-bg"><div class="mg-bar-fill ' + cls + '" style="width:' + Math.min(pct, 100).toFixed(0) + '%"></div></div>' +
+    '<span class="mg-text">' + m + '/' + j + '</span>' +
+    '</div>';
+}
+
+function renderTabela(dados) {
+  var tbody = document.getElementById('tbody');
+  if (!dados.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--sub)">Nenhum empregado encontrado com esses filtros.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = dados.map(function(e) {
+    var niv = normNivel(e.nivel);
+
+    return '<tr>' +
+      '<td><div class="emp-nome">' + esc(e.nome) + '</div></td>' +
+      '<td class="mono">' + esc(e.siape) + '</td>' +
+      '<td>' + esc(tit(e.cargo)) + '</td>' +
+      '<td style="font-size:.78rem">' + esc(tit(e.unidade || '')) + '</td>' +
+      '<td>' + tagPrograma(e.programa) + '</td>' +
+      '<td>' + renderMg(e.mg, e.janela) + '</td>' +
+      '<td><span class="badge ' + badgeNivel(niv) + '">' + esc(niv) + '</span></td>' +
+      '<td>' + tagEpi(e.epi_status, e.epi_ultima_retirada) + '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+/* ========== POPULA FILTROS ========== */
+function populaFiltrosDinamicos() {
+  var unidades = [];
+  var uniSet = {};
+  EMPREGADOS.forEach(function(e) {
+    var u = (e.unidade || '').trim();
+    if (u && !uniSet[u]) { uniSet[u] = true; unidades.push(u); }
+  });
+  unidades.sort(function(a, b) { return a.localeCompare(b, 'pt-BR'); });
+  var selUni = document.getElementById('fUnidade');
+  unidades.forEach(function(u) {
+    var opt = document.createElement('option');
+    opt.value = u;
+    opt.textContent = tit(u);
+    selUni.appendChild(opt);
+  });
+}
+
+/* ========== FILTROS ========== */
+function aplicaFiltros() {
+  var fPrograma = document.getElementById('fPrograma').value;
+  var fNivel = document.getElementById('fNivel').value;
+  var fEpi = document.getElementById('fEpi').value;
+  var fUnidade = document.getElementById('fUnidade').value;
+  var fBusca = document.getElementById('fBusca').value.toLowerCase().trim();
+
+  FILTRADOS = EMPREGADOS.filter(function(e) {
+    var niv = normNivel(e.nivel);
+    if (FILTRO_NIVEL !== 'todos' && niv !== FILTRO_NIVEL) return false;
+    if (fPrograma !== 'todos') {
+      var prog = (e.programa || '').toLowerCase();
+      if (fPrograma === 'Grau Maximo' && prog.indexOf('grau') < 0 && prog.indexOf('maximo') < 0) return false;
+      if (fPrograma === 'Periculosidade' && prog.indexOf('peric') < 0) return false;
+    }
+    if (fNivel !== 'todos' && niv !== fNivel) return false;
+    if (fEpi !== 'todos') {
+      var epi = (e.epi_status || '').toLowerCase();
+      if (fEpi === 'OK' && epi !== 'ok') return false;
+      if (fEpi === 'Atencao' && epi.indexOf('aten') < 0) return false;
+      if (fEpi === 'Pendente' && epi !== 'pendente') return false;
+      if (fEpi === 'Sem dado' && epi !== '' && epi !== 'sem dado') return false;
+    }
+    if (fUnidade !== 'todos' && (e.unidade || '') !== fUnidade) return false;
+    if (fBusca && (e.nome || '').toLowerCase().indexOf(fBusca) < 0 && (e.siape || '').indexOf(fBusca) < 0) return false;
+    return true;
+  });
+
+  ordenar();
+  renderTabela(FILTRADOS);
+  document.getElementById('filtroCount').textContent = FILTRADOS.length + ' de ' + EMPREGADOS.length + ' empregado(s)';
+}
+
+function limparFiltros() {
+  FILTRO_NIVEL = 'todos';
+  document.getElementById('fPrograma').value = 'todos';
+  document.getElementById('fNivel').value = 'todos';
+  document.getElementById('fEpi').value = 'todos';
+  document.getElementById('fUnidade').value = 'todos';
+  document.getElementById('fBusca').value = '';
+  renderDistribuicao();
+  atualizaTagFiltro();
+  aplicaFiltros();
+}
+
+/* ========== SORT ========== */
+function sortBy(col) {
+  if (SORT_COL === col) {
+    SORT_ASC = !SORT_ASC;
+  } else {
+    SORT_COL = col;
+    SORT_ASC = true;
+  }
+  document.querySelectorAll('.sort-arrow').forEach(function(el) { el.textContent = ''; });
+  var arrow = document.getElementById('sort-' + col);
+  if (arrow) arrow.textContent = SORT_ASC ? '▲' : '▼';
+  ordenar();
+  renderTabela(FILTRADOS);
+}
+
+function ordenar() {
+  var col = SORT_COL;
+  var dir = SORT_ASC ? 1 : -1;
+  FILTRADOS.sort(function(a, b) {
+    var va = (a[col] || '').toString();
+    var vb = (b[col] || '').toString();
+    /* numerico */
+    var na = parseFloat(va);
+    var nb = parseFloat(vb);
+    if (!isNaN(na) && !isNaN(nb)) return (na - nb) * dir;
+    /* data dd/mm/yyyy */
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(va)) {
+      var da = va.split('/').reverse().join('');
+      var db = (vb || '').split('/').reverse().join('');
+      return da.localeCompare(db) * dir;
+    }
+    return va.localeCompare(vb, 'pt-BR') * dir;
+  });
+}
+
+/* ========== BOOT ========== */
+function init() {
+  var loading = document.getElementById('loading');
+  var errorBox = document.getElementById('errorBox');
+  var conteudo = document.getElementById('conteudo');
+
+  Promise.all([
+    loadSheet(GID_RESUMO),
+    loadSheet(GID_EMPREGADOS)
+  ]).then(function(results) {
+    var tblResumo = results[0];
+    var tblEmp = results[1];
+
+    var resumoRows = tableToObjects(tblResumo);
+    if (resumoRows.length > 0) {
+      RESUMO = resumoRows[0];
+    }
+
+    EMPREGADOS = tableToObjects(tblEmp);
+
+    /* calculo local se resumo vazio */
+    if (Object.keys(RESUMO).length === 0 && EMPREGADOS.length > 0) {
+      calcResumoLocal();
+    }
+
+    loading.style.display = 'none';
+    conteudo.style.display = 'block';
+    document.getElementById('searchBar').style.display = 'flex';
+
+    renderResumo(RESUMO);
+    renderDistribuicao();
+    if (EMPREGADOS.length > 0) {
+      populaFiltrosDinamicos();
+      aplicaFiltros();
+    }
+
+  }).catch(function(err) {
+    loading.style.display = 'none';
+    errorBox.style.display = 'block';
+    errorBox.innerHTML =
+      '<strong>Erro ao carregar dados</strong><br>' +
+      esc(err.message) + '<br><br>' +
+      '<strong>Possiveis causas:</strong><br>' +
+      '&bull; Os GIDs das abas MON_RESUMO e MON_EMPREGADOS ainda nao foram configurados<br>' +
+      '&bull; A planilha nao esta compartilhada (Compartilhar &gt; Qualquer pessoa com o link)<br>' +
+      '&bull; A planilha nao esta publicada na web<br>' +
+      '&bull; Problemas de conexao com a internet<br><br>' +
+      '<strong>Dica:</strong> Verifique se os GIDs no codigo fonte correspondem as abas corretas da planilha.';
+  });
+}
+
+function calcResumoLocal() {
+  RESUMO = {
+    data_atualizacao: new Date().toLocaleString('pt-BR'),
+    total: EMPREGADOS.length,
+    grau_maximo: EMPREGADOS.filter(function(e) {
+      var p = (e.programa || '').toLowerCase();
+      return p.indexOf('grau') >= 0 || p.indexOf('maximo') >= 0;
+    }).length,
+    periculosidade: EMPREGADOS.filter(function(e) {
+      return (e.programa || '').toLowerCase().indexOf('peric') >= 0;
+    }).length,
+    com_laudo: EMPREGADOS.filter(function(e) {
+      return (e.status_laudo || '').toLowerCase().indexOf('emitido') >= 0;
+    }).length,
+    revisao_indicada: EMPREGADOS.filter(function(e) {
+      var niv = normNivel(e.nivel);
+      return niv === 'Revisao';
+    }).length,
+    epi_irregular: EMPREGADOS.filter(function(e) {
+      var epi = (e.epi_status || '').toLowerCase();
+      return epi === 'pendente' || (epi.indexOf('aten') >= 0);
+    }).length,
+  };
+}
+
+/* ========== TROCA DE VISTA ========== */
+var VIEW_ATUAL = 'dados';
+var CHARTS_RENDERED = false;
+var chartInstances = {};
+
+function switchView(view) {
+  VIEW_ATUAL = view;
+  var tabs = document.querySelectorAll('.nav-prog .prog-tab');
+  tabs.forEach(function(t, i) {
+    t.classList.toggle('on', (i === 0 && view === 'dados') || (i === 1 && view === 'graficos'));
+  });
+
+  var secDist = document.querySelector('.section');
+  var searchBar = document.getElementById('searchBar');
+
+  if (view === 'dados') {
+    document.getElementById('viewDados').style.display = '';
+    document.getElementById('viewGraficos').style.display = 'none';
+    if (secDist) secDist.style.display = '';
+    if (searchBar) searchBar.style.display = 'flex';
+  } else {
+    document.getElementById('viewDados').style.display = 'none';
+    document.getElementById('viewGraficos').style.display = '';
+    if (secDist) secDist.style.display = 'none';
+    if (searchBar) searchBar.style.display = 'none';
+    if (!CHARTS_RENDERED && EMPREGADOS.length > 0) {
+      renderGraficos();
+      CHARTS_RENDERED = true;
+    }
+  }
+}
+
+/* ========== CONFIGURACAO GLOBAL CHART.JS ========== */
+Chart.defaults.font.family = "'IBM Plex Sans', system-ui, sans-serif";
+Chart.defaults.font.size = 11;
+Chart.defaults.color = '#64748b';
+Chart.defaults.plugins.legend.display = false;
+
+/* Cores por nivel */
+var CORES_NIVEL = {
+  'Regular':  '#22c55e',
+  'Atencao':  '#f59e0b',
+  'Revisao':  '#ef4444',
+  'Revisado': '#8b5cf6',
+  'Pendente': '#94a3b8',
+};
+
+var CORES_PROG = {
+  'Grau Maximo':    '#ef4444',
+  'Periculosidade': '#f97316',
+};
+
+var CORES_EPI = {
+  'OK':       '#22c55e',
+  'Atencao':  '#f59e0b',
+  'Pendente': '#ef4444',
+  'Sem dado': '#cbd5e1',
+};
+
+function destroyChart(id) {
+  if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; }
+}
+
+function barH(canvasId, labels, valores, cores, maxItems) {
+  if (maxItems) { labels = labels.slice(0, maxItems); valores = valores.slice(0, maxItems); if (Array.isArray(cores)) cores = cores.slice(0, maxItems); }
+  var h = Math.max(120, labels.length * 26 + 30);
+  var wrap = document.getElementById(canvasId).parentElement;
+  wrap.style.height = h + 'px';
+  destroyChart(canvasId);
+  chartInstances[canvasId] = new Chart(document.getElementById(canvasId), {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{ data: valores, backgroundColor: cores, borderRadius: 3, barPercentage: .7 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+      layout: { padding: { right: 35 } },
+      scales: {
+        x: { display: false, beginAtZero: true },
+        y: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#475569' } }
+      },
+      plugins: {
+        tooltip: { callbacks: { label: function(ctx) { return ctx.raw + ' empregado(s)'; } } }
+      }
+    },
+    plugins: [{
+      id: 'valorNaBarra',
+      afterDatasetsDraw: function(chart) {
+        var ctx = chart.ctx;
+        ctx.font = "600 11px 'IBM Plex Sans', sans-serif";
+        ctx.fillStyle = '#475569';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        chart.data.datasets[0].data.forEach(function(v, i) {
+          var meta = chart.getDatasetMeta(0).data[i];
+          if (meta) ctx.fillText(v, meta.x + 6, meta.y);
+        });
+      }
+    }]
+  });
+}
+
+/* ========== RENDERIZAR GRAFICOS ========== */
+function renderGraficos() {
+  /* 1. Por Programa */
+  (function() {
+    var cont = { 'Grau Maximo': 0, 'Periculosidade': 0 };
+    EMPREGADOS.forEach(function(e) {
+      var p = (e.programa || '').toLowerCase();
+      if (p.indexOf('peric') >= 0) cont['Periculosidade']++;
+      else cont['Grau Maximo']++;
+    });
+    var items = Object.entries(cont).filter(function(x){return x[1]>0;}).sort(function(a,b){return b[1]-a[1];});
+    barH('chartPrograma',
+      items.map(function(i){return i[0]}),
+      items.map(function(i){return i[1]}),
+      items.map(function(i){return CORES_PROG[i[0]] || '#94a3b8'})
+    );
+  })();
+
+  /* 2. Por Nivel */
+  (function() {
+    var cont = {};
+    NIVEL_MAP.forEach(function(n) { cont[n.key] = 0; });
+    EMPREGADOS.forEach(function(e) {
+      var niv = normNivel(e.nivel);
+      if (cont[niv] !== undefined) cont[niv]++;
+    });
+    var items = NIVEL_MAP.filter(function(n) { return cont[n.key] > 0; });
+    barH('chartNivel',
+      items.map(function(i){return i.key}),
+      items.map(function(i){return cont[i.key]}),
+      items.map(function(i){return CORES_NIVEL[i.key] || '#94a3b8'})
+    );
+  })();
+
+  /* 3. EPI */
+  (function() {
+    var cont = { 'OK': 0, 'Atencao': 0, 'Pendente': 0, 'Sem dado': 0 };
+    EMPREGADOS.forEach(function(e) {
+      var epi = (e.epi_status || '').trim().toLowerCase();
+      if (epi === 'ok') cont['OK']++;
+      else if (epi.indexOf('aten') >= 0) cont['Atencao']++;
+      else if (epi === 'pendente') cont['Pendente']++;
+      else cont['Sem dado']++;
+    });
+    var order = ['OK', 'Atencao', 'Pendente', 'Sem dado'];
+    barH('chartEpi',
+      order,
+      order.map(function(k){return cont[k]}),
+      order.map(function(k){return CORES_EPI[k]})
+    );
+  })();
+
+  /* 4. Top 10 Unidades */
+  (function() {
+    var cont = {};
+    EMPREGADOS.forEach(function(e) {
+      var u = tit(e.unidade || 'Sem unidade');
+      cont[u] = (cont[u] || 0) + 1;
+    });
+    var items = Object.entries(cont).sort(function(a,b){return b[1]-a[1]});
+    barH('chartUnidade',
+      items.map(function(i){return i[0]}),
+      items.map(function(i){return i[1]}),
+      '#2a78d6',
+      10
+    );
+  })();
+}
+
+init();
+</script>
+
+</body>
+</html>

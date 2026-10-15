@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel de Não-Conformidades - SOST/SEG</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f0f2f7;
+    --card: #ffffff;
+    --az: #1a2744;
+    --azm: #2c5282;
+    --azl: #ebf4ff;
+    --green: #276749;
+    --greenl: #f0fdf4;
+    --red: #c0392b;
+    --redl: #fef2f2;
+    --amber: #d97706;
+    --amberl: #fffbeb;
+    --borda: #e2e8f0;
+    --txt: #1a202c;
+    --sub: #64748b;
+    --radius: 10px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.06);
+    --shadow-md: 0 4px 12px rgba(0,0,0,.08);
+    --shadow-lg: 0 8px 24px rgba(0,0,0,.1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    background: var(--bg); color: var(--txt); min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: linear-gradient(135deg, var(--az) 0%, #2d3a56 60%, #3b4f6e 100%);
+    color: #fff; padding: .9rem 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: .5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,.15);
+    position: relative; z-index: 10;
+  }
+  .header h1 { font-size: 1.15rem; font-weight: 600; letter-spacing: -.01em; }
+  .header .sub { color: rgba(255,255,255,.55); font-size: .75rem; font-weight: 400; margin-top: .15rem; }
+  .btn-hub {
+    display: inline-flex; align-items: center; gap: .35rem;
+    padding: .4rem .85rem; border-radius: 6px; font-size: .78rem; font-weight: 500;
+    font-family: inherit; color: rgba(255,255,255,.8); background: rgba(255,255,255,.1);
+    border: 1px solid rgba(255,255,255,.15); cursor: pointer; text-decoration: none;
+    transition: all .15s;
+  }
+  .btn-hub:hover { background: rgba(255,255,255,.2); color: #fff; }
+
+  /* ── KPIs ── */
+  .kpi-bar {
+    display: flex; gap: .5rem; padding: .7rem 2rem;
+    background: var(--card); border-bottom: 1px solid var(--borda);
+    flex-wrap: wrap; align-items: center;
+    box-shadow: var(--shadow-sm);
+  }
+  .kpi-item {
+    display: flex; align-items: baseline; gap: .35rem;
+    padding: .35rem .7rem; border-radius: 6px;
+    font-size: .78rem;
+  }
+  .kpi-item .val { font-weight: 700; font-size: 1.1rem; color: var(--azm); }
+  .kpi-item .lbl { color: var(--sub); font-weight: 500; font-size: .72rem; }
+  .kpi-item.alto .val { color: var(--red); }
+  .kpi-item.mod .val { color: var(--amber); }
+  .kpi-item.baixo .val { color: var(--green); }
+  .kpi-sep { flex: 1; }
+
+  /* ── FILTER + NAV BAR ── */
+  .toolbar {
+    display: flex; gap: .5rem; padding: .55rem 1.5rem;
+    background: var(--card); border-bottom: 1px solid var(--borda);
+    flex-wrap: wrap; align-items: center;
+  }
+  .toolbar label { font-size: .75rem; font-weight: 600; color: var(--sub); text-transform: uppercase; letter-spacing: .03em; }
+  .toolbar select {
+    font-family: inherit; font-size: .82rem; padding: .35rem .6rem;
+    border: 1px solid var(--borda); border-radius: 6px; background: #fff;
+    color: var(--txt); cursor: pointer; font-weight: 500;
+  }
+  .toolbar select:focus { outline: none; border-color: var(--azm); box-shadow: 0 0 0 2px rgba(44,82,130,.15); }
+  .toolbar .tb-sep { width: 1px; height: 20px; background: var(--borda); margin: 0 .25rem; }
+
+  /* AGENT FILTER CHIPS (badge circular + letra) */
+  .agent-chips { display: flex; gap: .4rem; flex-wrap: wrap; align-items: center; }
+  .agent-chip {
+    font-family: inherit; font-size: .72rem; font-weight: 600;
+    padding: .35rem .7rem .35rem .35rem; border-radius: 8px; cursor: pointer;
+    border: 1.5px solid var(--borda); background: #fff; color: var(--txt);
+    transition: all .15s; white-space: nowrap;
+    display: inline-flex; align-items: center; gap: .4rem;
+  }
+  .agent-chip:hover { border-color: var(--azm); background: var(--azl); box-shadow: var(--shadow-sm); }
+  .agent-chip.ativo { background: var(--az); color: #fff; border-color: var(--az); }
+  .agent-chip .ac-letter {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: .82rem; color: #fff; flex-shrink: 0;
+    letter-spacing: 0;
+  }
+  .agent-chip.ativo .ac-letter { box-shadow: 0 0 0 2px rgba(255,255,255,.4); }
+  .ac-letter.ac-fis { background: #dc2626; }
+  .ac-letter.ac-qui { background: #0891b2; }
+  .ac-letter.ac-bio { background: #059669; }
+  .ac-letter.ac-erg { background: #7c3aed; }
+  .ac-letter.ac-aci { background: #d97706; }
+  .ac-letter.ac-nen { background: #94a3b8; }
+  .ac-letter.ac-all { background: var(--azm); }
+  .agent-chip .ac-name { font-weight: 600; }
+  .agent-chip .ac-count {
+    font-weight: 700; font-size: .7rem; opacity: .7;
+    margin-left: .1rem;
+  }
+  .agent-chip.ativo .ac-count { opacity: .85; }
+
+  /* ── NAVIGATION STRIP (breadcrumb + back button) ── */
+  .nav-strip {
+    display: flex; align-items: center; gap: .6rem; margin-bottom: 1rem;
+    padding: .65rem 1rem; background: var(--card); border: 1px solid var(--borda);
+    border-radius: var(--radius); box-shadow: var(--shadow-sm);
+  }
+  .nav-back {
+    display: inline-flex; align-items: center; gap: .3rem;
+    padding: .4rem .75rem; border-radius: 6px; font-size: .78rem; font-weight: 600;
+    font-family: inherit; color: var(--azm); background: var(--azl);
+    border: 1px solid rgba(44,82,130,.15); cursor: pointer; text-decoration: none;
+    transition: all .15s; white-space: nowrap;
+  }
+  .nav-back:hover { background: #dbeafe; border-color: var(--azm); }
+  .nav-back svg { width: 14px; height: 14px; fill: currentColor; }
+  .nav-trail {
+    display: flex; align-items: center; gap: .35rem;
+    font-size: .8rem; color: var(--sub); flex-wrap: wrap; flex: 1;
+  }
+  .nav-trail .nt-crumb { color: var(--sub); font-weight: 400; }
+  .nav-trail .nt-link { color: var(--azm); text-decoration: none; cursor: pointer; font-weight: 600; }
+  .nav-trail .nt-link:hover { text-decoration: underline; }
+  .nav-trail .nt-active { color: var(--az); font-weight: 700; }
+  .nav-trail .nt-sep { color: var(--borda); font-size: .9rem; }
+
+  /* ── MAIN ── */
+  .main { margin: 0; padding: .75rem 1.5rem 1rem; min-height: calc(100vh - 180px); display: flex; flex-direction: column; }
+
+  /* VIEW STATES */
+  .view-zonas, .view-inspecoes, .view-ncs { display: none; }
+  .view-zonas.ativo, .view-inspecoes.ativo, .view-ncs.ativo { display: flex; flex-direction: column; flex: 1; }
+
+  /* ── ZONE CARDS GRID ── */
+  .zone-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: .6rem;
+    flex: 1; align-content: start;
+  }
+  .zone-card {
+    background: var(--card); border: 1px solid var(--borda);
+    border-left: 5px solid var(--borda); border-radius: var(--radius);
+    padding: 1rem 1.15rem; cursor: pointer;
+    transition: all .15s;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+  }
+  .zone-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--azm);
+  }
+  .zone-card.alto { border-left-color: var(--red); }
+  .zone-card.mod { border-left-color: var(--amber); }
+  .zone-card.baixo { border-left-color: var(--green); }
+  .zone-card .zc-top { display: flex; justify-content: space-between; align-items: flex-start; gap: .5rem; }
+  .zone-card .zc-nome { font-size: .85rem; font-weight: 700; color: var(--az); line-height: 1.25; flex: 1; }
+  .zone-card .zc-total-num { font-size: 1.5rem; font-weight: 700; color: var(--azm); line-height: 1; }
+  .zone-card .zc-total-lbl { font-size: .6rem; font-weight: 600; color: var(--sub); text-transform: uppercase; letter-spacing: .04em; text-align: right; }
+  .zone-card .zc-row {
+    display: flex; align-items: center; justify-content: space-between; gap: .5rem;
+    margin-top: .6rem; padding-top: .5rem; border-top: 1px solid #f1f3f7;
+  }
+  .zone-card .zc-meta { font-size: .68rem; color: var(--sub); }
+  .zone-card .zc-faixas { display: flex; gap: .3rem; }
+  .zone-card .zc-faixas .fx {
+    font-size: .62rem; font-weight: 700; padding: .15rem .4rem;
+    border-radius: 3px; letter-spacing: .02em;
+  }
+  .zone-card .zc-arrow {
+    position: absolute; right: .75rem; top: 50%; transform: translateY(-50%);
+    color: var(--borda); font-size: 1rem; transition: color .15s;
+  }
+  .zone-card:hover .zc-arrow { color: var(--azm); }
+  .fx.alto { background: var(--redl); color: var(--red); }
+  .fx.mod { background: var(--amberl); color: var(--amber); }
+  .fx.baixo { background: var(--greenl); color: var(--green); }
+
+  /* ── ANALYTICS PANEL (below zone grid) ── */
+  .analytics-row {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .75rem;
+    margin-top: .75rem;
+  }
+  .ana-card {
+    background: var(--card); border: 1px solid var(--borda); border-radius: var(--radius);
+    padding: .85rem 1rem; box-shadow: var(--shadow-sm);
+  }
+  .ana-card h3 {
+    font-size: .72rem; font-weight: 700; color: var(--az); text-transform: uppercase;
+    letter-spacing: .04em; margin-bottom: .6rem; padding-bottom: .4rem;
+    border-bottom: 2px solid var(--azl);
+  }
+  .ana-bar-row {
+    display: flex; align-items: center; gap: .5rem; margin-bottom: .4rem;
+    font-size: .72rem;
+  }
+  .ana-bar-label {
+    width: 110px; flex-shrink: 0; font-weight: 500; color: var(--txt);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .ana-bar-track {
+    flex: 1; height: 18px; background: #f1f3f7; border-radius: 3px;
+    overflow: hidden; position: relative;
+  }
+  .ana-bar-fill {
+    height: 100%; border-radius: 3px; transition: width .4s ease;
+    display: flex; align-items: center; justify-content: flex-end;
+    padding-right: .3rem; font-size: .6rem; font-weight: 700; color: #fff;
+    min-width: 20px;
+  }
+  .ana-bar-fill.f-az { background: var(--azm); }
+  .ana-bar-fill.f-red { background: var(--red); }
+  .ana-bar-fill.f-amber { background: var(--amber); }
+  .ana-bar-fill.f-green { background: var(--green); }
+  .ana-bar-fill.f-bio { background: #059669; }
+  .ana-bar-fill.f-acid { background: #d97706; }
+  .ana-bar-fill.f-ergo { background: #7c3aed; }
+  .ana-bar-fill.f-quim { background: #0891b2; }
+  .ana-bar-fill.f-fis { background: #dc2626; }
+  .ana-bar-fill.f-none { background: #94a3b8; }
+  .ana-bar-val { width: 32px; text-align: right; font-weight: 700; color: var(--azm); font-size: .72rem; flex-shrink: 0; }
+
+  /* Recent inspections mini list */
+  .ana-insp-item {
+    display: flex; align-items: center; gap: .5rem; padding: .35rem 0;
+    border-bottom: 1px solid #f1f3f7; font-size: .72rem; cursor: pointer;
+    transition: background .1s; border-radius: 4px; padding-left: .3rem; padding-right: .3rem;
+  }
+  .ana-insp-item:hover { background: var(--azl); }
+  .ana-insp-item:last-child { border-bottom: none; }
+  .ana-insp-date { font-weight: 700; color: var(--azm); white-space: nowrap; min-width: 62px; }
+  .ana-insp-setor { flex: 1; color: var(--txt); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ana-insp-count { font-weight: 700; color: var(--sub); white-space: nowrap; }
+
+  /* ── VIEW MODE TOGGLE (Planta / Quadrados) ── */
+  .view-toggle {
+    display: flex; align-items: center; gap: .5rem; margin-bottom: .6rem;
+  }
+  .view-toggle-label { font-size: .72rem; font-weight: 600; color: var(--sub); text-transform: uppercase; letter-spacing: .03em; }
+  .view-toggle-btns {
+    display: flex; background: var(--azl); border-radius: 6px; padding: 3px; gap: 0;
+  }
+  .view-toggle-btns button {
+    font-family: inherit; font-size: .75rem; font-weight: 600;
+    padding: .35rem .75rem; border: none; border-radius: 4px;
+    cursor: pointer; background: transparent; color: var(--sub);
+    transition: all .15s;
+  }
+  .view-toggle-btns button.ativo { background: var(--azm); color: #fff; box-shadow: var(--shadow-sm); }
+  .view-toggle-btns button:hover:not(.ativo) { color: var(--azm); }
+
+  /* ── SVG MAP ── */
+  .mapa-container {
+    background: var(--card); border: 1px solid var(--borda); border-radius: var(--radius);
+    overflow: hidden; box-shadow: var(--shadow-sm);
+    display: flex; flex-direction: row; align-items: stretch;
+    max-height: calc(100vh - 220px);
+  }
+  .mapa-header {
+    padding: .5rem .85rem; background: #f8fafc; border-bottom: 1px solid var(--borda);
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: .72rem; color: var(--sub);
+  }
+  .mapa-header h3 { font-size: .78rem; font-weight: 700; color: var(--az); margin: 0; }
+  .mapa-svg-wrap { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .mapa-svg-area { position: relative; background: #fafbfd; overflow: hidden; }
+  .mapa-svg-area svg { display: block; width: 100%; height: auto; }
+  .zona-shape {
+    cursor: pointer; transition: all .15s; stroke-width: 2;
+  }
+  .zona-shape:hover { fill-opacity: .75; stroke-width: 3; filter: brightness(1.1); }
+  .mapa-legenda-lateral {
+    width: 180px; flex-shrink: 0; background: #f8fafc; border-left: 1px solid var(--borda);
+    padding: .5rem .5rem; display: flex; flex-direction: column; gap: .2rem;
+    overflow-y: auto;
+  }
+  .mapa-legenda-lateral h4 {
+    font-size: .7rem; font-weight: 700; color: var(--az); margin: 0 0 .3rem 0;
+    text-transform: uppercase; letter-spacing: .5px;
+  }
+  .mapa-legenda-lateral .leg-item {
+    display: flex; align-items: center; gap: .3rem; font-size: .6rem;
+    font-weight: 600; color: var(--txt); padding: .12rem 0;
+    line-height: 1.15;
+  }
+  .mapa-legenda-lateral .leg-item:hover { background: var(--azl); border-radius: 4px; }
+  .mapa-legenda-lateral .leg-dot {
+    width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0;
+    border: 1px solid rgba(0,0,0,.12);
+  }
+  @media (max-width: 640px) {
+    .mapa-container { flex-direction: column; max-height: none; }
+    .mapa-legenda-lateral {
+      width: auto; flex-direction: row; flex-wrap: wrap; gap: .3rem;
+      border-left: none; border-top: 1px solid var(--borda); padding: .4rem .5rem;
+      max-height: 120px;
+    }
+    .mapa-legenda-lateral h4 { display: none; }
+  }
+
+  /* Tooltip do mapa */
+  .mapa-tooltip {
+    position: fixed; background: var(--az); color: #fff;
+    padding: .35rem .65rem; border-radius: 6px; font-size: .72rem;
+    font-weight: 600; pointer-events: none; z-index: 100;
+    box-shadow: 0 3px 10px rgba(0,0,0,.25); display: none;
+    white-space: nowrap;
+  }
+  .mapa-tooltip.show { display: block; }
+
+  @media (max-width: 960px) {
+    .analytics-row { grid-template-columns: 1fr; }
+  }
+
+  /* ── ZONE SUMMARY (in inspection view) ── */
+  .zone-summary {
+    background: linear-gradient(135deg, var(--az) 0%, #2d3a56 100%);
+    border-radius: var(--radius); padding: 1.1rem 1.5rem; margin-bottom: 1rem;
+    color: #fff; box-shadow: var(--shadow-md);
+  }
+  .zone-summary h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: .65rem; }
+  .zone-summary .zs-stats { display: flex; gap: .5rem; flex-wrap: wrap; }
+  .zone-summary .zs-item {
+    background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.12);
+    border-radius: 8px; padding: .4rem .75rem; text-align: center; min-width: 75px;
+  }
+  .zone-summary .zs-num { font-size: 1.15rem; font-weight: 700; color: #fff; }
+  .zone-summary .zs-lbl { font-size: .58rem; color: rgba(255,255,255,.6); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+  .zone-summary .zs-item.alto .zs-num { color: #fca5a5; }
+  .zone-summary .zs-item.mod .zs-num { color: #fcd34d; }
+  .zone-summary .zs-item.baixo .zs-num { color: #86efac; }
+
+  /* ── INSPECTION CARDS ── */
+  .insp-card {
+    background: var(--card); border: 1px solid var(--borda); border-radius: var(--radius);
+    padding: .85rem 1.15rem; margin-bottom: .55rem; cursor: pointer;
+    transition: all .15s; box-shadow: var(--shadow-sm);
+    display: flex; align-items: center; gap: 1rem;
+  }
+  .insp-card:hover { border-color: var(--azm); box-shadow: var(--shadow-md); }
+  .insp-date-block {
+    min-width: 56px; text-align: center;
+    background: var(--azl); border-radius: 8px; padding: .4rem .5rem;
+    flex-shrink: 0;
+  }
+  .insp-date-block .idb-dia { font-size: 1.3rem; font-weight: 700; color: var(--azm); line-height: 1; }
+  .insp-date-block .idb-mes { font-size: .6rem; font-weight: 600; color: var(--sub); text-transform: uppercase; letter-spacing: .04em; }
+  .insp-body { flex: 1; min-width: 0; }
+  .insp-body .ib-line1 {
+    display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+    font-size: .82rem; font-weight: 600; color: var(--az);
+  }
+  .insp-body .ib-inspetor { font-weight: 400; color: var(--sub); font-size: .78rem; }
+  .insp-body .ib-line2 {
+    display: flex; align-items: center; gap: .4rem; flex-wrap: wrap;
+    margin-top: .3rem;
+  }
+  .insp-body .ib-sei {
+    font-size: .68rem; color: var(--sub); font-weight: 500;
+    background: #f8fafc; border: 1px solid var(--borda);
+    padding: .12rem .45rem; border-radius: 4px;
+  }
+  .insp-right {
+    display: flex; flex-direction: column; align-items: flex-end; gap: .3rem;
+    flex-shrink: 0;
+  }
+  .insp-nc-count {
+    font-size: 1.1rem; font-weight: 700; color: var(--azm); line-height: 1;
+  }
+  .insp-nc-label { font-size: .58rem; color: var(--sub); font-weight: 600; text-transform: uppercase; }
+  .insp-faixas { display: flex; gap: .25rem; }
+  .insp-arrow { color: var(--borda); font-size: .9rem; transition: color .15s; }
+  .insp-card:hover .insp-arrow { color: var(--azm); }
+
+  /* ── NC CARDS ── */
+  .nc-card {
+    background: var(--card); border: 1px solid var(--borda);
+    border-left: 4px solid var(--borda); border-radius: 8px;
+    padding: .85rem 1.1rem; margin-bottom: .5rem; cursor: pointer;
+    transition: all .15s; box-shadow: var(--shadow-sm);
+  }
+  .nc-card:hover { box-shadow: var(--shadow-md); }
+  .nc-card.alto { border-left-color: var(--red); }
+  .nc-card.mod { border-left-color: var(--amber); }
+  .nc-card.baixo { border-left-color: var(--green); }
+  .nc-top { display: flex; align-items: flex-start; gap: .75rem; }
+  .nc-info { flex: 1; min-width: 0; }
+  .nc-card .nc-titulo { font-size: .84rem; font-weight: 700; color: var(--az); line-height: 1.3; }
+  .nc-card .nc-desc { font-size: .75rem; color: var(--sub); margin-top: .2rem; line-height: 1.4; }
+  .nc-card .nc-badges { display: flex; gap: .3rem; margin-top: .4rem; flex-wrap: wrap; }
+  .nc-card .badge {
+    font-size: .6rem; font-weight: 700; padding: .14rem .45rem; border-radius: 3px;
+    text-transform: uppercase; letter-spacing: .03em;
+  }
+  .badge.b-alto { background: var(--redl); color: var(--red); }
+  .badge.b-mod { background: var(--amberl); color: var(--amber); }
+  .badge.b-baixo { background: var(--greenl); color: var(--green); }
+  .badge.b-agente { background: var(--azl); color: var(--azm); }
+  .badge.b-sei { background: #f8fafc; color: var(--sub); border: 1px solid var(--borda); }
+  .badge.b-norm { background: #f8fafc; color: var(--txt); border: 1px solid var(--borda); }
+  .nc-expand-icon {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: #f8fafc; border: 1px solid var(--borda);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .65rem; color: var(--sub); flex-shrink: 0;
+    transition: all .15s; margin-top: .15rem;
+  }
+  .nc-card:hover .nc-expand-icon { background: var(--azl); color: var(--azm); border-color: var(--azm); }
+
+  .nc-detail {
+    background: #f8fafc; border: 1px solid var(--borda); border-radius: 8px;
+    padding: .65rem 1rem; margin-top: .5rem; font-size: .76rem;
+    display: none;
+  }
+  .nc-detail.aberto { display: block; }
+  .nc-detail .dl { display: grid; grid-template-columns: 110px 1fr; gap: .2rem .6rem; }
+  .nc-detail .dl dt { font-weight: 600; color: var(--sub); text-transform: uppercase; font-size: .62rem; letter-spacing: .04em; padding-top: .1rem; }
+  .nc-detail .dl dd { color: var(--txt); line-height: 1.4; }
+
+  /* ── LOADING ── */
+  .loading { text-align: center; padding: 4rem 1rem; color: var(--sub); }
+  .loading .spin {
+    display: inline-block; width: 32px; height: 32px;
+    border: 3px solid var(--borda); border-top-color: var(--azm);
+    border-radius: 50%; animation: spin .6s linear infinite;
+    margin-bottom: .75rem;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .empty-msg { text-align: center; padding: 3rem 1rem; color: var(--sub); font-size: .85rem; }
+
+  .footer {
+    text-align: center; padding: .75rem 1.5rem;
+    color: var(--sub); font-size: .65rem;
+    border-top: 1px solid var(--borda);
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    .header { padding: .75rem 1rem; }
+    .main { padding: .5rem .75rem; margin: 0; }
+    .kpi-bar { padding: .5rem 1rem; }
+    .toolbar { padding: .4rem 1rem; }
+    .zone-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: .5rem; }
+    .insp-card { flex-wrap: wrap; gap: .6rem; padding: .7rem .85rem; }
+    .insp-right { flex-direction: row; align-items: center; gap: .5rem; }
+  }
+  @media (max-width: 480px) {
+    .zone-grid { grid-template-columns: 1fr; }
+    .kpi-bar { gap: .35rem; }
+    .kpi-item .val { font-size: .95rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>Painel de Nao-Conformidades</h1>
+    <div class="sub">NR-1 1.5.4 / 1.5.7 &middot; USOST &middot; HUL/EBSERH</div>
+  </div>
+  <a class="btn-hub" href="index.html">&#8249; Hub</a>
+</div>
+
+<div class="kpi-bar" id="kpiBar">
+  <div class="kpi-item"><span class="val" id="kTotal">-</span><span class="lbl">Total NCs</span></div>
+  <div class="kpi-item alto"><span class="val" id="kAlto">-</span><span class="lbl">Alto</span></div>
+  <div class="kpi-item mod"><span class="val" id="kMod">-</span><span class="lbl">Moderado</span></div>
+  <div class="kpi-item baixo"><span class="val" id="kBaixo">-</span><span class="lbl">Baixo</span></div>
+  <div class="kpi-sep"></div>
+  <div class="kpi-item"><span class="val" id="kZonas">-</span><span class="lbl">Zonas</span></div>
+  <div class="kpi-item"><span class="val" id="kInsp">-</span><span class="lbl">Inspecoes</span></div>
+</div>
+
+<div class="toolbar">
+  <label>Ano:</label>
+  <select id="filtroAno" onchange="app.filtrar()">
+    <option value="">Todos</option>
+  </select>
+  <div class="tb-sep"></div>
+  <label>Agente:</label>
+  <div class="agent-chips" id="agentChips"></div>
+</div>
+
+<div class="main">
+
+  <div class="view-zonas ativo" id="viewZonas">
+    <div class="loading" id="loadingMsg">
+      <div class="spin"></div>
+      <div style="font-size:.85rem">Carregando dados do Google Sheets...</div>
+    </div>
+    <div id="viewToggle" class="view-toggle" style="display:none">
+      <span class="view-toggle-label">Visualizar:</span>
+      <div class="view-toggle-btns">
+        <button class="ativo" id="btnQuadrados" onclick="app.setViewMode('quadrados')">Quadrados</button>
+        <button id="btnPlanta" onclick="app.setViewMode('planta')">Planta</button>
+      </div>
+    </div>
+    <div id="zonaGrid" class="zone-grid" style="display:none"></div>
+    <div id="mapaContainer" class="mapa-container" style="display:none">
+      <div class="mapa-svg-wrap">
+        <div class="mapa-header">
+          <h3>Planta Baixa - HUL/EBSERH</h3>
+          <span>Clique em uma zona para ver as inspecoes</span>
+        </div>
+        <div class="mapa-svg-area" id="mapaSvgArea"></div>
+      </div>
+      <div class="mapa-legenda-lateral" id="mapaLegenda"></div>
+    </div>
+    <div id="analyticsRow" class="analytics-row" style="display:none"></div>
+  </div>
+  <div class="mapa-tooltip" id="mapaTooltip"></div>
+
+  <div class="view-inspecoes" id="viewInsp">
+    <div class="nav-strip" id="navInsp">
+      <button class="nav-back" onclick="app.voltarZonas()">
+        <svg viewBox="0 0 16 16"><path d="M10.3 12.7L5.6 8l4.7-4.7L9 2 3.3 7.7a.4.4 0 000 .6L9 14z"/></svg>
+        Voltar
+      </button>
+      <div class="nav-trail">
+        <a class="nt-link" onclick="app.voltarZonas()">Zonas</a>
+        <span class="nt-sep">&#8250;</span>
+        <span class="nt-active" id="bcZona">-</span>
+      </div>
+    </div>
+    <div id="zonaSummary"></div>
+    <div id="inspList"></div>
+  </div>
+
+  <div class="view-ncs" id="viewNcs">
+    <div class="nav-strip" id="navNcs">
+      <button class="nav-back" onclick="app.voltarInsp()">
+        <svg viewBox="0 0 16 16"><path d="M10.3 12.7L5.6 8l4.7-4.7L9 2 3.3 7.7a.4.4 0 000 .6L9 14z"/></svg>
+        Voltar
+      </button>
+      <div class="nav-trail">
+        <a class="nt-link" onclick="app.voltarZonas()">Zonas</a>
+        <span class="nt-sep">&#8250;</span>
+        <a class="nt-link" onclick="app.voltarInsp()" id="bcZona2">-</a>
+        <span class="nt-sep">&#8250;</span>
+        <span class="nt-active" id="bcInsp">-</span>
+      </div>
+    </div>
+    <div id="ncList"></div>
+  </div>
+
+</div>
+
+<div class="footer">
+  Painel Gerencial SOST/SEG &middot; USOST &middot; Hospital Universitario de Lagarto &middot; EBSERH
+</div>
+
+<script>
+/* ====================================================================
+   PAINEL DE NAO-CONFORMIDADES
+   Le dados da aba NC_REGISTROS no Google Sheets via gviz JSONP.
+   ==================================================================== */
+
+var SHEET_ID = '1BAcopQ8Jacx4Q8ojBuU-2MpGH85NUKzi73xd6rmo2rQ';
+
+var AGENTES = ['FISICO','QUIMICO','BIOLOGICO','ERGONOMICO','ACIDENTES','NENHUM'];
+var FAIXAS = ['ALTO','MODERADO','BAIXO'];
+var MESES_CURTO = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+var SETORES_UNIFICADOS = {
+  'LABORATORIO DE ANALISES CLINICAS': 'Laboratorio e Agencia Transfusional',
+  'AGENCIA TRANSFUSIONAL': 'Laboratorio e Agencia Transfusional',
+  'AG. TRANSFUSIONAL': 'Laboratorio e Agencia Transfusional',
+  'AG TRANSFUSIONAL': 'Laboratorio e Agencia Transfusional',
+  'LABORATORIO': 'Laboratorio e Agencia Transfusional'
+};
+
+/* Zonas calibradas da planta baixa (viewBox 1200x848) */
+var ZONAS_CALIBRADAS = [
+  { nome: 'Clinica cirurgica', areas: [{ tipo: 'rect', x: 395, y: 378.31, w: 47.41, h: 81.47 }] },
+  { nome: 'Clinica medica', areas: [{ tipo: 'poly', pontos: [[443.38,378.07],[443.14,459.78],[538.2,458.81],[536.99,413.12],[559.97,414.09],[559.97,379.52],[559.73,379.04]] }] },
+  { nome: 'Necrotério', areas: [{ tipo: 'poly', pontos: [[505.3,284.76],[505.79,304.58],[530.7,304.1],[530.46,285],[505.3,284.76]] }] },
+  { nome: 'Eixo critico', areas: [{ tipo: 'poly', pontos: [[392.82,314.49],[392.1,372.03],[526.59,371.79],[526.59,328.52],[537.23,328.52],[536.99,304.58],[436.61,304.34],[436.85,315.46]] }] },
+  { nome: 'Engenharia clinica (UEC)', areas: [{ tipo: 'rect', x: 538.28, y: 423.51, w: 22.98, h: 35.54 }, { tipo: 'rect', x: 456.04, y: 284.91, w: 25.64, h: 19.1 }] },
+  { nome: 'UTI', areas: [{ tipo: 'poly', pontos: [[545.3,264.39],[545.06,327.25],[557.15,327.73],[557.39,320.48],[633.35,319.99],[662.61,319.99],[663.1,328.7],[673.98,328.7],[674.47,264.88],[546.51,264.64]] }] },
+  { nome: 'NIR', areas: [{ tipo: 'poly', pontos: [[567.63,441.91],[568.36,458.83],[592.06,458.83],[592.31,442.15]] }] },
+  { nome: 'Servico de imagem (UDI)', areas: [
+    { tipo: 'poly', pontos: [[536.91,338.39],[537.15,353.62],[559.89,352.9],[559.89,337.18]] },
+    { tipo: 'poly', pontos: [[566.67,337.91],[567.15,360.63],[589.64,360.87],[590.37,337.91]] },
+    { tipo: 'poly', pontos: [[600.05,337.91],[600.77,373.93],[633.91,373.93],[633.18,337.91]] },
+    { tipo: 'poly', pontos: [[694.36,337.43],[695.08,379.73],[717.34,379.97],[716.85,337.43]] }
+  ]},
+  { nome: 'Nefrologia', areas: [{ tipo: 'poly', pontos: [[634.15,337.18],[634.39,353.62],[653.26,353.38],[653.26,337.91]] }] },
+  { nome: 'Laboratorio e Agencia Transfusional', areas: [
+    { tipo: 'poly', pontos: [[663.66,337.43],[663.42,386.98],[687.37,387.95],[687.13,337.67]] },
+    { tipo: 'rect', x: 633.26, y: 353.66, w: 19.59, h: 20.06 }
+  ]},
+  { nome: 'Unidade azul', areas: [
+    { tipo: 'poly', pontos: [[536.67,353.62],[537.4,377.8],[561.1,379],[560.38,353.14]] },
+    { tipo: 'poly', pontos: [[600.02,373.93],[600.74,413.57],[653.23,414.06],[652.51,374.17]] },
+    { tipo: 'poly', pontos: [[568.82,423.05],[568.09,440.7],[591.79,440.94],[593.25,458.59],[636.79,459.07],[636.79,475.03],[653.23,474.3],[652.99,469.71],[688.31,469.95],[688.31,424.75]] },
+    { tipo: 'poly', pontos: [[664.12,413.38],[676.21,413.38],[675.49,400.09],[687.1,399.36],[686.86,388.73],[663.15,388.49]] }
+  ]},
+  { nome: 'Nutricao', areas: [{ tipo: 'poly', pontos: [[686.86,400.57],[686.62,414.35],[676.7,413.87],[676.7,400.57]] }] },
+  { nome: 'Pediatria', areas: [{ tipo: 'poly', pontos: [[694.6,380.7],[695.08,457.84],[764.5,457.84],[764.75,380]] }] },
+  { nome: 'Hospital do amor', areas: [{ tipo: 'poly', pontos: [[765.18,379.03],[765.42,456.63],[882.49,457.59],[882.49,380.24]] }] },
+  { nome: 'Bloco cirurgico', areas: [{ tipo: 'poly', pontos: [[681,239.23],[681.24,328.19],[703.98,328.19],[712.93,320.93],[720.91,321.42],[728.17,328.43],[737.6,320.93],[753.56,321.42],[753.56,239.47]] }] },
+  { nome: 'CME', areas: [{ tipo: 'poly', pontos: [[727.2,328.91],[726.72,353.08],[770.01,353.08],[769.53,298.21],[759.61,298.21],[759.61,321.18],[737.6,321.66],[736.87,322.63]] }] },
+  { nome: 'Hotelaria', areas: [{ tipo: 'poly', pontos: [[759.85,286.12],[759.37,297.73],[800.01,298.21],[799.28,286.37]] }] },
+  { nome: 'Subestacao', areas: [{ tipo: 'poly', pontos: [[811.62,279.35],[855.4,280.08],[855.16,297.97],[811.86,299.18]] }] },
+  { nome: 'Gerador', areas: [{ tipo: 'poly', pontos: [[810.65,266.06],[855.16,266.54],[854.92,279.11],[811.13,278.87]] }] },
+  { nome: 'Gases medicinais', areas: [{ tipo: 'poly', pontos: [[867.25,266.78],[855.4,265.82],[855.88,298.45],[867.01,299.18]] }] },
+  { nome: 'Tanque criogenico', areas: [{ tipo: 'poly', pontos: [[837.74,241.64],[838.23,259.05],[867.98,259.77],[867.01,246.24],[862.17,240.68],[837.98,240.68]] }] },
+  { nome: "Caixa d'agua", areas: [{ tipo: 'poly', pontos: [[812.1,240.44],[812.34,259.29],[837.26,259.05],[836.77,240.68]] }] },
+  { nome: 'Casa de bombas', areas: [{ tipo: 'poly', pontos: [[785.25,260.02],[784.04,273.31],[792.99,273.31],[792.75,259.77]] }] },
+  { nome: 'Servico social', areas: [{ tipo: 'poly', pontos: [[757.49,363.96],[758.46,374.36],[774.66,374.6],[774.9,363.72]] }] },
+  { nome: 'Arquivo', areas: [{ tipo: 'poly', pontos: [[727.01,363.72],[727.49,373.63],[756.76,373.63],[756.52,363.72]] }] },
+  { nome: 'Farmacia', areas: [{ tipo: 'poly', pontos: [[779.5,298.45],[779.5,353.57],[799.82,353.33],[799.82,298.45]] }] },
+  { nome: 'Refeitorio e cozinha', areas: [{ tipo: 'poly', pontos: [[794.26,363.99],[794.26,374.63],[897.78,373.66],[897.54,324.59],[882.06,325.31],[882.06,314.43],[812.4,314.19],[812.16,352.87],[834.41,352.63],[833.93,358.19],[846.26,358.43],[844.57,363.99]] }] },
+  { nome: 'Anexo de apoio', areas: [{ tipo: 'poly', pontos: [[844.33,159.86],[844.33,205.06],[901.17,205.55],[901.17,159.86]] }] },
+  { nome: 'Container SAFS', areas: [{ tipo: 'poly', pontos: [[916.65,167.35],[916.41,228.51],[939.87,228.51],[939.39,168.08]] }] },
+  { nome: 'Container Almoxarifado de abastecimento', areas: [{ tipo: 'poly', pontos: [[989.7,167.83],[990.67,228.75],[1013.17,229.24],[1013.41,167.35]] }] },
+  { nome: 'Container DIVLH e SIF', areas: [{ tipo: 'poly', pontos: [[1067.11,163],[1067.35,207.72],[1022.12,207.24],[1021.39,161.79]] }] },
+  { nome: 'Bloco administrativo', areas: [{ tipo: 'poly', pontos: [[1025.74,221.26],[1025.99,289.19],[1068.56,289.43],[1068.56,221.02]] }] },
+  { nome: 'Estar Residentes', areas: [{ tipo: 'poly', pontos: [[1019.21,385.32],[1018.97,429.8],[1045.58,430.04],[1044.85,386.28]] }] },
+  { nome: 'UMA', areas: [{ tipo: 'poly', pontos: [[1045.58,430.52],[1045.82,442.61],[1018.97,443.09],[1019.7,431.25]] }] },
+  { nome: 'Area de vivencia e cantina', areas: [{ tipo: 'poly', pontos: [[898.27,313.95],[898.27,379.22],[1040.26,378.49],[1039.05,314.19]] }] },
+  { nome: 'Manutencao predial', areas: [{ tipo: 'poly', pontos: [[1001.07,443.12],[1001.31,463.42],[1058.64,463.66],[1056.46,443.36]] }] },
+  { nome: 'Abrigo de residuos', areas: [{ tipo: 'poly', pontos: [[387.58,194.43],[386.85,250.27],[427.73,250.99],[429.43,190.56]] }] },
+  { nome: 'SGPTI', areas: [{ tipo: 'poly', pontos: [[953.36,166.88],[954.32,228.76],[977.54,228.76],[976.82,168.81]] }] }
+];
+
+/* Mapeamento de nome da zona calibrada para nome normalizado no painel */
+function matchZonaNome(zonaCal, setoresComNc) {
+  var n = zonaCal.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  for (var i = 0; i < setoresComNc.length; i++) {
+    var s = setoresComNc[i].toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+    if (s === n) return setoresComNc[i];
+    if (s.indexOf(n) >= 0 || n.indexOf(s) >= 0) return setoresComNc[i];
+    /* Comparar palavras chave */
+    var nw = n.split(/\s+/);
+    var sw = s.split(/\s+/);
+    var matches = nw.filter(function(w) { return w.length > 2 && sw.indexOf(w) >= 0; });
+    if (matches.length >= 2 || (matches.length >= 1 && nw.length <= 2)) return setoresComNc[i];
+  }
+  return null;
+}
+
+/* State */
+var state = {
+  allNcs: [],
+  filtered: [],
+  zonaAtual: null,
+  inspAtual: null,
+  _inspArr: [],
+  filtroAgente: '',
+  viewMode: 'quadrados'
+};
+
+/* Mapa de letra + classe CSS para cada agente */
+var CORES_ZONA = [
+  '#C4A0B5','#8CBF9A','#7FA0C4','#C9B07A','#6BB5A8','#D4908A',
+  '#9E8CC4','#B5B870','#6AAAC4','#8FB86E','#C48AB5','#6EC4A0',
+  '#D4A870','#7A8EC4','#90C47A','#C47A90','#70C4B0','#B07AC4',
+  '#C4B570','#6AAEC4','#A0C470','#C470A0','#70C490','#D49570',
+  '#708CC4','#78C47A','#C470B8','#70C4A8','#A870C4','#C4A070',
+  '#70B0C4','#98C470','#C47080','#70C4B8','#9070C4','#C4A870',
+  '#70C4C4','#C48870'
+];
+
+var AGENTES_BADGE = {
+  'FISICO':     { letra: 'F', cls: 'ac-fis' },
+  'FÍSICO':     { letra: 'F', cls: 'ac-fis' },
+  'QUIMICO':    { letra: 'Q', cls: 'ac-qui' },
+  'QUÍMICO':    { letra: 'Q', cls: 'ac-qui' },
+  'BIOLOGICO':  { letra: 'B', cls: 'ac-bio' },
+  'BIOLÓGICO':  { letra: 'B', cls: 'ac-bio' },
+  'ERGONOMICO': { letra: 'E', cls: 'ac-erg' },
+  'ERGONÔMICO': { letra: 'E', cls: 'ac-erg' },
+  'ACIDENTES':  { letra: 'A', cls: 'ac-aci' },
+  'NENHUM':     { letra: 'N', cls: 'ac-nen' }
+};
+
+/* ── UTILS ── */
+function esc(s) {
+  return s == null ? '' : String(s).replace(/[&<>"']/g, function(c) {
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+
+function titleCase(str) {
+  var lower = ['de','do','da','dos','das','e','em','a','o','na','no','nas','nos','para','por','com','sem','ao','aos'];
+  /* Siglas que devem permanecer em maiuscula */
+  var siglas = ['CME','UTI','NIR','UDI','UMA','SAFS','SIF','DIVLH','SGPTI','UFS','UEC','SEI','SOST','HUL'];
+  var words = String(str).split(/\s+/);
+  return words.map(function(w, i) {
+    var up = w.toUpperCase();
+    if (siglas.indexOf(up) >= 0) return up;
+    var lo = w.toLowerCase();
+    if (i > 0 && lower.indexOf(lo) >= 0) return lo;
+    return lo.charAt(0).toUpperCase() + lo.slice(1);
+  }).join(' ');
+}
+
+function normSetor(s) {
+  if (!s) return s;
+  var k = String(s).trim().toUpperCase();
+  var unified = SETORES_UNIFICADOS[k];
+  if (unified) return unified;
+  /* Padronizar para Title Case */
+  return titleCase(String(s).trim());
+}
+
+function leitorNC(nc, campo) {
+  if (!nc) return '';
+  var ad = nc.atributos_derivados || {};
+  if (campo === 'faixa') return ad.f || nc.faixa || '';
+  if (campo === 'agente') return ad.a || nc.agente || '';
+  if (campo === 'severidade') return ad.s != null ? ad.s : (nc.severidade || '');
+  if (campo === 'probab') return ad.p != null ? ad.p : (nc.probabilidade || '');
+  if (campo === 'risco') return ad.r != null ? ad.r : (nc.risco || '');
+  if (campo === 'normativo') return ad.n || nc.normativo || '';
+  return nc[campo] || '';
+}
+
+/* Parse gviz Date(year,month,day) format (month is 0-indexed) and ISO YYYY-MM-DD */
+function parseData(raw) {
+  if (!raw) return null;
+  var s = String(raw);
+  /* gviz format: Date(2026,8,25) where month is 0-indexed */
+  var gm = s.match(/^Date\((\d+),\s*(\d+),\s*(\d+)\)$/i);
+  if (gm) {
+    return { ano: parseInt(gm[1]), mes: parseInt(gm[2]), dia: parseInt(gm[3]) };
+  }
+  /* ISO: 2026-09-25 */
+  var im = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (im) {
+    return { ano: parseInt(im[1]), mes: parseInt(im[2]) - 1, dia: parseInt(im[3]) };
+  }
+  /* Fallback: try to extract year */
+  var ym = s.match(/(\d{4})/);
+  if (ym) return { ano: parseInt(ym[1]), mes: 0, dia: 1 };
+  return null;
+}
+
+function fmtData(raw) {
+  var d = parseData(raw);
+  if (!d) return String(raw || '');
+  var dd = String(d.dia).padStart(2, '0');
+  var mm = String(d.mes + 1).padStart(2, '0');
+  return dd + '/' + mm + '/' + d.ano;
+}
+
+function fmtDataParts(raw) {
+  var d = parseData(raw);
+  if (!d) return { dia: '--', mesAbrev: '---', ano: '' };
+  return {
+    dia: String(d.dia).padStart(2, '0'),
+    mesAbrev: MESES_CURTO[d.mes] || '???',
+    ano: String(d.ano)
+  };
+}
+
+function sortKeyData(raw) {
+  var d = parseData(raw);
+  if (!d) return '0000-00-00';
+  return String(d.ano) + '-' + String(d.mes + 1).padStart(2, '0') + '-' + String(d.dia).padStart(2, '0');
+}
+
+function domFaixa(ncs) {
+  var a = 0, m = 0;
+  ncs.forEach(function(n) {
+    var f = leitorNC(n, 'faixa');
+    if (f === 'ALTO') a++;
+    else if (f === 'MODERADO') m++;
+  });
+  if (a > 0) return 'alto';
+  if (m > 0) return 'mod';
+  return 'baixo';
+}
+
+function domAgente(ncs) {
+  var c = {};
+  ncs.forEach(function(n) {
+    var ag = leitorNC(n, 'agente');
+    if (ag) c[ag] = (c[ag] || 0) + 1;
+  });
+  var best = '', max = 0;
+  Object.keys(c).forEach(function(k) { if (c[k] > max) { max = c[k]; best = k; } });
+  return best;
+}
+
+function inspKey(nc) {
+  return sortKeyData(nc.data) + '|' + (nc.setor || '') + '|' + (nc.inspetor || '');
+}
+
+/* ── GVIZ FETCH (JSONP) ── */
+function parseGvizResponse(json) {
+  if (!json || !json.table || !json.table.rows) return [];
+  var cols = json.table.cols.map(function(c) { return c.label || c.id || ''; });
+  return json.table.rows.map(function(row) {
+    var obj = {};
+    (row.c || []).forEach(function(cell, i) {
+      if (cell && cell.v != null) obj[cols[i]] = cell.v;
+      else if (cell && cell.f) obj[cols[i]] = cell.f;
+    });
+    return obj;
+  });
+}
+
+function fetchSheet(name) {
+  return new Promise(function(resolve, reject) {
+    var cbName = '_gviz_' + Math.random().toString(36).slice(2, 10);
+    var timeout = setTimeout(function() {
+      delete window[cbName];
+      reject(new Error('Timeout ao carregar aba ' + name));
+    }, 15000);
+
+    window[cbName] = function(resp) {
+      clearTimeout(timeout);
+      delete window[cbName];
+      var script = document.getElementById(cbName);
+      if (script) script.remove();
+      resolve(parseGvizResponse(resp));
+    };
+
+    var url = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID +
+      '/gviz/tq?tqx=responseHandler:' + cbName + '&sheet=' + encodeURIComponent(name);
+
+    var script = document.createElement('script');
+    script.id = cbName;
+    script.src = url;
+    script.onerror = function() {
+      clearTimeout(timeout);
+      delete window[cbName];
+      script.remove();
+      reject(new Error('Falha ao carregar aba ' + name + '. Verifique se a planilha esta publicada.'));
+    };
+    document.head.appendChild(script);
+  });
+}
+
+/* ── DATA LOADING ── */
+function carregarDados() {
+  fetchSheet('NC_REGISTROS').then(function(rows) {
+    if (!rows.length) {
+      document.getElementById('loadingMsg').innerHTML =
+        '<div style="font-size:.85rem;color:#64748b">Nenhum dado encontrado na aba NC_REGISTROS.<br>Execute o exportador para popular os dados.</div>';
+      return;
+    }
+
+    var CAMPOS_NC = [
+      'chave','setor','zona_id','ano','data','descricao','termo_canonico',
+      'acao','local','condicao','observacoes','inspetor','processo_sei',
+      'faixa','agente','severidade','probabilidade','risco','normativo',
+      'prioridade','n_item'
+    ];
+
+    var primeiraRow = rows[0];
+    var keys = Object.keys(primeiraRow);
+    var temHeaderReal = keys.some(function(k) {
+      return CAMPOS_NC.indexOf(k.toLowerCase().replace(/\s+/g, '_')) >= 0;
+    });
+
+    var dataRows = rows;
+    var colMap = null;
+    if (!temHeaderReal && rows.length > 1) {
+      var vals = keys.map(function(k) { return String(primeiraRow[k] || '').toLowerCase().replace(/\s+/g, '_'); });
+      var isHeader = vals.some(function(v) { return CAMPOS_NC.indexOf(v) >= 0; });
+      if (isHeader) {
+        colMap = {};
+        keys.forEach(function(k) { colMap[k] = String(primeiraRow[k] || '').toLowerCase().replace(/\s+/g, '_'); });
+        dataRows = rows.slice(1);
+      } else {
+        colMap = {};
+        keys.forEach(function(k, i) { if (i < CAMPOS_NC.length) colMap[k] = CAMPOS_NC[i]; });
+      }
+    }
+
+    state.allNcs = dataRows.map(function(r) {
+      var nc = {};
+      if (colMap) {
+        Object.keys(r).forEach(function(k) {
+          var campo = colMap[k] || k.toLowerCase().replace(/\s+/g, '_');
+          nc[campo] = r[k];
+        });
+      } else {
+        Object.keys(r).forEach(function(k) {
+          nc[k.toLowerCase().replace(/\s+/g, '_')] = r[k];
+        });
+      }
+
+      nc.setor = normSetor(nc.setor || nc.zona || '');
+      nc.faixa = nc.faixa || '';
+      nc.agente = nc.agente || '';
+      nc.ano = nc.ano ? String(nc.ano) : '';
+      nc.data = nc.data || '';
+      nc.descricao = nc.descricao || '';
+      nc.termo_canonico = nc.termo_canonico || '';
+      nc.acao = nc.acao || '';
+      nc.observacoes = nc.observacoes || '';
+      nc.inspetor = nc.inspetor || '';
+      nc.processo_sei = nc.processo_sei || '';
+      nc.normativo = nc.normativo || '';
+      nc.severidade = nc.severidade || '';
+      nc.probabilidade = nc.probabilidade || '';
+      nc.risco = nc.risco || '';
+      nc.local = nc.local || '';
+      nc.condicao = nc.condicao || '';
+      nc.atributos_derivados = {};
+
+      /* Extrair ano da data se campo ano estiver vazio */
+      if (!nc.ano && nc.data) {
+        var pd = parseData(nc.data);
+        if (pd) nc.ano = String(pd.ano);
+      }
+
+      return nc;
+    });
+
+    popularFiltroAno();
+    app.filtrar();
+    document.getElementById('loadingMsg').style.display = 'none';
+    document.getElementById('viewToggle').style.display = '';
+    if (state.viewMode === 'quadrados') {
+      document.getElementById('zonaGrid').style.display = '';
+    } else {
+      document.getElementById('mapaContainer').style.display = '';
+    }
+  }).catch(function(err) {
+    document.getElementById('loadingMsg').innerHTML =
+      '<div style="color:#c0392b;font-size:.85rem">Erro ao carregar dados: ' + esc(err.message) +
+      '<br><br>Verifique se a planilha esta publicada e a aba NC_REGISTROS existe.</div>';
+  });
+}
+
+function popularFiltroAno() {
+  var anos = {};
+  state.allNcs.forEach(function(n) { if (n.ano) anos[n.ano] = 1; });
+  var sorted = Object.keys(anos).sort();
+  var sel = document.getElementById('filtroAno');
+
+  sorted.forEach(function(a) {
+    var opt = document.createElement('option');
+    opt.value = a;
+    opt.textContent = a;
+    sel.appendChild(opt);
+  });
+
+  /* Auto-selecionar o ano mais recente */
+  if (sorted.length > 0) {
+    sel.value = sorted[sorted.length - 1];
+  }
+}
+
+function renderAgentChips() {
+  var ncs = state.allNcs;
+  var ano = document.getElementById('filtroAno').value;
+  if (ano) ncs = ncs.filter(function(n) { return n.ano === ano; });
+
+  var contagem = {};
+  ncs.forEach(function(n) {
+    var ag = leitorNC(n, 'agente');
+    if (ag) contagem[ag] = (contagem[ag] || 0) + 1;
+  });
+
+  var agentes = Object.keys(contagem).sort(function(a, b) { return contagem[b] - contagem[a]; });
+  var html = '<button class="agent-chip' + (state.filtroAgente === '' ? ' ativo' : '') +
+    '" onclick="app.filtrarAgente(\'\')">' +
+    '<span class="ac-letter ac-all">T</span>' +
+    '<span class="ac-name">Todos</span>' +
+    '<span class="ac-count">(' + ncs.length + ')</span></button>';
+
+  agentes.forEach(function(ag) {
+    var badge = AGENTES_BADGE[ag] || { letra: ag.charAt(0), cls: 'ac-nen' };
+    html += '<button class="agent-chip' + (state.filtroAgente === ag ? ' ativo' : '') +
+      '" onclick="app.filtrarAgente(\'' + esc(ag).replace(/'/g, "\\'") + '\')">' +
+      '<span class="ac-letter ' + badge.cls + '">' + badge.letra + '</span>' +
+      '<span class="ac-name">' + esc(ag) + '</span>' +
+      '<span class="ac-count">(' + contagem[ag] + ')</span></button>';
+  });
+
+  document.getElementById('agentChips').innerHTML = html;
+}
+
+/* ── APP LOGIC ── */
+var app = {
+
+  filtrar: function() {
+    var ano = document.getElementById('filtroAno').value;
+    state.filtered = state.allNcs;
+    if (ano) {
+      state.filtered = state.filtered.filter(function(n) { return n.ano === ano; });
+    }
+    if (state.filtroAgente) {
+      state.filtered = state.filtered.filter(function(n) { return leitorNC(n, 'agente') === state.filtroAgente; });
+    }
+    renderAgentChips();
+    this.renderKpis();
+    this.renderZonas();
+    state.zonaAtual = null;
+    state.inspAtual = null;
+    this.showView('zonas');
+  },
+
+  filtrarAgente: function(ag) {
+    state.filtroAgente = ag;
+    this.filtrar();
+  },
+
+  renderKpis: function() {
+    var ncs = state.filtered;
+    var alto = 0, mod = 0, baixo = 0;
+    ncs.forEach(function(n) {
+      var f = leitorNC(n, 'faixa');
+      if (f === 'ALTO') alto++;
+      else if (f === 'MODERADO') mod++;
+      else baixo++;
+    });
+
+    var zonas = {};
+    var insps = {};
+    ncs.forEach(function(n) {
+      if (n.setor) zonas[n.setor] = 1;
+      insps[inspKey(n)] = 1;
+    });
+
+    document.getElementById('kTotal').textContent = ncs.length;
+    document.getElementById('kAlto').textContent = alto;
+    document.getElementById('kMod').textContent = mod;
+    document.getElementById('kBaixo').textContent = baixo;
+    document.getElementById('kZonas').textContent = Object.keys(zonas).length;
+    document.getElementById('kInsp').textContent = Object.keys(insps).length;
+  },
+
+  renderZonas: function() {
+    var ncs = state.filtered;
+    var porZona = {};
+
+    ncs.forEach(function(n) {
+      var z = n.setor || '(sem setor)';
+      if (!porZona[z]) porZona[z] = [];
+      porZona[z].push(n);
+    });
+
+    var zonas = Object.keys(porZona).sort(function(a, b) {
+      return porZona[b].length - porZona[a].length;
+    });
+
+    var html = '';
+    zonas.forEach(function(z) {
+      var list = porZona[z];
+      var dom = domFaixa(list);
+      var a = 0, m = 0, b = 0;
+      list.forEach(function(n) {
+        var f = leitorNC(n, 'faixa');
+        if (f === 'ALTO') a++; else if (f === 'MODERADO') m++; else b++;
+      });
+      var ag = domAgente(list);
+      var insps = {};
+      list.forEach(function(n) { insps[inspKey(n)] = 1; });
+      var nInsps = Object.keys(insps).length;
+
+      html += '<div class="zone-card ' + dom + '" onclick="app.abrirZona(\'' + esc(z).replace(/'/g, "\\'") + '\')">' +
+        '<div class="zc-top">' +
+          '<div class="zc-nome">' + esc(z) + '</div>' +
+          '<div style="text-align:right">' +
+            '<div class="zc-total-num">' + list.length + '</div>' +
+            '<div class="zc-total-lbl">NCs</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="zc-row">' +
+          '<div class="zc-meta">' + nInsps + ' insp. &middot; ' + esc(ag) + '</div>' +
+          '<div class="zc-faixas">' +
+            (a ? '<span class="fx alto">' + a + ' A</span>' : '') +
+            (m ? '<span class="fx mod">' + m + ' M</span>' : '') +
+            (b ? '<span class="fx baixo">' + b + ' B</span>' : '') +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    });
+
+    document.getElementById('zonaGrid').innerHTML = html;
+    if (!zonas.length) {
+      document.getElementById('zonaGrid').innerHTML =
+        '<div class="empty-msg">Nenhuma NC encontrada para o filtro selecionado.</div>';
+    }
+    this.renderAnalytics(ncs, porZona);
+    if (state.viewMode === 'planta') {
+      this.renderMapa();
+    }
+  },
+
+  renderAnalytics: function(ncs, porZona) {
+    if (!ncs.length) { document.getElementById('analyticsRow').style.display = 'none'; return; }
+
+    var maxNc = 0;
+    var zonasSorted = Object.keys(porZona).sort(function(a,b){ return porZona[b].length - porZona[a].length; });
+    if (zonasSorted.length) maxNc = porZona[zonasSorted[0]].length;
+
+    /* 1. Top zonas criticas */
+    var topN = Math.min(7, zonasSorted.length);
+    var htmlZonas = '<div class="ana-card"><h3>Zonas com Mais NCs</h3>';
+    for (var i = 0; i < topN; i++) {
+      var z = zonasSorted[i];
+      var pct = maxNc > 0 ? Math.round(porZona[z].length / maxNc * 100) : 0;
+      var dom = domFaixa(porZona[z]);
+      var barCls = dom === 'alto' ? 'f-red' : dom === 'mod' ? 'f-amber' : 'f-az';
+      htmlZonas += '<div class="ana-bar-row">' +
+        '<div class="ana-bar-label" title="' + esc(z) + '">' + esc(z) + '</div>' +
+        '<div class="ana-bar-track"><div class="ana-bar-fill ' + barCls + '" style="width:' + pct + '%">' +
+          (pct > 15 ? porZona[z].length : '') + '</div></div>' +
+        '<div class="ana-bar-val">' + porZona[z].length + '</div></div>';
+    }
+    htmlZonas += '</div>';
+
+    /* 2. Distribuicao por agente */
+    var agCount = {};
+    ncs.forEach(function(n) {
+      var ag = leitorNC(n, 'agente') || 'SEM AGENTE';
+      agCount[ag] = (agCount[ag] || 0) + 1;
+    });
+    var agSorted = Object.keys(agCount).sort(function(a,b){ return agCount[b] - agCount[a]; });
+    var maxAg = agSorted.length ? agCount[agSorted[0]] : 1;
+
+    var agColorMap = { 'BIOLÓGICO':'f-bio', 'BIOLOGICO':'f-bio', 'ACIDENTES':'f-acid',
+      'ERGONÔMICO':'f-ergo', 'ERGONOMICO':'f-ergo', 'QUÍMICO':'f-quim', 'QUIMICO':'f-quim',
+      'FÍSICO':'f-fis', 'FISICO':'f-fis', 'NENHUM':'f-none', 'SEM AGENTE':'f-none' };
+
+    var htmlAgente = '<div class="ana-card"><h3>Distribuicao por Agente</h3>';
+    agSorted.forEach(function(ag) {
+      var pct = Math.round(agCount[ag] / maxAg * 100);
+      var cls = agColorMap[ag] || 'f-az';
+      htmlAgente += '<div class="ana-bar-row">' +
+        '<div class="ana-bar-label">' + esc(ag) + '</div>' +
+        '<div class="ana-bar-track"><div class="ana-bar-fill ' + cls + '" style="width:' + pct + '%">' +
+          (pct > 15 ? agCount[ag] : '') + '</div></div>' +
+        '<div class="ana-bar-val">' + agCount[ag] + '</div></div>';
+    });
+    htmlAgente += '</div>';
+
+    /* 3. Inspecoes recentes */
+    var insps = {};
+    ncs.forEach(function(n) {
+      var k = inspKey(n);
+      if (!insps[k]) insps[k] = { data: n.data, setor: n.setor, inspetor: n.inspetor, count: 0 };
+      insps[k].count++;
+    });
+    var inspList = Object.values(insps).sort(function(a,b) {
+      return sortKeyData(b.data).localeCompare(sortKeyData(a.data));
+    }).slice(0, 8);
+
+    var htmlInsp = '<div class="ana-card"><h3>Inspecoes Recentes</h3>';
+    inspList.forEach(function(insp) {
+      var zona = insp.setor || '-';
+      htmlInsp += '<div class="ana-insp-item" onclick="app.abrirZona(\'' + esc(zona).replace(/'/g, "\\'") + '\')">' +
+        '<div class="ana-insp-date">' + fmtData(insp.data) + '</div>' +
+        '<div class="ana-insp-setor">' + esc(zona) + '</div>' +
+        '<div class="ana-insp-count">' + insp.count + ' NCs</div></div>';
+    });
+    htmlInsp += '</div>';
+
+    document.getElementById('analyticsRow').innerHTML = htmlZonas + htmlAgente + htmlInsp;
+    document.getElementById('analyticsRow').style.display = '';
+  },
+
+  abrirZona: function(zona) {
+    state.zonaAtual = zona;
+    document.getElementById('bcZona').textContent = zona;
+    document.getElementById('bcZona2').textContent = zona;
+
+    var ncsZona = state.filtered.filter(function(n) { return (n.setor || '(sem setor)') === zona; });
+
+    /* Mini summary */
+    var a = 0, m = 0, b = 0;
+    ncsZona.forEach(function(n) {
+      var f = leitorNC(n, 'faixa');
+      if (f === 'ALTO') a++; else if (f === 'MODERADO') m++; else b++;
+    });
+    var ag = domAgente(ncsZona);
+    var anos = {};
+    ncsZona.forEach(function(n) { if (n.ano) anos[n.ano] = 1; });
+    var anoRange = Object.keys(anos).sort();
+    var trend = anoRange.length > 1 ? anoRange[0] + ' - ' + anoRange[anoRange.length - 1] : (anoRange[0] || '-');
+
+    document.getElementById('zonaSummary').innerHTML =
+      '<div class="zone-summary">' +
+        '<h2>' + esc(zona) + '</h2>' +
+        '<div class="zs-stats">' +
+          '<div class="zs-item"><div class="zs-num">' + ncsZona.length + '</div><div class="zs-lbl">Total NCs</div></div>' +
+          '<div class="zs-item alto"><div class="zs-num">' + a + '</div><div class="zs-lbl">Alto</div></div>' +
+          '<div class="zs-item mod"><div class="zs-num">' + m + '</div><div class="zs-lbl">Moderado</div></div>' +
+          '<div class="zs-item baixo"><div class="zs-num">' + b + '</div><div class="zs-lbl">Baixo</div></div>' +
+          '<div class="zs-item"><div class="zs-num">' + esc(ag || '-') + '</div><div class="zs-lbl">Agente dom.</div></div>' +
+          '<div class="zs-item"><div class="zs-num">' + esc(trend) + '</div><div class="zs-lbl">Periodo</div></div>' +
+        '</div>' +
+      '</div>';
+
+    /* Group inspections */
+    var insps = {};
+    ncsZona.forEach(function(n) {
+      var k = inspKey(n);
+      if (!insps[k]) insps[k] = { data: n.data, setor: n.setor, inspetor: n.inspetor, sei: n.processo_sei, ncs: [] };
+      insps[k].ncs.push(n);
+      /* Capturar SEI se disponivel */
+      if (n.processo_sei && !insps[k].sei) insps[k].sei = n.processo_sei;
+    });
+
+    var inspArr = Object.values(insps).sort(function(a, b) {
+      return sortKeyData(b.data).localeCompare(sortKeyData(a.data));
+    });
+
+    var html = '';
+    inspArr.forEach(function(insp, idx) {
+      var dom = domFaixa(insp.ncs);
+      var ai = 0, mi = 0, bi = 0;
+      insp.ncs.forEach(function(n) {
+        var f = leitorNC(n, 'faixa');
+        if (f === 'ALTO') ai++; else if (f === 'MODERADO') mi++; else bi++;
+      });
+
+      var dp = fmtDataParts(insp.data);
+
+      html += '<div class="insp-card" onclick="app.abrirInsp(' + idx + ')">' +
+        '<div class="insp-date-block">' +
+          '<div class="idb-dia">' + dp.dia + '</div>' +
+          '<div class="idb-mes">' + dp.mesAbrev + (dp.ano ? ' ' + dp.ano.slice(-2) : '') + '</div>' +
+        '</div>' +
+        '<div class="insp-body">' +
+          '<div class="ib-line1">' +
+            insp.ncs.length + ' NCs' +
+            (insp.inspetor ? '<span class="ib-inspetor">&middot; ' + esc(insp.inspetor) + '</span>' : '') +
+          '</div>' +
+          '<div class="ib-line2">' +
+            (insp.sei ? '<span class="ib-sei">SEI ' + esc(insp.sei) + '</span>' : '') +
+            (ai ? '<span class="fx alto">' + ai + ' Alto</span>' : '') +
+            (mi ? '<span class="fx mod">' + mi + ' Mod</span>' : '') +
+            (bi ? '<span class="fx baixo">' + bi + ' Baixo</span>' : '') +
+          '</div>' +
+        '</div>' +
+        '<div class="insp-arrow">&#8250;</div>' +
+      '</div>';
+    });
+
+    document.getElementById('inspList').innerHTML = html;
+    state._inspArr = inspArr;
+    this.showView('inspecoes');
+  },
+
+  abrirInsp: function(idx) {
+    var insp = state._inspArr[idx];
+    state.inspAtual = idx;
+    document.getElementById('bcInsp').textContent =
+      fmtData(insp.data) + (insp.inspetor ? ' (' + insp.inspetor + ')' : '');
+
+    var ncs = insp.ncs.sort(function(a, b) {
+      var order = { ALTO: 0, MODERADO: 1, BAIXO: 2 };
+      return (order[leitorNC(a, 'faixa')] || 9) - (order[leitorNC(b, 'faixa')] || 9);
+    });
+
+    var html = '';
+    ncs.forEach(function(nc, i) {
+      var faixa = leitorNC(nc, 'faixa');
+      var cls = faixa === 'ALTO' ? 'alto' : faixa === 'MODERADO' ? 'mod' : 'baixo';
+      var agente = leitorNC(nc, 'agente');
+      var sev = leitorNC(nc, 'severidade');
+      var prob = leitorNC(nc, 'probab');
+      var risco = leitorNC(nc, 'risco');
+      var norm = leitorNC(nc, 'normativo');
+
+      html += '<div class="nc-card ' + cls + '" onclick="app.toggleNc(' + i + ')">' +
+        '<div class="nc-top">' +
+          '<div class="nc-info">' +
+            '<div class="nc-titulo">' + esc(nc.termo_canonico || nc.descricao || 'NC #' + (i + 1)) + '</div>' +
+            (nc.descricao && nc.termo_canonico
+              ? '<div class="nc-desc">' + esc(nc.descricao).substring(0, 140) + (nc.descricao.length > 140 ? '...' : '') + '</div>'
+              : '') +
+            '<div class="nc-badges">' +
+              '<span class="badge b-' + cls + '">' + esc(faixa) + '</span>' +
+              (agente ? '<span class="badge b-agente">' + esc(agente) + '</span>' : '') +
+              (risco ? '<span class="badge b-norm">R=' + esc(String(risco)) + '</span>' : '') +
+              (nc.processo_sei ? '<span class="badge b-sei">SEI ' + esc(nc.processo_sei) + '</span>' : '') +
+            '</div>' +
+          '</div>' +
+          '<div class="nc-expand-icon" title="Expandir detalhes">&#9662;</div>' +
+        '</div>' +
+        '<div class="nc-detail" id="ncDet' + i + '">' +
+          '<div class="dl">' +
+            (nc.local ? '<dt>Local</dt><dd>' + esc(nc.local) + '</dd>' : '') +
+            (nc.condicao ? '<dt>Condicao</dt><dd>' + esc(nc.condicao) + '</dd>' : '') +
+            (sev ? '<dt>Severidade</dt><dd>' + esc(String(sev)) + '</dd>' : '') +
+            (prob ? '<dt>Probabilidade</dt><dd>' + esc(String(prob)) + '</dd>' : '') +
+            (norm ? '<dt>Normativo</dt><dd>' + esc(norm) + '</dd>' : '') +
+            (nc.acao ? '<dt>Acao</dt><dd>' + esc(nc.acao) + '</dd>' : '') +
+            (nc.observacoes ? '<dt>Observacoes</dt><dd>' + esc(nc.observacoes) + '</dd>' : '') +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    });
+
+    document.getElementById('ncList').innerHTML = html;
+    this.showView('ncs');
+  },
+
+  toggleNc: function(i) {
+    var el = document.getElementById('ncDet' + i);
+    if (el) el.classList.toggle('aberto');
+  },
+
+  setViewMode: function(modo) {
+    state.viewMode = modo;
+    var btnQ = document.getElementById('btnQuadrados');
+    var btnP = document.getElementById('btnPlanta');
+    var grid = document.getElementById('zonaGrid');
+    var mapa = document.getElementById('mapaContainer');
+
+    if (modo === 'planta') {
+      btnQ.className = ''; btnP.className = 'ativo';
+      grid.style.display = 'none'; mapa.style.display = '';
+      this.renderMapa();
+    } else {
+      btnQ.className = 'ativo'; btnP.className = '';
+      grid.style.display = ''; mapa.style.display = 'none';
+    }
+  },
+
+  renderMapa: function() {
+    var ncs = state.filtered;
+    var porZona = {};
+    ncs.forEach(function(n) {
+      var z = n.setor || '(sem setor)';
+      if (!porZona[z]) porZona[z] = [];
+      porZona[z].push(n);
+    });
+    var setoresComNc = Object.keys(porZona);
+
+    var shapes = '';
+    ZONAS_CALIBRADAS.forEach(function(zona, zi) {
+      var setorMatch = matchZonaNome(zona.nome, setoresComNc);
+      var ncList = setorMatch ? porZona[setorMatch] : [];
+      var count = ncList ? ncList.length : 0;
+
+      var cor = CORES_ZONA[zi % CORES_ZONA.length];
+      var fillOp = '0.4';
+
+      var clickTarget = setorMatch || zona.nome;
+
+      zona.areas.forEach(function(area, ai) {
+        var id = 'mz_' + zi + '_' + ai;
+        if (area.tipo === 'rect') {
+          shapes += '<rect id="' + id + '" class="zona-shape" x="' + area.x + '" y="' + area.y +
+            '" width="' + area.w + '" height="' + area.h +
+            '" fill="' + cor + '" fill-opacity="' + fillOp + '" stroke="' + cor + '"' +
+            ' data-zona="' + esc(clickTarget) + '" data-nome="' + esc(zona.nome) + '" data-count="' + count + '"/>';
+        } else if (area.tipo === 'poly' && area.pontos) {
+          var pts = area.pontos.map(function(p) { return p[0] + ',' + p[1]; }).join(' ');
+          shapes += '<polygon id="' + id + '" class="zona-shape" points="' + pts +
+            '" fill="' + cor + '" fill-opacity="' + fillOp + '" stroke="' + cor + '"' +
+            ' data-zona="' + esc(clickTarget) + '" data-nome="' + esc(zona.nome) + '" data-count="' + count + '"/>';
+        }
+      });
+    });
+
+    var svgHtml = '<svg viewBox="211 150 870 350" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto">' +
+      '<rect x="211" y="150" width="870" height="350" fill="#f8fafc" rx="4"/>' +
+      '<image href="planta_crop.png" x="211.4" y="154.5" width="862.3" height="346.4" opacity="0.85" preserveAspectRatio="none" />' +
+      shapes + '</svg>';
+
+    document.getElementById('mapaSvgArea').innerHTML = svgHtml;
+
+    /* Legenda dinâmica com cores das zonas */
+    var legHtml = '<h4>Zonas</h4>';
+    ZONAS_CALIBRADAS.forEach(function(zona, zi) {
+      var setorMatch = matchZonaNome(zona.nome, setoresComNc);
+      var ncList = setorMatch ? porZona[setorMatch] : [];
+      var c = ncList ? ncList.length : 0;
+      var cor = CORES_ZONA[zi % CORES_ZONA.length];
+      legHtml += '<div class="leg-item" style="cursor:pointer" onclick="app.abrirZona(\'' + esc(setorMatch || zona.nome) + '\')">' +
+        '<div class="leg-dot" style="background:' + cor + '"></div>' +
+        '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(zona.nome) + '</span>' +
+        (c > 0 ? '<span style="font-weight:700;color:var(--azm);font-size:.65rem">' + c + '</span>' : '') +
+        '</div>';
+    });
+    document.getElementById('mapaLegenda').innerHTML = legHtml;
+
+    /* Event listeners para tooltip e clique */
+    var tooltip = document.getElementById('mapaTooltip');
+    var allShapes = document.querySelectorAll('.zona-shape');
+    allShapes.forEach(function(el) {
+      el.addEventListener('mouseenter', function(e) {
+        var nome = el.getAttribute('data-nome');
+        var count = el.getAttribute('data-count');
+        tooltip.textContent = nome + ' (' + count + ' NCs)';
+        tooltip.className = 'mapa-tooltip show';
+      });
+      el.addEventListener('mousemove', function(e) {
+        tooltip.style.left = (e.clientX + 12) + 'px';
+        tooltip.style.top = (e.clientY - 30) + 'px';
+      });
+      el.addEventListener('mouseleave', function() {
+        tooltip.className = 'mapa-tooltip';
+      });
+      el.addEventListener('click', function() {
+        tooltip.className = 'mapa-tooltip';
+        var zona = el.getAttribute('data-zona');
+        if (zona) app.abrirZona(zona);
+      });
+    });
+  },
+
+  voltarZonas: function() {
+    state.zonaAtual = null;
+    state.inspAtual = null;
+    this.showView('zonas');
+  },
+
+  voltarInsp: function() {
+    state.inspAtual = null;
+    this.abrirZona(state.zonaAtual);
+  },
+
+  showView: function(view) {
+    document.getElementById('viewZonas').className = 'view-zonas' + (view === 'zonas' ? ' ativo' : '');
+    document.getElementById('viewInsp').className = 'view-inspecoes' + (view === 'inspecoes' ? ' ativo' : '');
+    document.getElementById('viewNcs').className = 'view-ncs' + (view === 'ncs' ? ' ativo' : '');
+    window.scrollTo(0, 0);
+  }
+};
+
+/* ── INIT ── */
+carregarDados();
+</script>
+</body>
+</html>

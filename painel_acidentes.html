@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestao de Acidentes - Painel Gerencial SOST/SEG</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--bg:#f0f2f7;--card:#ffffff;--az:#1a2744;--azm:#2c5282;--azl:#ebf4ff;--green:#276749;--greenl:#f0fdf4;--red:#c0392b;--redl:#fef2f2;--amber:#d97706;--amberl:#fffbeb;--purple:#6d28d9;--purplel:#f5f3ff;--borda:#e2e8f0;--txt:#1a202c;--sub:#64748b;--radius:10px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Sans',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
+
+.header{background:linear-gradient(135deg,var(--az) 0%,#2d3a56 100%);color:#fff;padding:.75rem 1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem}
+.header h1{font-size:1.1rem;font-weight:600;letter-spacing:-.01em}
+.header .sub{color:rgba(255,255,255,.65);font-size:.8rem}
+.header .meta{text-align:right;font-size:.75rem;color:rgba(255,255,255,.5)}
+.btn-voltar{display:inline-flex;align-items:center;gap:.35rem;padding:.35rem .75rem;border-radius:6px;font-size:.8rem;font-weight:500;font-family:inherit;color:rgba(255,255,255,.7);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);cursor:pointer;text-decoration:none;transition:all .15s;white-space:nowrap}
+.btn-voltar:hover{background:rgba(255,255,255,.15);color:#fff}
+
+.nav-prog{background:var(--card);border-bottom:1px solid var(--borda);padding:.35rem 1.5rem;display:flex;gap:.5rem;overflow-x:auto}
+.prog-tab{padding:.3rem .7rem;border-radius:6px;font-size:.78rem;cursor:pointer;white-space:nowrap;color:var(--sub);background:transparent;border:1px solid transparent;font-family:inherit;transition:all .15s}
+.prog-tab:hover{background:var(--azl);color:var(--azm)}
+.prog-tab.on{background:var(--azm);color:#fff;border-color:var(--azm)}
+
+.main{padding:.5rem 1.5rem}
+.loading{text-align:center;padding:3rem;color:var(--sub)}
+.loading .spin{display:inline-block;width:2rem;height:2rem;border:3px solid var(--borda);border-top-color:var(--azm);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error-box{background:var(--redl);color:var(--red);padding:1rem 1.5rem;border-radius:var(--radius);border:1px solid #fecaca;margin-bottom:1rem}
+
+/* KPIs */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:.35rem;margin-bottom:.4rem}
+.card-stat{background:var(--card);border-radius:var(--radius);padding:.35rem .5rem;border:1px solid var(--borda);text-align:center;transition:box-shadow .15s}
+.card-stat:hover{box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.card-stat .num{font-size:1.3rem;font-weight:700;line-height:1.1}
+.card-stat .label{font-size:.62rem;color:var(--sub);margin-top:.15rem;font-weight:500;text-transform:uppercase;letter-spacing:.03em}
+.card-stat .sublabel{font-size:.58rem;color:#94a3b8;margin-top:.1rem}
+.card-stat.az .num{color:var(--azm)}
+.card-stat.green .num{color:var(--green)}
+.card-stat.red .num{color:var(--red)}
+.card-stat.amber .num{color:var(--amber)}
+.card-stat.purple .num{color:var(--purple)}
+
+/* Secoes */
+.section{margin-bottom:.4rem}
+.section-title{font-size:.78rem;font-weight:600;color:var(--az);margin-bottom:.3rem;display:flex;align-items:center;gap:.5rem}
+.section-title::after{content:'';flex:1;height:1px;background:var(--borda)}
+
+/* Distribuicao por tipo */
+.dist-grid{display:flex;gap:.35rem;margin-bottom:.4rem}
+.dist-item{background:var(--card);border-radius:8px;padding:.3rem .6rem;border:2px solid var(--borda);display:flex;align-items:center;gap:.5rem;cursor:pointer;transition:all .15s;user-select:none;flex:1;min-width:90px}
+.dist-item:hover{border-color:var(--azm);background:var(--azl)}
+.dist-item.active{border-color:var(--azm);background:var(--azl);box-shadow:0 0 0 2px rgba(44,82,130,.2)}
+.dist-item .di-label{font-size:.78rem;font-weight:500;flex:1}
+.dist-item .di-val{font-size:1.2rem;font-weight:700;color:var(--azm)}
+
+/* Filtros */
+.filtros{background:var(--card);border-radius:var(--radius);border:1px solid var(--borda);padding:.35rem .6rem;margin-bottom:.35rem;display:flex;flex-wrap:wrap;gap:.35rem;align-items:center}
+.filtro-group{display:flex;align-items:center;gap:.2rem}
+.filtro-group label{font-size:.68rem;color:var(--sub);font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+.filtro-group select,.filtro-group input{font-family:inherit;font-size:.78rem;padding:.2rem .35rem;border:1px solid var(--borda);border-radius:6px;background:#fff;color:var(--txt)}
+.filtro-busca{flex:1 1 180px;display:flex;align-items:center;gap:.3rem}
+.filtro-busca input{flex:1;font-family:inherit;font-size:.82rem;padding:.25rem .5rem;border:1px solid var(--borda);border-radius:6px;background:#f8fafc;color:var(--txt)}
+.filtro-busca input:focus{outline:none;border-color:var(--azm);box-shadow:0 0 0 2px rgba(44,82,130,.12);background:#fff}
+.filtro-busca .ct{font-size:.72rem;color:var(--sub);white-space:nowrap}
+.filtro-limpar{font-size:.72rem;color:var(--azm);cursor:pointer;background:none;border:none;font-family:inherit;padding:.2rem .4rem;border-radius:4px}
+.filtro-limpar:hover{background:var(--azl)}
+
+/* Tabela */
+.table-wrap{background:var(--card);border-radius:var(--radius);border:1px solid var(--borda);overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.78rem}
+thead{background:#f8fafc;position:sticky;top:0;z-index:1}
+th{padding:.45rem .5rem;text-align:left;font-weight:600;color:var(--sub);font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;border-bottom:2px solid var(--borda);white-space:nowrap;cursor:pointer;user-select:none}
+th:hover{color:var(--azm)}
+td{padding:.4rem .5rem;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+tr:hover td{background:#f8fafc}
+.mono{font-family:'IBM Plex Mono',monospace;font-size:.75rem}
+
+/* Badges */
+.badge{display:inline-block;padding:.1rem .35rem;border-radius:4px;font-size:.68rem;font-weight:600}
+.b-tipico{background:var(--azl);color:var(--azm)}
+.b-trajeto{background:var(--amberl);color:var(--amber)}
+.b-doenca{background:var(--purplel);color:var(--purple)}
+.b-sim{background:var(--redl);color:var(--red)}
+.b-nao{background:var(--greenl);color:var(--green)}
+.b-analisada{background:var(--greenl);color:var(--green)}
+.b-pendente{background:var(--amberl);color:var(--amber)}
+.b-obito{background:#1a202c;color:#fff}
+
+/* Linha expandida */
+.row-detalhe{display:none}
+.row-detalhe.open{display:table-row}
+.row-detalhe td{padding:.6rem .8rem;background:#f8fafc;border-bottom:2px solid var(--borda)}
+.detalhe-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.4rem .8rem;font-size:.76rem}
+.detalhe-grid dt{color:var(--sub);font-size:.66rem;text-transform:uppercase;letter-spacing:.03em;font-weight:600}
+.detalhe-grid dd{margin-bottom:.3rem}
+.detalhe-desc{background:#fff;padding:.5rem .7rem;border-radius:6px;border:1px solid var(--borda);font-size:.78rem;color:var(--sub);line-height:1.5;margin-bottom:.4rem}
+
+/* Grid lado a lado */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:.4rem}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem}
+
+/* Grafico */
+.grafico-card{background:var(--card);border:1px solid var(--borda);border-radius:var(--radius);padding:.5rem .7rem}
+.grafico-titulo{font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--sub);margin-bottom:.3rem}
+.grafico-wrap{position:relative;width:100%}
+.grafico-wrap canvas{width:100%!important}
+
+/* Heatmap */
+table.heatmap{border-collapse:collapse;font-size:.7rem;width:100%}
+table.heatmap th{background:#f8fafc;color:var(--sub);padding:.35rem .4rem;font-weight:600;font-size:.62rem}
+table.heatmap td{padding:.3rem .4rem;text-align:center;border:1px solid var(--borda);min-width:38px;font-weight:500;font-size:.72rem}
+
+/* Padrao item */
+.padrao-item{margin-bottom:.2rem}
+.padrao-row{display:flex;justify-content:space-between;font-size:.76rem;margin-bottom:.1rem}
+.padrao-label{max-width:75%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.padrao-val{font-weight:600;color:var(--azm);white-space:nowrap}
+.padrao-bar{height:3px;background:var(--borda);border-radius:2px}
+.padrao-bar-fill{height:100%;border-radius:2px;transition:width .3s}
+
+
+.footer{text-align:center;padding:1rem;color:var(--sub);font-size:.7rem}
+
+@media(max-width:900px){.cards{grid-template-columns:repeat(4,1fr)}.grid-2,.grid-3{grid-template-columns:1fr}}
+@media(max-width:640px){.header{padding:.6rem 1rem}.main{padding:.5rem .75rem}.cards{grid-template-columns:repeat(2,1fr)}.filtros{flex-direction:column;align-items:stretch}.dist-grid{flex-direction:column}}
+@media print{body{background:#fff}.header{background:var(--az);print-color-adjust:exact;-webkit-print-color-adjust:exact}.nav-prog,.filtros{display:none}.card-stat{break-inside:avoid}table{font-size:.7rem}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>Gestao de Acidentes do Trabalho</h1>
+    <div class="sub">Indicadores conforme ABNT NBR 14280</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:.75rem">
+    <select id="filtroAno" style="font-family:inherit;font-size:.78rem;padding:.25rem .5rem;border-radius:6px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.15);color:#fff;cursor:pointer;-webkit-appearance:none;appearance:none;padding-right:1.2rem;background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2210%22 height=%226%22><path d=%22M0 0l5 6 5-6z%22 fill=%22white%22/></svg>');background-repeat:no-repeat;background-position:right .4rem center">
+      <option value="todos" style="background:#fff;color:#1a202c">Todos os anos</option>
+    </select>
+    <a class="btn-voltar" href="index.html">&#8249; Hub</a>
+    <div class="meta"><div id="metaAtualiz"></div></div>
+  </div>
+</div>
+
+<div class="nav-prog">
+  <button class="prog-tab on" onclick="switchView('resumo')">Resumo</button>
+  <button class="prog-tab" onclick="switchView('registros')">Registros</button>
+  <button class="prog-tab" onclick="switchView('graficos')">Graficos</button>
+</div>
+
+<div class="main">
+  <div id="loading" class="loading"><div class="spin"></div><p style="margin-top:1rem">Carregando dados...</p></div>
+  <div id="errorBox" class="error-box" style="display:none"></div>
+
+  <div id="conteudo" style="display:none">
+
+    <!-- KPIs (sempre visivel) -->
+    <div class="cards" id="cardsKPI"></div>
+
+    <!-- Distribuicao tipo (sempre visivel) -->
+    <div class="dist-grid" id="distTipo"></div>
+
+    <!-- ==================== ABA RESUMO ==================== -->
+    <div id="viewResumo">
+
+      <!-- Taxas TF/TG + Reincidentes lado a lado -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.4rem;align-items:start">
+        <div id="secTaxas"></div>
+        <div id="secReinc"></div>
+      </div>
+
+      <!-- Heatmap + Padroes -->
+      <div id="secHeatmap" style="margin-bottom:.4rem"></div>
+      <div id="secPadroes"></div>
+
+    </div>
+
+    <!-- ==================== ABA REGISTROS ==================== -->
+    <div id="viewRegistros" style="display:none">
+      <div class="filtros" id="searchBar">
+        <div class="filtro-group filtro-busca">
+          <span style="color:var(--sub);font-size:.9rem;flex-shrink:0">&#128269;</span>
+          <input type="text" id="fBusca" placeholder="Buscar nome, setor, descricao..." oninput="aplicaFiltros()">
+          <span class="ct" id="filtroCount"></span>
+        </div>
+        <div class="filtro-group"><label>Tipo:</label>
+          <select id="fTipo" onchange="aplicaFiltros()"><option value="todos">Todos</option><option value="Típico">Tipico</option><option value="Trajeto">Trajeto</option><option value="Doença">Doenca</option></select>
+        </div>
+        <div class="filtro-group"><label>Agente:</label><select id="fAgente" onchange="aplicaFiltros()"><option value="todos">Todos</option></select></div>
+        <div class="filtro-group"><label>Analise:</label>
+          <select id="fAnalise" onchange="aplicaFiltros()"><option value="todos">Todos</option><option value="Analisada">Analisada</option><option value="Pendente">Pendente</option></select>
+        </div>
+        <div class="filtro-group"><label>Afast.:</label>
+          <select id="fAfast" onchange="aplicaFiltros()"><option value="todos">Todos</option><option value="Sim">Sim</option><option value="Nao">Nao</option></select>
+        </div>
+        <button class="filtro-limpar" onclick="limparFiltros()">Limpar</button>
+      </div>
+      <div class="table-wrap" id="tabelaRegistros"></div>
+    </div>
+
+    <!-- ==================== ABA GRAFICOS ==================== -->
+    <div id="viewGraficos" style="display:none">
+      <div class="grid-2" style="margin-bottom:.4rem">
+        <div class="grafico-card"><div class="grafico-titulo">Acidentes por mes</div><div class="grafico-wrap"><canvas id="chartTimeline"></canvas></div></div>
+        <div class="grafico-card"><div class="grafico-titulo">TF / TG por ano (NBR 14280)</div><div class="grafico-wrap"><canvas id="chartTaxas"></canvas></div></div>
+      </div>
+      <div class="grid-2" style="margin-bottom:.4rem">
+        <div class="grafico-card"><div class="grafico-titulo">Barreiras que mais falharam</div><div class="grafico-wrap"><canvas id="chartBarreiras"></canvas></div></div>
+        <div class="grafico-card"><div class="grafico-titulo">Acidentes por agente</div><div class="grafico-wrap"><canvas id="chartAgentes"></canvas></div></div>
+      </div>
+      <div class="grid-2">
+        <div class="grafico-card"><div class="grafico-titulo">Top 10 setores</div><div class="grafico-wrap"><canvas id="chartSetores"></canvas></div></div>
+        <div class="grafico-card"><div class="grafico-titulo">Afastamento x Sem afastamento por ano</div><div class="grafico-wrap"><canvas id="chartAfast"></canvas></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="footer">Painel Gerencial SOST/SEG &middot; USOST &middot; Hospital Universitario de Lagarto &middot; EBSERH</div>
+
+<script>
+var SPREADSHEET_ID='1BAcopQ8Jacx4Q8ojBuU-2MpGH85NUKzi73xd6rmo2rQ';
+var SHEET_RESUMO='GAT_RESUMO',SHEET_TAXAS='GAT_TAXAS',SHEET_SETORES='GAT_SETORES',SHEET_BARREIRAS='GAT_BARREIRAS',SHEET_REINCIDENTES='GAT_REINCIDENTES',SHEET_ACIDENTES='GAT_ACIDENTES';
+
+var RESUMO={},TAXAS=[],SETORES=[],BARREIRAS=[],REINCIDENTES=[],ACIDENTES=[],FILTRADOS=[];
+var SORT_COL='data',SORT_ASC=false,FILTRO_TIPO='todos',VIEW_ATUAL='resumo',CHARTS_OK=false,charts={};
+var _cbN=0;
+
+/* ===== LOAD SHEET (by name) ===== */
+function loadSheet(name){
+  return new Promise(function(ok,fail){
+    var cb='_gc'+(++_cbN)+'_'+Date.now();
+    var tm=setTimeout(function(){delete window[cb];if(s.parentNode)s.remove();fail(new Error('Timeout: '+name))},15000);
+    window[cb]=function(r){clearTimeout(tm);delete window[cb];if(s.parentNode)s.remove();
+      if(r.status==='error'){fail(new Error(name+': '+(r.errors||[]).map(function(e){return e.message}).join(', ')));return}
+      ok(r.table);
+    };
+    var s=document.createElement('script');
+    s.src='https://docs.google.com/spreadsheets/d/'+SPREADSHEET_ID+'/gviz/tq?tqx=responseHandler:'+cb+'&sheet='+encodeURIComponent(name);
+    s.onerror=function(){clearTimeout(tm);delete window[cb];fail(new Error('Rede: '+name))};
+    document.head.appendChild(s);
+  });
+}
+
+/* ===== PARSERS ===== */
+function parseGvizDate(v){
+  if(!v)return '';var s=String(v);
+  var m=s.match(/^Date\((\d{4}),(\d{1,2}),(\d{1,2})(?:,\d{1,2}(?:,\d{1,2}(?:,\d{1,2})?)?)?\)$/);
+  if(m)return m[3].padStart(2,'0')+'/'+String(parseInt(m[2])+1).padStart(2,'0')+'/'+m[1];
+  if(/^\d{2}\/\d{2}\/\d{4}$/.test(s))return s;
+  return s;
+}
+function tableToObjects(table){
+  var hd=table.cols.map(function(c){return(c.label||c.id||'').toLowerCase().trim()});
+  var dc={};table.cols.forEach(function(c,i){if(c.type==='date'||c.type==='datetime')dc[i]=true});
+  return table.rows.filter(function(r){return r.c&&r.c.some(function(c){return c&&c.v!=null})})
+    .map(function(r){var o={};hd.forEach(function(h,i){var c=r.c[i];
+      o[h]=c&&c.v!=null?(dc[i]?parseGvizDate(String(c.v)):String(c.v)):'';});return o});
+}
+function esc(s){return s?s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):''}
+function extrairAno(d){if(!d)return '';if(d.indexOf('/')>=0){var p=d.split('/');return p.length===3?p[2]:''}return d.slice(0,4)}
+
+/* ===== INIT ===== */
+function init(){
+  Promise.all([loadSheet(SHEET_RESUMO),loadSheet(SHEET_TAXAS),loadSheet(SHEET_SETORES),loadSheet(SHEET_BARREIRAS),loadSheet(SHEET_REINCIDENTES),loadSheet(SHEET_ACIDENTES)])
+  .then(function(r){
+    var rr=tableToObjects(r[0]);if(rr.length>0)RESUMO=rr[0];
+    TAXAS=tableToObjects(r[1]);SETORES=tableToObjects(r[2]);BARREIRAS=tableToObjects(r[3]);
+    REINCIDENTES=tableToObjects(r[4]);ACIDENTES=tableToObjects(r[5]);
+
+    if(ACIDENTES.length>0&&!ACIDENTES[0].hasOwnProperty('nome')){
+      document.getElementById('loading').style.display='none';
+      var eb=document.getElementById('errorBox');eb.style.display='block';
+      eb.innerHTML='<strong>Dados inconsistentes</strong><br>A aba GAT_ACIDENTES nao contem as colunas esperadas. Verifique se foi gerada pelo exportar.html.';
+      return;
+    }
+
+    document.getElementById('loading').style.display='none';
+    document.getElementById('conteudo').style.display='block';
+    populaFiltros();renderAll();
+  }).catch(function(err){
+    document.getElementById('loading').style.display='none';
+    var eb=document.getElementById('errorBox');eb.style.display='block';
+    eb.innerHTML='<strong>Erro ao carregar dados</strong><br>'+esc(err.message)+'<br><br>Verifique se as abas GAT_* existem e a planilha esta publicada na web.';
+  });
+}
+
+/* ===== RENDER ALL ===== */
+function renderAll(){
+  var anoSel=document.getElementById('filtroAno').value;
+  /* Anos */
+  var anos={};ACIDENTES.forEach(function(a){var y=extrairAno(a.data);if(y)anos[y]=true});
+  var sel=document.getElementById('filtroAno'),cur=sel.value;
+  sel.innerHTML='<option value="todos" style="background:#fff;color:#1a202c">Todos os anos</option>';
+  Object.keys(anos).sort().forEach(function(y){sel.innerHTML+='<option value="'+y+'" style="background:#fff;color:#1a202c"'+(y===cur?' selected':'')+'>'+y+'</option>'});
+
+  var acids=ACIDENTES;
+  if(anoSel!=='todos')acids=ACIDENTES.filter(function(a){return extrairAno(a.data)===anoSel});
+
+  renderKPIs(acids,anoSel);
+  renderDistTipo(acids);
+  renderTaxas();
+  renderReinc();
+  renderHeatmap(acids);
+  renderPadroes(acids);
+  aplicaFiltros();
+
+  var dt=RESUMO.data_atualizacao||'';
+  if(dt)document.getElementById('metaAtualiz').textContent=dt;
+
+  if(VIEW_ATUAL==='graficos'&&!CHARTS_OK){renderGraficos();CHARTS_OK=true}
+}
+
+/* ===== KPIs ===== */
+function renderKPIs(ac,ano){
+  var t=ac.length,ca=ac.filter(function(a){return a.afastamento==='Sim'}).length;
+  var ob=ac.filter(function(a){return a.obito==='Sim'}).length;
+  var dias=ac.reduce(function(s,a){return s+(parseFloat(a.dias_afastados)||0)},0);
+  var an=ac.filter(function(a){return a.situacao_analise==='Analisada'}).length;
+  var bio=ac.filter(function(a){var g=a.categoria_agente||'';return g.indexOf('Bio')>=0||g.indexOf('Perfuro')>=0}).length;
+  var pend=t-an;
+
+  var c=[
+    {n:t,l:'Total',c:'az'},{n:ca,l:'Com afast.',c:'red'},{n:t-ca,l:'Sem afast.',c:'green'},
+    {n:ob,l:'Obitos',c:ob>0?'red':'green'},{n:dias,l:'Dias afast.',c:'amber'},
+    {n:bio,l:'Bio/Perfuro',c:'purple'},{n:an,l:'Analisados',c:'green'},{n:pend,l:'Pendentes',c:pend>0?'amber':'green'}
+  ];
+  if(ano!=='todos'){
+    var tx=TAXAS.find(function(t){return String(t.ano)===ano});
+    if(tx){
+      var tfv=tx.tf&&tx.tf!=='sem HHE'?parseFloat(tx.tf):null;
+      var tgv=tx.tg&&tx.tg!=='sem HHE'?parseFloat(tx.tg):null;
+      if(tfv!==null)c.push({n:tfv.toFixed(1),l:'TF',c:'az',s:'NBR 14280'});
+      if(tgv!==null)c.push({n:tgv.toFixed(1),l:'TG',c:'amber',s:'NBR 14280'});
+    }
+  }
+  document.getElementById('cardsKPI').innerHTML=c.map(function(x){
+    return '<div class="card-stat '+x.c+'"><div class="num">'+x.n+'</div><div class="label">'+x.l+'</div>'+(x.s?'<div class="sublabel">'+x.s+'</div>':'')+'</div>'}).join('');
+}
+
+/* ===== DIST TIPO ===== */
+function renderDistTipo(ac){
+  var tp=[{k:'Típico',l:'Tipico'},{k:'Trajeto',l:'Trajeto'},{k:'Doença',l:'Doenca'}];
+  var ct={};tp.forEach(function(t){ct[t.k]=0});
+  ac.forEach(function(a){var v=a.tipo_cat||'';if(ct[v]!==undefined)ct[v]++});
+  document.getElementById('distTipo').innerHTML=tp.map(function(t){
+    var active=FILTRO_TIPO===t.k;
+    return '<div class="dist-item '+(active?'active':'')+'" onclick="filtrarTipo(\''+t.k+'\')"><span class="di-label">'+t.l+'</span><span class="di-val">'+ct[t.k]+'</span></div>'}).join('');
+}
+function filtrarTipo(k){FILTRO_TIPO=FILTRO_TIPO===k?'todos':k;var a=document.getElementById('filtroAno').value;var ac=ACIDENTES;if(a!=='todos')ac=ACIDENTES.filter(function(x){return extrairAno(x.data)===a});renderDistTipo(ac);aplicaFiltros()}
+
+/* ===== TAXAS ===== */
+function renderTaxas(){
+  if(!TAXAS.length){document.getElementById('secTaxas').innerHTML='';return}
+  var h='<div class="section-title">TF / TG por ano</div><div class="table-wrap"><table><thead><tr><th>Ano</th><th>Total</th><th>Afast.</th><th>Dias</th><th>TF</th><th>TG</th></tr></thead><tbody>';
+  TAXAS.forEach(function(t){
+    var tf=t.tf&&t.tf!=='sem HHE'?'<span style="font-weight:700;color:var(--azm)">'+parseFloat(t.tf).toFixed(2)+'</span>':'<span style="color:var(--sub)">-</span>';
+    var tg=t.tg&&t.tg!=='sem HHE'?'<span style="font-weight:700;color:var(--amber)">'+parseFloat(t.tg).toFixed(2)+'</span>':'<span style="color:var(--sub)">-</span>';
+    h+='<tr><td style="font-weight:600">'+t.ano+'</td><td>'+t.total+'</td><td>'+t.com_afastamento+'</td><td>'+t.dias_debitados+'</td><td>'+tf+'</td><td>'+tg+'</td></tr>'});
+  h+='</tbody></table></div>';
+  document.getElementById('secTaxas').innerHTML=h;
+}
+
+/* ===== REINCIDENTES ===== */
+function renderReinc(){
+  if(!REINCIDENTES.length){document.getElementById('secReinc').innerHTML='';return}
+  var h='<div class="section-title">Reincidentes</div><div class="table-wrap"><table><thead><tr><th style="width:40px;text-align:center">Qtd</th><th>Nome</th><th style="width:75px">Matricula</th></tr></thead><tbody>';
+  REINCIDENTES.forEach(function(r){
+    h+='<tr><td style="text-align:center;font-weight:700;color:var(--red)">'+r.acidentes+'</td><td style="font-weight:500">'+esc(r.nome)+'</td><td class="mono">'+esc(r.matricula)+'</td></tr>'});
+  h+='</tbody></table></div>';document.getElementById('secReinc').innerHTML=h;
+}
+
+/* ===== HEATMAP ===== */
+function renderHeatmap(ac){
+  if(!ac.length){document.getElementById('secHeatmap').innerHTML='';return}
+  var st={},ag={},mx={};
+  ac.forEach(function(a){var s=a.setor||'N/I',g=a.categoria_agente||'N/I';st[s]=(st[s]||0)+1;ag[g]=true;var k=s+'|'+g;mx[k]=(mx[k]||0)+1});
+  var sa=Object.keys(st).sort(function(a,b){return st[b]-st[a]}).slice(0,12);
+  var aa=Object.keys(ag).sort();
+  var mv=Math.max.apply(null,Object.values(mx).concat([1]));
+  var h='<div class="section-title">Setor x Agente</div><div class="table-wrap"><div style="overflow-x:auto"><table class="heatmap"><thead><tr><th style="text-align:left">Setor</th>';
+  aa.forEach(function(a){h+='<th>'+esc(a)+'</th>'});h+='<th>Total</th></tr></thead><tbody>';
+  sa.forEach(function(s){
+    h+='<tr><td style="text-align:left;font-weight:600;white-space:nowrap">'+esc(s)+'</td>';var rt=0;
+    aa.forEach(function(a){var v=mx[s+'|'+a]||0;rt+=v;var i=mv>0?v/mv:0;
+      h+='<td style="background:'+(v>0?'rgba(192,57,43,'+(0.08+i*0.45)+')':'transparent')+';font-weight:'+(v>0?'600':'400')+';color:'+(v>0?'var(--red)':'var(--sub')+'">'+(v||'')+'</td>'});
+    h+='<td style="font-weight:700;background:var(--azl);color:var(--azm)">'+rt+'</td></tr>'});
+  h+='</tbody></table></div></div>';document.getElementById('secHeatmap').innerHTML=h;
+}
+
+/* ===== PADROES ===== */
+function renderPadroes(ac){
+  if(!ac.length){document.getElementById('secPadroes').innerHTML='';return}
+  function topN(campo,n){var c={};ac.forEach(function(a){var v=a[campo]||'N/I';c[v]=(c[v]||0)+1});return Object.entries(c).sort(function(a,b){return b[1]-a[1]}).slice(0,n||5)}
+  var sets=[
+    {t:'Top agentes',d:topN('agente_causador',5),cor:'var(--azm)'},
+    {t:'Top partes do corpo',d:topN('parte_corpo',5),cor:'var(--purple)'},
+    {t:'Top setores',d:topN('setor',5),cor:'var(--green)'}
+  ];
+  var h='<div class="section-title">Padroes recorrentes</div><div class="grid-3">';
+  sets.forEach(function(s){
+    h+='<div class="grafico-card"><div class="grafico-titulo">'+s.t+'</div>';
+    s.d.forEach(function(e){var pct=(e[1]/ac.length*100).toFixed(0);
+      h+='<div class="padrao-item"><div class="padrao-row"><span class="padrao-label" title="'+esc(e[0])+'">'+esc(e[0])+'</span><span class="padrao-val">'+e[1]+'</span></div><div class="padrao-bar"><div class="padrao-bar-fill" style="width:'+pct+'%;background:'+s.cor+'"></div></div></div>'});
+    h+='</div>'});
+  h+='</div>';document.getElementById('secPadroes').innerHTML=h;
+}
+
+/* ===== FILTROS ===== */
+function populaFiltros(){
+  var ag={};ACIDENTES.forEach(function(a){var v=(a.categoria_agente||'').trim();if(v)ag[v]=true});
+  var sel=document.getElementById('fAgente');
+  Object.keys(ag).sort().forEach(function(a){var o=document.createElement('option');o.value=a;o.textContent=a;sel.appendChild(o)});
+}
+
+function aplicaFiltros(){
+  var ano=document.getElementById('filtroAno').value;
+  var fT=document.getElementById('fTipo').value,fA=document.getElementById('fAgente').value;
+  var fAn=document.getElementById('fAnalise').value,fAf=document.getElementById('fAfast').value;
+  var fB=(document.getElementById('fBusca').value||'').toLowerCase().trim();
+  FILTRADOS=ACIDENTES.filter(function(a){
+    if(ano!=='todos'&&extrairAno(a.data)!==ano)return false;
+    if(FILTRO_TIPO!=='todos'&&(a.tipo_cat||'')!==FILTRO_TIPO)return false;
+    if(fT!=='todos'&&(a.tipo_cat||'')!==fT)return false;
+    if(fA!=='todos'&&(a.categoria_agente||'')!==fA)return false;
+    if(fAn!=='todos'&&(a.situacao_analise||'')!==fAn)return false;
+    if(fAf!=='todos'&&(a.afastamento||'')!==fAf)return false;
+    if(fB){var t=((a.nome||'')+(a.setor||'')+(a.descricao||'')+(a.agente_causador||'')).toLowerCase();if(t.indexOf(fB)<0)return false}
+    return true;
+  });
+  sortFiltrados();renderTabela();
+  document.getElementById('filtroCount').textContent=FILTRADOS.length+' de '+ACIDENTES.length;
+}
+
+function limparFiltros(){
+  FILTRO_TIPO='todos';
+  document.getElementById('fTipo').value='todos';document.getElementById('fAgente').value='todos';
+  document.getElementById('fAnalise').value='todos';document.getElementById('fAfast').value='todos';
+  document.getElementById('fBusca').value='';
+  var a=document.getElementById('filtroAno').value,ac=ACIDENTES;
+  if(a!=='todos')ac=ACIDENTES.filter(function(x){return extrairAno(x.data)===a});
+  renderDistTipo(ac);aplicaFiltros();
+}
+
+function sortFiltrados(){
+  var col=SORT_COL,dir=SORT_ASC?1:-1;
+  FILTRADOS.sort(function(a,b){
+    var va=(a[col]||'').toString(),vb=(b[col]||'').toString();
+    if(/^\d{2}\/\d{2}\/\d{4}$/.test(va)){return va.split('/').reverse().join('').localeCompare((vb||'').split('/').reverse().join(''))*dir}
+    var na=parseFloat(va),nb=parseFloat(vb);if(!isNaN(na)&&!isNaN(nb))return(na-nb)*dir;
+    return va.localeCompare(vb,'pt-BR')*dir;
+  });
+}
+
+function sortBy(col){if(SORT_COL===col)SORT_ASC=!SORT_ASC;else{SORT_COL=col;SORT_ASC=true}sortFiltrados();renderTabela()}
+
+/* ===== TABELA REGISTROS ===== */
+function renderTabela(){
+  var cols=[
+    {k:'data',l:'Data',w:'75px'},{k:'nome',l:'Nome'},{k:'setor',l:'Setor'},
+    {k:'tipo_cat',l:'Tipo',w:'70px'},{k:'categoria_agente',l:'Agente'},
+    {k:'afastamento',l:'Afast.',w:'55px'},{k:'situacao_analise',l:'Analise',w:'70px'}
+  ];
+  var arrow=function(k){if(SORT_COL!==k)return '';return SORT_ASC?' &#9650;':' &#9660;'};
+  var h='<table><thead><tr>';
+  cols.forEach(function(c){h+='<th style="'+(c.w?'width:'+c.w:'')+'" onclick="sortBy(\''+c.k+'\')">'+c.l+arrow(c.k)+'</th>'});
+  h+='</tr></thead><tbody>';
+
+  if(!FILTRADOS.length){
+    h+='<tr><td colspan="'+cols.length+'" style="text-align:center;padding:1.5rem;color:var(--sub)">Nenhum registro encontrado.</td></tr>';
+  } else {
+    FILTRADOS.forEach(function(a,i){
+      var tipoBdg=a.tipo_cat==='Trajeto'?'b-trajeto':a.tipo_cat==='Doença'?'b-doenca':'b-tipico';
+      var analBdg=a.situacao_analise==='Analisada'?'b-analisada':'b-pendente';
+      var afBdg=a.afastamento==='Sim'?'b-sim':'b-nao';
+
+      h+='<tr style="cursor:pointer" onclick="toggleDetalhe('+i+')">';
+      h+='<td class="mono">'+esc(a.data||'-')+'</td>';
+      h+='<td style="font-weight:500">'+esc(a.nome||'-')+'</td>';
+      h+='<td>'+esc(a.setor||'-')+'</td>';
+      h+='<td><span class="badge '+tipoBdg+'">'+esc(a.tipo_cat||'-')+'</span></td>';
+      h+='<td style="font-size:.72rem">'+esc(a.categoria_agente||'-')+'</td>';
+      h+='<td><span class="badge '+afBdg+'">'+(a.afastamento==='Sim'?'Sim':'Nao')+'</span></td>';
+      h+='<td><span class="badge '+analBdg+'">'+esc(a.situacao_analise||'Pendente')+'</span>'+(a.obito==='Sim'?' <span class="badge b-obito">OBITO</span>':'')+'</td>';
+      h+='</tr>';
+
+      /* linha expandivel */
+      h+='<tr class="row-detalhe" id="det'+i+'"><td colspan="'+cols.length+'">';
+
+      if(a.descricao){
+        var desc=String(a.descricao);if(desc.length>400)desc=desc.substring(0,400)+'...';
+        h+='<div class="detalhe-desc">'+esc(desc)+'</div>';
+      }
+
+      h+='<div class="detalhe-grid">';
+      h+='<div><dt>Matricula</dt><dd class="mono">'+esc(a.matricula||'-')+'</dd></div>';
+      h+='<div><dt>Agente causador</dt><dd>'+esc(a.agente_causador||'-')+'</dd></div>';
+      h+='<div><dt>Parte do corpo</dt><dd>'+esc(a.parte_corpo||'-')+'</dd></div>';
+      h+='<div><dt>Lateralidade</dt><dd>'+esc(a.lateralidade||'-')+'</dd></div>';
+      if(a.afastamento==='Sim')h+='<div><dt>Dias afastados</dt><dd style="font-weight:600;color:var(--red)">'+(a.dias_afastados||0)+'</dd></div>';
+      if(a.causa_raiz)h+='<div style="grid-column:1/-1"><dt>Causa raiz</dt><dd style="color:var(--amber);font-weight:500">'+esc(a.causa_raiz)+'</dd></div>';
+      if(a.barreiras_que_falharam)h+='<div style="grid-column:1/-1"><dt>Barreiras que falharam</dt><dd style="color:var(--red)">'+esc(a.barreiras_que_falharam)+'</dd></div>';
+      if(a.acoes_corretivas)h+='<div style="grid-column:1/-1"><dt>Acoes corretivas</dt><dd style="color:var(--green)">'+esc(a.acoes_corretivas)+'</dd></div>';
+      h+='</div></td></tr>';
+    });
+  }
+  h+='</tbody></table>';
+  document.getElementById('tabelaRegistros').innerHTML=h;
+}
+
+function toggleDetalhe(i){document.getElementById('det'+i).classList.toggle('open')}
+
+/* ===== VIEWS ===== */
+function switchView(v){
+  VIEW_ATUAL=v;
+  document.querySelectorAll('.prog-tab').forEach(function(t){t.classList.remove('on')});
+  var tabs={resumo:0,registros:1,graficos:2};
+  document.querySelectorAll('.prog-tab')[tabs[v]].classList.add('on');
+  document.getElementById('viewResumo').style.display=v==='resumo'?'':'none';
+  document.getElementById('viewRegistros').style.display=v==='registros'?'':'none';
+  document.getElementById('viewGraficos').style.display=v==='graficos'?'':'none';
+  if(v==='graficos'&&!CHARTS_OK&&ACIDENTES.length>0){renderGraficos();CHARTS_OK=true}
+}
+
+/* ===== GRAFICOS ===== */
+Chart.defaults.font.family="'IBM Plex Sans',system-ui,sans-serif";
+Chart.defaults.font.size=11;Chart.defaults.color='#64748b';Chart.defaults.plugins.legend.display=false;
+
+function dc(id){if(charts[id]){charts[id].destroy();delete charts[id]}}
+
+function barH(id,labels,vals,cor,max){
+  if(max){labels=labels.slice(0,max);vals=vals.slice(0,max)}
+  var h=Math.max(120,labels.length*26+30);
+  document.getElementById(id).parentElement.style.height=h+'px';
+  dc(id);
+  charts[id]=new Chart(document.getElementById(id),{
+    type:'bar',data:{labels:labels,datasets:[{data:vals,backgroundColor:cor,borderRadius:3,barPercentage:.7}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',layout:{padding:{right:35}},
+      scales:{x:{display:false,beginAtZero:true},y:{grid:{display:false},ticks:{font:{size:10},color:'#475569'}}}},
+    plugins:[{id:'vl',afterDatasetsDraw:function(c){var ctx=c.ctx;ctx.font="600 11px 'IBM Plex Sans',sans-serif";ctx.fillStyle='#475569';ctx.textAlign='left';ctx.textBaseline='middle';
+      c.data.datasets[0].data.forEach(function(v,i){var m=c.getDatasetMeta(0).data[i];if(m)ctx.fillText(v,m.x+6,m.y)})}}]
+  });
+}
+
+function renderGraficos(){
+  var ano=document.getElementById('filtroAno').value;
+  var ac=ACIDENTES;if(ano!=='todos')ac=ACIDENTES.filter(function(a){return extrairAno(a.data)===ano});
+
+  /* Timeline */
+  (function(){
+    var ms={};ac.forEach(function(a){var d=a.data||'',m='';if(d.indexOf('/')>=0){var p=d.split('/');if(p.length===3)m=p[2]+'-'+p[1]}else m=d.slice(0,7);if(m)ms[m]=(ms[m]||0)+1});
+    var lb=Object.keys(ms).sort(),vl=lb.map(function(m){return ms[m]});
+    var nm=['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    var ld=lb.map(function(m){var p=m.split('-');return(nm[parseInt(p[1])]||p[1])+'/'+p[0]});
+    dc('chartTimeline');
+    charts.chartTimeline=new Chart(document.getElementById('chartTimeline'),{
+      type:'bar',data:{labels:ld,datasets:[{data:vl,backgroundColor:'rgba(44,82,130,.6)',borderColor:'rgba(44,82,130,1)',borderWidth:1,borderRadius:3}]},
+      options:{responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{color:'#64748b',font:{size:10},maxRotation:45},grid:{color:'#e2e8f0'}},y:{beginAtZero:true,ticks:{color:'#64748b',stepSize:1},grid:{color:'#e2e8f0'}}}}
+    });
+  })();
+
+  /* TF/TG */
+  (function(){
+    if(!TAXAS.length)return;
+    var lb=TAXAS.map(function(t){return t.ano});
+    var tf=TAXAS.map(function(t){return t.tf&&t.tf!=='sem HHE'?parseFloat(t.tf):null});
+    var tg=TAXAS.map(function(t){return t.tg&&t.tg!=='sem HHE'?parseFloat(t.tg):null});
+    dc('chartTaxas');
+    charts.chartTaxas=new Chart(document.getElementById('chartTaxas'),{
+      type:'line',data:{labels:lb,datasets:[
+        {label:'TF',data:tf,borderColor:'#2c5282',backgroundColor:'rgba(44,82,130,.1)',fill:true,tension:.3,pointRadius:5,pointBackgroundColor:'#2c5282'},
+        {label:'TG',data:tg,borderColor:'#d97706',backgroundColor:'rgba(217,119,6,.1)',fill:true,tension:.3,pointRadius:5,pointBackgroundColor:'#d97706'}
+      ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:'#1a202c',padding:12}}},
+        scales:{x:{ticks:{color:'#64748b'},grid:{color:'#e2e8f0'}},y:{beginAtZero:true,ticks:{color:'#64748b'},grid:{color:'#e2e8f0'}}}}
+    });
+  })();
+
+  /* Barreiras */
+  (function(){
+    if(!BARREIRAS.length)return;
+    barH('chartBarreiras',BARREIRAS.map(function(b){return b.barreira}),BARREIRAS.map(function(b){return parseFloat(b.falhas)||0}),'#c0392b');
+  })();
+
+  /* Agentes */
+  (function(){
+    var ct={};ac.forEach(function(a){var g=a.categoria_agente||'N/I';ct[g]=(ct[g]||0)+1});
+    var it=Object.entries(ct).sort(function(a,b){return b[1]-a[1]});
+    barH('chartAgentes',it.map(function(i){return i[0]}),it.map(function(i){return i[1]}),'#6d28d9');
+  })();
+
+  /* Setores */
+  (function(){
+    var ct={};ac.forEach(function(a){var s=a.setor||'N/I';ct[s]=(ct[s]||0)+1});
+    var it=Object.entries(ct).sort(function(a,b){return b[1]-a[1]});
+    barH('chartSetores',it.map(function(i){return i[0]}),it.map(function(i){return i[1]}),'#2a78d6',10);
+  })();
+
+  /* Afastamento por ano */
+  (function(){
+    var anos={};ACIDENTES.forEach(function(a){var y=extrairAno(a.data);if(!y)return;if(!anos[y])anos[y]={c:0,s:0};if(a.afastamento==='Sim')anos[y].c++;else anos[y].s++});
+    var lb=Object.keys(anos).sort();
+    dc('chartAfast');
+    charts.chartAfast=new Chart(document.getElementById('chartAfast'),{
+      type:'bar',data:{labels:lb,datasets:[
+        {label:'Com afast.',data:lb.map(function(y){return anos[y].c}),backgroundColor:'rgba(192,57,43,.7)',borderRadius:3},
+        {label:'Sem afast.',data:lb.map(function(y){return anos[y].s}),backgroundColor:'rgba(44,82,130,.5)',borderRadius:3}
+      ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:'#1a202c',padding:12}}},
+        scales:{x:{stacked:true,ticks:{color:'#64748b'},grid:{color:'#e2e8f0'}},y:{stacked:true,beginAtZero:true,ticks:{color:'#64748b',stepSize:1},grid:{color:'#e2e8f0'}}}}
+    });
+  })();
+}
+
+/* ===== EVENTOS ===== */
+document.getElementById('filtroAno').addEventListener('change',function(){CHARTS_OK=false;renderAll()});
+init();
+</script>
+</body>
+</html>
