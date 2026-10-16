@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel de EPI - Painel Gerencial SOST/SEG</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--bg:#f0f2f7;--card:#ffffff;--az:#1a2744;--azm:#2c5282;--azl:#ebf4ff;--green:#276749;--greenl:#f0fdf4;--red:#c0392b;--redl:#fef2f2;--amber:#d97706;--amberl:#fffbeb;--purple:#6d28d9;--purplel:#f5f3ff;--teal:#0d9488;--teall:#f0fdfa;--borda:#e2e8f0;--txt:#1a202c;--sub:#64748b;--radius:10px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Sans',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
+
+.header{background:linear-gradient(135deg,var(--az) 0%,#2d3a56 100%);color:#fff;padding:.75rem 1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem}
+.header h1{font-size:1.1rem;font-weight:600;letter-spacing:-.01em}
+.header .sub{color:rgba(255,255,255,.65);font-size:.8rem}
+.header .meta{text-align:right;font-size:.75rem;color:rgba(255,255,255,.5)}
+.btn-voltar{display:inline-flex;align-items:center;gap:.35rem;padding:.35rem .75rem;border-radius:6px;font-size:.8rem;font-weight:500;font-family:inherit;color:rgba(255,255,255,.7);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);cursor:pointer;text-decoration:none;transition:all .15s;white-space:nowrap}
+.btn-voltar:hover{background:rgba(255,255,255,.15);color:#fff}
+
+.nav-prog{background:var(--card);border-bottom:1px solid var(--borda);padding:.35rem 1.5rem;display:flex;gap:.5rem;overflow-x:auto}
+.prog-tab{padding:.3rem .7rem;border-radius:6px;font-size:.78rem;cursor:pointer;white-space:nowrap;color:var(--sub);background:transparent;border:1px solid transparent;font-family:inherit;transition:all .15s}
+.prog-tab:hover{background:var(--azl);color:var(--azm)}
+.prog-tab.on{background:var(--azm);color:#fff;border-color:var(--azm)}
+
+.main{padding:.75rem 1.5rem}
+.loading{text-align:center;padding:3rem;color:var(--sub)}
+.loading .spin{display:inline-block;width:2rem;height:2rem;border:3px solid var(--borda);border-top-color:var(--azm);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* KPIs */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.75rem;margin-bottom:1rem}
+.kpi{background:var(--card);border:1px solid var(--borda);border-radius:var(--radius);padding:.75rem 1rem;text-align:center}
+.kpi .valor{font-size:1.6rem;font-weight:700;line-height:1.2}
+.kpi .rotulo{font-size:.7rem;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;margin-top:.15rem}
+.kpi.destaque{border-left:3px solid var(--azm)}
+
+/* Cards */
+.card{background:var(--card);border:1px solid var(--borda);border-radius:var(--radius);margin-bottom:1rem;overflow:hidden}
+.card.card-busca{overflow:visible}
+.card-header{background:var(--az);color:#fff;padding:.5rem 1rem;font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;gap:.5rem}
+.card-body{padding:1rem}
+
+/* Busca */
+.busca-wrap{display:flex;gap:.5rem;margin-bottom:.75rem;flex-wrap:wrap;align-items:center}
+.busca-input{flex:1;min-width:200px;padding:.5rem .75rem;border:1px solid var(--borda);border-radius:6px;font-size:.85rem;font-family:inherit;outline:none;transition:border .15s}
+.busca-input:focus{border-color:var(--azm);box-shadow:0 0 0 3px rgba(44,82,130,.1)}
+.busca-btn{padding:.5rem 1rem;border-radius:6px;font-size:.8rem;font-weight:600;cursor:pointer;border:none;background:var(--azm);color:#fff;font-family:inherit;transition:all .15s}
+.busca-btn:hover{background:#1e3a6a}
+.ac-item:hover{background:var(--azl)}
+
+/* Tabela */
+table{width:100%;border-collapse:collapse;font-size:.78rem}
+thead th{background:var(--az);color:#fff;padding:.5rem .6rem;text-align:left;font-weight:600;font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;position:sticky;top:0}
+tbody td{padding:.45rem .6rem;border-bottom:1px solid var(--borda);vertical-align:middle}
+tbody tr:hover td{background:#f8fafc}
+.tbl-scroll{max-height:400px;overflow-y:auto;border:1px solid var(--borda);border-radius:var(--radius)}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;gap:.3rem;font-size:.65rem;font-weight:600;padding:.15rem .5rem;border-radius:12px;white-space:nowrap}
+.badge-ok{background:var(--greenl);color:var(--green)}
+.badge-warn{background:var(--amberl);color:var(--amber)}
+.badge-danger{background:var(--redl);color:var(--red)}
+.badge-info{background:var(--azl);color:var(--azm)}
+
+/* Alertas validade */
+.alerta-item{display:flex;align-items:center;gap:.6rem;padding:.5rem .75rem;border-radius:6px;margin-bottom:.4rem;font-size:.8rem}
+.alerta-vencido{background:var(--redl);border:1px solid #fecaca}
+.alerta-atencao{background:var(--amberl);border:1px solid #fde68a}
+
+/* Filtro ano resumo */
+.filtro-ano-wrap{display:flex;align-items:center;gap:.6rem;margin-bottom:.75rem;flex-wrap:wrap}
+.filtro-ano-label{font-size:.78rem;font-weight:600;color:var(--sub);text-transform:uppercase;letter-spacing:.04em}
+.filtro-ano-wrap .chip{padding:.3rem .7rem;border-radius:14px;font-size:.75rem;font-weight:600;cursor:pointer;border:1px solid var(--borda);background:var(--card);color:var(--sub);transition:all .15s}
+.filtro-ano-wrap .chip:hover{border-color:var(--azm);color:var(--azm)}
+.filtro-ano-wrap .chip.on{background:var(--azm);color:#fff;border-color:var(--azm)}
+
+/* Chips filtro */
+.chips{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.75rem}
+.chip{padding:.25rem .6rem;border-radius:14px;font-size:.7rem;font-weight:600;cursor:pointer;border:1px solid var(--borda);background:var(--card);color:var(--sub);transition:all .15s}
+.chip:hover{border-color:var(--azm);color:var(--azm)}
+.chip.on{background:var(--azm);color:#fff;border-color:var(--azm)}
+
+/* Gráficos */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.chart-wrap{background:var(--card);border:1px solid var(--borda);border-radius:var(--radius);padding:1rem}
+.chart-titulo{font-size:.75rem;font-weight:600;color:var(--az);margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.04em}
+
+/* Setor ranking */
+.setor-bar{display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem;font-size:.78rem}
+.setor-nome{width:200px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0;font-size:.72rem}
+.setor-barra{flex:1;height:18px;background:#edf2f7;border-radius:3px;overflow:hidden}
+.setor-barra-fill{height:100%;border-radius:3px;transition:width .3s}
+.setor-val{width:40px;font-weight:600;font-size:.72rem;font-family:'IBM Plex Mono',monospace}
+
+/* Views */
+.view{display:none}
+.view.ativa{display:block}
+
+/* Responsivo */
+@media(max-width:768px){
+  .main{padding:.5rem .75rem}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .chart-grid{grid-template-columns:1fr}
+  .setor-nome{width:120px}
+}
+@media(max-width:480px){
+  .header{padding:.5rem .75rem}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .busca-wrap{flex-direction:column}
+  .busca-input{min-width:100%}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
+      <a class="btn-voltar" href="index.html">&#8249; Hub</a>
+      <div>
+        <h1>Painel de EPI</h1>
+        <div class="sub">Controle de Fornecimento de Equipamentos de Protecao Individual</div>
+      </div>
+    </div>
+  </div>
+  <div class="meta">
+    <div>HUL/EBSERH · USOST</div>
+    <div id="metaAtualiz"></div>
+  </div>
+</div>
+
+<div class="nav-prog">
+  <button class="prog-tab on" onclick="trocarView('resumo')">Resumo</button>
+  <button class="prog-tab" onclick="trocarView('busca')">Busca por Empregado</button>
+  <button class="prog-tab" onclick="trocarView('alertas')">Alertas de Validade</button>
+  <button class="prog-tab" onclick="trocarView('setores')">Visao por Setor</button>
+  <button class="prog-tab" onclick="trocarView('graficos')">Graficos</button>
+</div>
+
+<div class="main">
+  <div id="loadingDiv" class="loading">
+    <div class="spin"></div>
+    <p style="margin-top:.75rem">Carregando dados de EPI...</p>
+  </div>
+
+  <!-- RESUMO -->
+  <div id="viewResumo" class="view">
+    <div id="filtroAnoResumo" class="filtro-ano-wrap"></div>
+    <div class="kpi-grid" id="kpiGrid"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+      <div class="card">
+        <div class="card-header">Top 10 Setores por Retiradas</div>
+        <div class="card-body" id="topSetoresResumo"></div>
+      </div>
+      <div class="card">
+        <div class="card-header">Distribuicao por Categoria de EPI</div>
+        <div class="card-body" id="catBarrasResumo"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:1rem">
+      <div class="card-header">Ultimas Entregas Registradas</div>
+      <div class="card-body">
+        <div class="tbl-scroll" style="max-height:300px" id="tblUltimas"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BUSCA POR EMPREGADO -->
+  <div id="viewBusca" class="view">
+    <div class="card card-busca">
+      <div class="card-header" style="border-radius:var(--radius) var(--radius) 0 0">Buscar Empregado</div>
+      <div class="card-body">
+        <div class="busca-wrap">
+          <div style="position:relative;flex:1;min-width:200px">
+            <input class="busca-input" id="buscaEmpInput" style="width:100%" placeholder="Digite o nome ou SIAPE do empregado..." autocomplete="off" oninput="autoCompletarEmp()" onkeydown="navAutoComplete(event)">
+            <div id="buscaDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:50;background:var(--card);border:1px solid var(--azm);border-top:none;border-radius:0 0 6px 6px;max-height:260px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.12)"></div>
+          </div>
+          <button class="busca-btn" onclick="buscarEmpregado()">Buscar</button>
+        </div>
+      </div>
+    </div>
+    <div id="buscaResultado" style="display:none">
+      <div class="card">
+        <div class="card-header" id="buscaEmpNome">Empregado</div>
+        <div class="card-body">
+          <div id="buscaEmpInfo" style="margin-bottom:.75rem"></div>
+          <div id="buscaAlertas"></div>
+          <div class="tbl-scroll" id="buscaTabela"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ALERTAS DE VALIDADE -->
+  <div id="viewAlertas" class="view">
+    <div class="card">
+      <div class="card-header">Filtrar por Categoria de EPI</div>
+      <div class="card-body">
+        <div id="cfgValidadePainel" style="margin-bottom:8px;"></div>
+        <div class="chips" id="alertaChips"></div>
+        <div style="font-size:.75rem;color:var(--sub);margin-bottom:.5rem">
+          Validades conforme NR-6 item 6.6.1 alinea d e vida util estimada pelos fabricantes:
+          Oculos 5a | Protetor Auricular 2a | Calcado 1.5a | Capacete 5a | Mascara semifacial 5a
+        </div>
+      </div>
+    </div>
+    <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:1rem" id="alertaKpis"></div>
+    <div class="card">
+      <div class="card-header">Empregados com EPI Vencido ou Proximo do Vencimento</div>
+      <div class="card-body">
+        <div class="tbl-scroll" style="max-height:500px" id="alertaTabela"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VISAO POR SETOR -->
+  <div id="viewSetores" class="view">
+    <div class="card">
+      <div class="card-header">Ranking de Setores por Quantidade de Retiradas</div>
+      <div class="card-body" id="setoresRanking"></div>
+    </div>
+    <div class="card" style="margin-top:1rem">
+      <div class="card-header">Detalhamento por Setor</div>
+      <div class="card-body">
+        <div class="busca-wrap">
+          <select class="busca-input" id="selSetor" onchange="detalharSetor()" style="flex:1">
+            <option value="">Selecione um setor...</option>
+          </select>
+        </div>
+        <div id="setorDetalhe"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRAFICOS -->
+  <div id="viewGraficos" class="view">
+    <div class="chart-grid">
+      <div class="chart-wrap">
+        <div class="chart-titulo">Entregas por Mes</div>
+        <canvas id="chartMensal" height="250"></canvas>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-titulo">Distribuicao por Categoria</div>
+        <canvas id="chartCategoria" height="250"></canvas>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-titulo">Top 15 Setores</div>
+        <canvas id="chartSetores" height="300"></canvas>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-titulo">Evolucao Anual</div>
+        <canvas id="chartAnual" height="250"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== CONFIG ===== */
+var SPREADSHEET_ID='1BAcopQ8Jacx4Q8ojBuU-2MpGH85NUKzi73xd6rmo2rQ';
+var SHEET_REGISTROS='EPI_REGISTROS';
+var SHEET_CADASTRO='EPI_CADASTRO';
+
+/* Validades em anos (mesma tabela do programa local).
+   Protetor facial removido: era fornecido só na pandemia, não é mais
+   reposto — mantê-lo gerava alertas irremovíveis. Decisão USOST out/2026. */
+var VALIDADES={
+  'OCULOS DE SEGURANCA':5,
+  'PROTETOR AURICULAR':2,
+  'SAPATO DE SEGURANCA':1.5,
+  'MASCARA SEMIFACIAL':5
+};
+
+/* ═══ CATEGORIAS MONITORADAS — toggle de silenciamento de alertas ═══
+   Desativa temporariamente alertas para categorias sem fornecimento.
+   Salvo em localStorage (preferência de exibição). Decisão USOST out/2026. */
+var _LS_SIL_PAINEL='painel_epi_silenciados';
+var _cfgValAbertoPainel=false;
+function _silPainel(){try{var s=localStorage.getItem(_LS_SIL_PAINEL);return s?JSON.parse(s):[];}catch(e){return[];}}
+function _salvarSilPainel(a){try{localStorage.setItem(_LS_SIL_PAINEL,JSON.stringify(a));}catch(e){}}
+function _catAtivaPainel(cat){return !!VALIDADES[cat]&&_silPainel().indexOf(cat)===-1;}
+
+function renderCfgValidadePainel(){
+  var el=document.getElementById('cfgValidadePainel');if(!el)return;
+  var sil=_silPainel();
+  var h='<div onclick="toggleCfgPainel()" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;'
+    +'font-size:.7rem;color:var(--sub);font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:4px 0;user-select:none;">'
+    +'&#9881; Categorias monitoradas '
+    +'<span id="cfgPainelSeta" style="font-size:9px;transition:transform .2s;display:inline-block;'
+    +(_cfgValAbertoPainel?'transform:rotate(90deg)':'')+'">&#9654;</span>'
+    +(sil.length?(' <span style="background:var(--amber);color:#fff;font-size:.6rem;padding:1px 7px;border-radius:10px;font-weight:700;margin-left:4px;">'
+    +sil.length+' silenciada'+(sil.length>1?'s':'')+'</span>'):'')
+    +'</div>'
+    +'<div id="cfgPainelBody" style="display:'+(_cfgValAbertoPainel?'block':'none')+';margin-top:6px;padding:10px 12px;'
+    +'background:var(--bg);border:1px solid var(--borda);border-radius:6px;">'
+    +'<div style="font-size:.7rem;color:var(--sub);margin-bottom:8px;">Desmarque categorias que não estão sendo fornecidas para silenciar seus alertas:</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:6px 20px;">';
+  Object.keys(VALIDADES).forEach(function(cat){
+    var ativo=sil.indexOf(cat)===-1;
+    h+='<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.75rem;padding:3px 0;'
+      +(ativo?'color:var(--txt)':'color:var(--sub);text-decoration:line-through;opacity:.6')+'">'
+      +'<input type="checkbox" '+(ativo?'checked':'')+' onchange="toggleCatPainel(\''+cat+'\')" '
+      +'style="accent-color:var(--azm);width:14px;height:14px;cursor:pointer;">'
+      +cat+' ('+VALIDADES[cat]+'a)</label>';
+  });
+  h+='</div></div>';
+  el.innerHTML=h;
+}
+function toggleCfgPainel(){
+  _cfgValAbertoPainel=!_cfgValAbertoPainel;
+  var p=document.getElementById('cfgPainelBody'),s=document.getElementById('cfgPainelSeta');
+  if(p)p.style.display=_cfgValAbertoPainel?'block':'none';
+  if(s)s.style.transform=_cfgValAbertoPainel?'rotate(90deg)':'';
+}
+function toggleCatPainel(cat){
+  var sil=_silPainel(),idx=sil.indexOf(cat);
+  if(idx!==-1)sil.splice(idx,1);else sil.push(cat);
+  _salvarSilPainel(sil);
+  _cfgValAbertoPainel=true;
+  renderAlertas();renderCfgValidadePainel();
+}
+
+/* Cores por categoria */
+var CORES_CAT={
+  'RESPIRADOR PFF2':'#2c5282',
+  'OCULOS DE SEGURANCA':'#276749',
+  'PROTETOR FACIAL':'#6d28d9',
+  'MASCARA SEMIFACIAL':'#0d9488',
+  'PROTETOR AURICULAR':'#d97706',
+  'SAPATO DE SEGURANCA':'#9f1239',
+  'LUVA':'#ea580c',
+  'FILTRO RESPIRADOR':'#4338ca',
+  'JALECO':'#0891b2',
+  'MASCARA DESCARTAVEL':'#64748b',
+  'OUTROS':'#94a3b8'
+};
+
+var REGISTROS=[];
+var CADASTRO=[];
+var VIEW_ATUAL='resumo';
+var CHARTS_OK=false;
+var ANO_RESUMO=null; /* null = auto (mais recente) */
+var _chartInstances={};
+
+/* ===== GVIZ ===== */
+var _cbId=0;
+function gvizQuery(sheet,sql,cb){
+  var id='gviz_cb_'+(++_cbId);
+  var url='https://docs.google.com/spreadsheets/d/'+SPREADSHEET_ID+'/gviz/tq?tqx=responseHandler:'+id+'&sheet='+encodeURIComponent(sheet);
+  if(sql)url+='&tq='+encodeURIComponent(sql);
+  window[id]=function(r){
+    delete window[id];
+    if(r.status==='error'){cb([]);return}
+    var cols=r.table.cols,rows=r.table.rows,out=[];
+    rows.forEach(function(row){
+      var o={};
+      cols.forEach(function(c,i){
+        var v=row.c[i];
+        o[c.label||c.id]=v?v.v:null;
+      });
+      out.push(o);
+    });
+    cb(out);
+  };
+  var s=document.createElement('script');
+  s.src=url;s.onerror=function(){cb([])};
+  document.head.appendChild(s);
+}
+
+/* ===== LOAD ===== */
+var _loaded=0;
+function checkReady(){
+  if(++_loaded<2)return;
+  document.getElementById('loadingDiv').style.display='none';
+  renderAll();
+}
+
+function carregarDados(){
+  /* Registros */
+  gvizQuery(SHEET_REGISTROS,'select *',function(rows){
+    REGISTROS=rows.map(function(r){
+      return {
+        nome:r.NOME||'',
+        siape:String(r.SIAPE||''),
+        epi:r.EPI||'',
+        categoria:r.CATEGORIA||'',
+        ca:String(r.CA||''),
+        data:gvizDateToStr(r.DATA),
+        qtd:parseInt(r.QTD)||1,
+        fonte:r.FONTE||'',
+        lotacao:r.LOTACAO||''
+      };
+    });
+    checkReady();
+  });
+  /* Cadastro */
+  gvizQuery(SHEET_CADASTRO,'select *',function(rows){
+    CADASTRO=rows.map(function(r){
+      return {
+        nome:r.NOME||'',
+        siape:String(r.SIAPE||''),
+        cargo:r.CARGO||'',
+        lotacao:r.LOTACAO||''
+      };
+    });
+    checkReady();
+  });
+}
+
+/* ===== UTILS ===== */
+function norm(s){return s?String(s).trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''):''}
+function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
+/* Converte valor gviz para string DD/MM/YYYY */
+function gvizDateToStr(v){
+  if(!v)return '';
+  /* Se for objeto Date nativo (gviz JSONP pode avaliar new Date()) */
+  if(v instanceof Date&&!isNaN(v)){
+    var dd=('0'+v.getDate()).slice(-2);
+    var mm=('0'+(v.getMonth()+1)).slice(-2);
+    return dd+'/'+mm+'/'+v.getFullYear();
+  }
+  var s=String(v);
+  /* gviz retorna "Date(2025,11,31)" onde mes eh 0-indexado */
+  var mg=s.match(/Date\((\d{4}),\s*(\d{1,2}),\s*(\d{1,2})/i);
+  if(mg){
+    var dd=('0'+mg[3]).slice(-2);
+    var mm=('0'+(parseInt(mg[2])+1)).slice(-2);
+    return dd+'/'+mm+'/'+mg[1];
+  }
+  /* Ja eh DD/MM/YYYY */
+  var mb=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(mb)return ('0'+mb[1]).slice(-2)+'/'+('0'+mb[2]).slice(-2)+'/'+mb[3];
+  /* Formato YYYY-MM-DD (ISO) */
+  var mi=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(mi)return mi[3]+'/'+mi[2]+'/'+mi[1];
+  return s;
+}
+function parseDtBR(s){
+  if(!s)return null;
+  var m=String(s).match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  return m?new Date(parseInt(m[3]),parseInt(m[2])-1,parseInt(m[1])):null;
+}
+function fmtNum(n){return n.toLocaleString('pt-BR')}
+
+/* ===== VIEWS ===== */
+function trocarView(v){
+  VIEW_ATUAL=v;
+  document.querySelectorAll('.view').forEach(function(el){el.classList.remove('ativa')});
+  document.getElementById('view'+v.charAt(0).toUpperCase()+v.slice(1)).classList.add('ativa');
+  document.querySelectorAll('.prog-tab').forEach(function(t){t.classList.remove('on')});
+  event.target.classList.add('on');
+  if(v==='graficos'&&!CHARTS_OK){renderGraficos();CHARTS_OK=true}
+  if(v==='alertas'){renderAlertas();renderCfgValidadePainel();}
+  if(v==='setores')renderSetores();
+}
+
+/* ===== FILTRO ANO RESUMO ===== */
+function _anosDisponiveis(){
+  var anos={};
+  REGISTROS.forEach(function(r){
+    var d=parseDtBR(r.data);
+    if(d&&d.getFullYear()>=2020)anos[d.getFullYear()]=true;
+  });
+  return Object.keys(anos).map(Number).sort(function(a,b){return b-a});
+}
+
+function _registrosResumo(){
+  if(!ANO_RESUMO)return REGISTROS;
+  return REGISTROS.filter(function(r){
+    var d=parseDtBR(r.data);
+    return d&&d.getFullYear()===ANO_RESUMO;
+  });
+}
+
+function renderFiltroAno(){
+  var anos=_anosDisponiveis();
+  if(anos.length<2){document.getElementById('filtroAnoResumo').innerHTML='';return;}
+  if(!ANO_RESUMO)ANO_RESUMO=anos[0];
+  var html='<span class="filtro-ano-label">Ano:</span>';
+  anos.forEach(function(a){
+    html+='<span class="chip'+(ANO_RESUMO===a?' on':'')+'" onclick="selecionarAnoResumo('+a+')">'+a+'</span>';
+  });
+  html+='<span class="chip'+(ANO_RESUMO===null?' on':'')+'" onclick="selecionarAnoResumo(null)">Todos</span>';
+  document.getElementById('filtroAnoResumo').innerHTML=html;
+}
+
+function selecionarAnoResumo(ano){
+  ANO_RESUMO=ano;
+  renderFiltroAno();
+  renderKPIs();
+  renderTopSetoresResumo();
+  renderCatResumo();
+  renderUltimas();
+}
+
+/* ===== RENDER ALL ===== */
+function renderAll(){
+  renderFiltroAno();
+  renderKPIs();
+  renderTopSetoresResumo();
+  renderCatResumo();
+  renderUltimas();
+  document.getElementById('viewResumo').classList.add('ativa');
+}
+
+/* ===== KPIs ===== */
+function renderKPIs(){
+  var regs=_registrosResumo();
+  var total=regs.length;
+  var emps=new Set();regs.forEach(function(r){emps.add(norm(r.nome))});
+  var cats=new Set();regs.forEach(function(r){if(r.categoria)cats.add(r.categoria)});
+  var setores=new Set();regs.forEach(function(r){if(r.lotacao)setores.add(r.lotacao)});
+
+  /* Periodo (filtra datas futuras e absurdas) */
+  var hoje=new Date();
+  var datas=regs.map(function(r){return parseDtBR(r.data)}).filter(function(d){
+    return d&&d.getFullYear()>=2020&&d<=hoje;
+  }).sort(function(a,b){return a-b});
+  var periodo=datas.length?(datas[0].toLocaleDateString('pt-BR')+' a '+datas[datas.length-1].toLocaleDateString('pt-BR')):'';
+
+  /* Vencidos */
+  var alertas=calcularAlertasGeral();
+
+  var html='';
+  html+='<div class="kpi destaque"><div class="valor" style="color:var(--azm)">'+fmtNum(total)+'</div><div class="rotulo">Entregas Registradas</div></div>';
+  html+='<div class="kpi"><div class="valor">'+fmtNum(emps.size)+'</div><div class="rotulo">Empregados Atendidos</div></div>';
+  html+='<div class="kpi"><div class="valor">'+cats.size+'</div><div class="rotulo">Categorias de EPI</div></div>';
+  html+='<div class="kpi"><div class="valor">'+setores.size+'</div><div class="rotulo">Setores</div></div>';
+  html+='<div class="kpi"><div class="valor" style="color:var(--red)">'+alertas.vencidos+'</div><div class="rotulo">EPIs Vencidos</div></div>';
+  html+='<div class="kpi"><div class="valor" style="color:var(--amber)">'+alertas.atencao+'</div><div class="rotulo">Proximos ao Vencimento</div></div>';
+  document.getElementById('kpiGrid').innerHTML=html;
+
+  if(periodo)document.getElementById('metaAtualiz').textContent=periodo;
+}
+
+/* ===== ALERTAS GERAL ===== */
+function calcularAlertasGeral(){
+  var agora=new Date();
+  var porEmp={};
+  REGISTROS.forEach(function(r){
+    var cat=r.categoria;
+    if(!_catAtivaPainel(cat))return;
+    var dt=parseDtBR(r.data);if(!dt)return;
+    var chave=norm(r.nome)+'|'+cat;
+    if(!porEmp[chave]||dt>porEmp[chave].data){
+      porEmp[chave]={nome:r.nome,siape:r.siape,categoria:cat,data:dt,dataStr:r.data,lotacao:r.lotacao,valAnos:VALIDADES[cat]};
+    }
+  });
+  var vencidos=0,atencao=0,listaVenc=[],listaAten=[];
+  Object.keys(porEmp).forEach(function(k){
+    var info=porEmp[k];
+    var anos=(agora-info.data)/(365.25*24*60*60*1000);
+    var pct=anos/info.valAnos;
+    info.anosDecorridos=anos;info.pctVida=pct;
+    if(pct>=1){vencidos++;listaVenc.push(info)}
+    else if(pct>=0.8){atencao++;listaAten.push(info)}
+  });
+  listaVenc.sort(function(a,b){return b.pctVida-a.pctVida});
+  listaAten.sort(function(a,b){return b.pctVida-a.pctVida});
+  return {vencidos:vencidos,atencao:atencao,listaVenc:listaVenc,listaAten:listaAten};
+}
+
+/* ===== TOP SETORES RESUMO ===== */
+function renderTopSetoresResumo(){
+  var regs=_registrosResumo();
+  var por={};
+  regs.forEach(function(r){
+    var s=r.lotacao||'Sem setor';
+    por[s]=(por[s]||0)+r.qtd;
+  });
+  var arr=Object.keys(por).map(function(k){return {nome:k,qtd:por[k]}}).sort(function(a,b){return b.qtd-a.qtd}).slice(0,10);
+  var max=arr.length?arr[0].qtd:1;
+  var html='';
+  arr.forEach(function(s,i){
+    var pct=Math.round(s.qtd/max*100);
+    var cor=i<3?'var(--azm)':i<6?'var(--teal)':'var(--sub)';
+    html+='<div class="setor-bar">'
+      +'<div class="setor-nome" title="'+esc(s.nome)+'">'+esc(s.nome)+'</div>'
+      +'<div class="setor-barra"><div class="setor-barra-fill" style="width:'+pct+'%;background:'+cor+'"></div></div>'
+      +'<div class="setor-val">'+fmtNum(s.qtd)+'</div>'
+      +'</div>';
+  });
+  document.getElementById('topSetoresResumo').innerHTML=html;
+}
+
+/* ===== CATEGORIAS RESUMO (barras horizontais) ===== */
+function renderCatResumo(){
+  var regs=_registrosResumo();
+  var por={};
+  regs.forEach(function(r){
+    var c=r.categoria||'OUTROS';
+    por[c]=(por[c]||0)+r.qtd;
+  });
+  var arr=Object.keys(por).map(function(k){return {nome:k,qtd:por[k]}}).sort(function(a,b){return b.qtd-a.qtd});
+  var max=arr.length?arr[0].qtd:1;
+  var html='';
+  arr.forEach(function(s){
+    var pct=Math.round(s.qtd/max*100);
+    var cor=CORES_CAT[s.nome]||'#94a3b8';
+    html+='<div class="setor-bar">'
+      +'<div class="setor-nome" title="'+esc(s.nome)+'">'+esc(s.nome)+'</div>'
+      +'<div class="setor-barra"><div class="setor-barra-fill" style="width:'+pct+'%;background:'+cor+'"></div></div>'
+      +'<div class="setor-val">'+fmtNum(s.qtd)+'</div>'
+      +'</div>';
+  });
+  document.getElementById('catBarrasResumo').innerHTML=html;
+}
+
+/* ===== ULTIMAS ENTREGAS ===== */
+function renderUltimas(){
+  var sorted=_registrosResumo().slice().sort(function(a,b){
+    var da=parseDtBR(a.data),db=parseDtBR(b.data);
+    if(!da)return 1;if(!db)return -1;return db-da;
+  }).slice(0,50);
+  var html='<table><thead><tr><th>Data</th><th>Empregado</th><th>SIAPE</th><th>EPI</th><th>CA</th><th>Setor</th></tr></thead><tbody>';
+  sorted.forEach(function(r){
+    html+='<tr><td>'+esc(r.data)+'</td><td>'+esc(r.nome)+'</td><td>'+esc(r.siape)+'</td><td>'+esc(r.epi)+'</td><td>'+esc(r.ca)+'</td><td style="font-size:.68rem">'+esc(r.lotacao)+'</td></tr>';
+  });
+  html+='</tbody></table>';
+  document.getElementById('tblUltimas').innerHTML=html;
+}
+
+/* ===== BUSCA EMPREGADO ===== */
+var _acLista=[];
+var _acIdx=-1;
+var _acTimer=null;
+
+/* Cache de todos os empregados */
+var _todosEmpregados=null;
+
+function _buildCacheEmpregados(){
+  if(_todosEmpregados)return;
+  var encontrados={};
+  CADASTRO.forEach(function(e){
+    encontrados[norm(e.nome)]={nome:e.nome,siape:e.siape,cargo:e.cargo,lotacao:e.lotacao};
+  });
+  REGISTROS.forEach(function(r){
+    var nk=norm(r.nome);
+    if(!encontrados[nk])encontrados[nk]={nome:r.nome,siape:r.siape,cargo:'',lotacao:r.lotacao};
+  });
+  _todosEmpregados=Object.values(encontrados).sort(function(a,b){return a.nome.localeCompare(b.nome)});
+}
+
+function _listarEmpregados(termo){
+  _buildCacheEmpregados();
+  if(!termo)return _todosEmpregados;
+  return _todosEmpregados.filter(function(e){
+    return norm(e.nome).indexOf(termo)>=0||norm(e.siape)===termo;
+  });
+}
+
+function _renderDropdown(lista){
+  var dd=document.getElementById('buscaDropdown');
+  _acIdx=-1;
+  if(!lista.length){_acLista=[];dd.style.display='none';return}
+  var MAX=30;
+  var exibir=lista.slice(0,MAX);
+  _acLista=exibir;
+  var html='';
+  exibir.forEach(function(e,i){
+    var nk=norm(e.nome);
+    var cnt=0;
+    REGISTROS.forEach(function(r){if(norm(r.nome)===nk)cnt++});
+    html+='<div class="ac-item" data-idx="'+i+'" onmousedown="selecionarAC('+i+')" '
+      +'style="padding:.5rem .75rem;cursor:pointer;font-size:.82rem;border-bottom:1px solid var(--borda);transition:background .1s">'
+      +'<div style="font-weight:600;color:var(--az)">'+esc(e.nome)+'</div>'
+      +'<div style="font-size:.72rem;color:var(--sub)">'
+      +(e.siape?'<span style="font-family:\'IBM Plex Mono\'">'+esc(e.siape)+'</span> · ':'')
+      +(e.lotacao?esc(e.lotacao)+' · ':'')
+      +cnt+' registro'+(cnt!==1?'s':'')
+      +'</div></div>';
+  });
+  if(lista.length>MAX){
+    html+='<div style="padding:.4rem .75rem;font-size:.72rem;color:var(--sub);text-align:center">+'+(lista.length-MAX)+' resultados. Continue digitando para refinar.</div>';
+  }
+  dd.innerHTML=html;
+  dd.style.display='block';
+}
+
+function autoCompletarEmp(){
+  clearTimeout(_acTimer);
+  _acTimer=setTimeout(function(){
+    var termo=norm(document.getElementById('buscaEmpInput').value.trim());
+    var dd=document.getElementById('buscaDropdown');
+    if(termo.length<2){dd.style.display='none';_acLista=[];return}
+    _renderDropdown(_listarEmpregados(termo));
+  },200);
+}
+
+function navAutoComplete(e){
+  var dd=document.getElementById('buscaDropdown');
+  if(dd.style.display==='none'||!_acLista.length){
+    if(e.key==='Enter')buscarEmpregado();
+    return;
+  }
+  if(e.key==='ArrowDown'){e.preventDefault();_acIdx=Math.min(_acIdx+1,_acLista.length-1);destacarAC()}
+  else if(e.key==='ArrowUp'){e.preventDefault();_acIdx=Math.max(_acIdx-1,0);destacarAC()}
+  else if(e.key==='Enter'){e.preventDefault();if(_acIdx>=0)selecionarAC(_acIdx);else buscarEmpregado()}
+  else if(e.key==='Escape'){dd.style.display='none'}
+}
+
+function destacarAC(){
+  var items=document.querySelectorAll('.ac-item');
+  items.forEach(function(el,i){
+    el.style.background=i===_acIdx?'var(--azl)':'transparent';
+    if(i===_acIdx)el.scrollIntoView({block:'nearest'});
+  });
+}
+
+function selecionarAC(idx){
+  var emp=_acLista[idx];
+  document.getElementById('buscaDropdown').style.display='none';
+  document.getElementById('buscaEmpInput').value=emp.nome;
+  mostrarEmpregado(emp);
+}
+
+function buscarEmpregado(){
+  document.getElementById('buscaDropdown').style.display='none';
+  var termo=norm(document.getElementById('buscaEmpInput').value.trim());
+  if(!termo)return;
+  var lista=_listarEmpregados(termo);
+  if(!lista.length){
+    document.getElementById('buscaResultado').style.display='none';
+    alert('Nenhum empregado encontrado.');
+    return;
+  }
+  if(lista.length===1){
+    mostrarEmpregado(lista[0]);
+    return;
+  }
+  _renderDropdown(lista);
+}
+
+function mostrarEmpregado(emp){
+  document.getElementById('buscaResultado').style.display='block';
+  document.getElementById('buscaEmpNome').textContent=emp.nome;
+
+  var info='<div style="display:flex;gap:1.5rem;flex-wrap:wrap;font-size:.82rem;margin-bottom:.5rem">';
+  if(emp.siape)info+='<span><b>SIAPE:</b> '+esc(emp.siape)+'</span>';
+  if(emp.cargo)info+='<span><b>Cargo:</b> '+esc(emp.cargo)+'</span>';
+  if(emp.lotacao)info+='<span><b>Lotacao:</b> '+esc(emp.lotacao)+'</span>';
+  info+='</div>';
+  document.getElementById('buscaEmpInfo').innerHTML=info;
+
+  /* Filtrar registros */
+  var nNorm=norm(emp.nome);
+  var regs=REGISTROS.filter(function(r){
+    return norm(r.nome)===nNorm||(emp.siape&&norm(r.siape)===norm(emp.siape));
+  }).sort(function(a,b){
+    var da=parseDtBR(a.data),db=parseDtBR(b.data);
+    if(!da)return 1;if(!db)return -1;return db-da;
+  });
+
+  /* Alertas de validade */
+  var agora=new Date();
+  var maisRecente={};
+  regs.forEach(function(r){
+    var cat=r.categoria;
+    if(!_catAtivaPainel(cat))return;
+    var dt=parseDtBR(r.data);if(!dt)return;
+    if(!maisRecente[cat]||dt>maisRecente[cat].data){
+      maisRecente[cat]={data:dt,dataStr:r.data,epi:r.epi,valAnos:VALIDADES[cat]};
+    }
+  });
+
+  var alertaHtml='';
+  Object.keys(maisRecente).forEach(function(cat){
+    var info=maisRecente[cat];
+    var anos=(agora-info.data)/(365.25*24*60*60*1000);
+    var pct=anos/info.valAnos;
+    if(pct>=1){
+      alertaHtml+='<div class="alerta-item alerta-vencido">&#9888; <b>'+esc(cat)+'</b> vencido. Ultima retirada: '+info.dataStr+' ('+anos.toFixed(1)+' anos atras, validade: '+info.valAnos+' anos)</div>';
+    }else if(pct>=0.8){
+      alertaHtml+='<div class="alerta-item alerta-atencao">&#9888; <b>'+esc(cat)+'</b> proximo do vencimento. Ultima retirada: '+info.dataStr+' ('+anos.toFixed(1)+' anos atras, validade: '+info.valAnos+' anos)</div>';
+    }
+  });
+  document.getElementById('buscaAlertas').innerHTML=alertaHtml;
+
+  /* Tabela */
+  var html='<table><thead><tr><th>Data</th><th>EPI</th><th>Categoria</th><th>CA</th><th>Qtd</th><th>Fonte</th><th>Status</th></tr></thead><tbody>';
+  regs.forEach(function(r){
+    var status='';
+    if(_catAtivaPainel(r.categoria)){
+      var dt=parseDtBR(r.data);
+      if(dt){
+        var anos=(agora-dt)/(365.25*24*60*60*1000);
+        var pct=anos/VALIDADES[r.categoria];
+        if(pct>=1)status='<span class="badge badge-danger">Vencido</span>';
+        else if(pct>=0.8)status='<span class="badge badge-warn">Atencao</span>';
+        else status='<span class="badge badge-ok">Vigente</span>';
+      }
+    }
+    html+='<tr><td>'+esc(r.data)+'</td><td>'+esc(r.epi)+'</td><td>'+esc(r.categoria)+'</td><td>'+esc(r.ca)+'</td><td>'+r.qtd+'</td><td style="font-size:.68rem">'+esc(r.fonte)+'</td><td>'+status+'</td></tr>';
+  });
+  html+='</tbody></table>';
+  document.getElementById('buscaTabela').innerHTML=html;
+}
+
+/* ===== ALERTAS VALIDADE ===== */
+var ALERTA_FILTRO='TODOS';
+function renderAlertas(){
+  var alertas=calcularAlertasGeral();
+
+  /* Chips — mostra apenas categorias ativas (não silenciadas) */
+  var sil=_silPainel();
+  var cats=Object.keys(VALIDADES).filter(function(c){return sil.indexOf(c)===-1;});
+  var chipsHtml='<div class="chip'+(ALERTA_FILTRO==='TODOS'?' on':'')+'" onclick="ALERTA_FILTRO=\'TODOS\';renderAlertas()">Todos</div>';
+  cats.forEach(function(c){
+    chipsHtml+='<div class="chip'+(ALERTA_FILTRO===c?' on':'')+'" onclick="ALERTA_FILTRO=\''+c+'\';renderAlertas()">'+esc(c)+'</div>';
+  });
+  document.getElementById('alertaChips').innerHTML=chipsHtml;
+
+  var listaV=alertas.listaVenc,listaA=alertas.listaAten;
+  if(ALERTA_FILTRO!=='TODOS'){
+    listaV=listaV.filter(function(i){return i.categoria===ALERTA_FILTRO});
+    listaA=listaA.filter(function(i){return i.categoria===ALERTA_FILTRO});
+  }
+
+  /* KPIs */
+  var khtml='';
+  khtml+='<div class="kpi"><div class="valor" style="color:var(--red)">'+listaV.length+'</div><div class="rotulo">Vencidos</div></div>';
+  khtml+='<div class="kpi"><div class="valor" style="color:var(--amber)">'+listaA.length+'</div><div class="rotulo">Proximos ao Vencimento</div></div>';
+  khtml+='<div class="kpi"><div class="valor" style="color:var(--green)">'+(listaV.length+listaA.length)+'</div><div class="rotulo">Total de Alertas</div></div>';
+  document.getElementById('alertaKpis').innerHTML=khtml;
+
+  /* Tabela */
+  var todos=listaV.map(function(i){i._status='vencido';return i}).concat(listaA.map(function(i){i._status='atencao';return i}));
+  todos.sort(function(a,b){return b.pctVida-a.pctVida});
+
+  var html='<table><thead><tr><th>Status</th><th>Empregado</th><th>SIAPE</th><th>EPI</th><th>Ultima Retirada</th><th>Validade</th><th>Tempo Decorrido</th><th>Setor</th></tr></thead><tbody>';
+  todos.forEach(function(i){
+    var badge=i._status==='vencido'?'<span class="badge badge-danger">Vencido</span>':'<span class="badge badge-warn">Atencao</span>';
+    html+='<tr><td>'+badge+'</td><td>'+esc(i.nome)+'</td><td>'+esc(i.siape)+'</td><td>'+esc(i.categoria)+'</td><td>'+i.dataStr+'</td><td>'+i.valAnos+' anos</td><td>'+i.anosDecorridos.toFixed(1)+' anos</td><td style="font-size:.68rem">'+esc(i.lotacao)+'</td></tr>';
+  });
+  html+='</tbody></table>';
+  document.getElementById('alertaTabela').innerHTML=html;
+}
+
+/* ===== SETORES ===== */
+function renderSetores(){
+  var por={};
+  REGISTROS.forEach(function(r){
+    var s=r.lotacao||'Sem setor';
+    por[s]=(por[s]||0)+r.qtd;
+  });
+  var arr=Object.keys(por).map(function(k){return {nome:k,qtd:por[k]}}).sort(function(a,b){return b.qtd-a.qtd});
+  var max=arr.length?arr[0].qtd:1;
+
+  var html='';
+  arr.forEach(function(s,i){
+    var pct=Math.round(s.qtd/max*100);
+    var cor=i<3?'var(--azm)':i<7?'var(--teal)':'var(--sub)';
+    html+='<div class="setor-bar">'
+      +'<div class="setor-nome" title="'+esc(s.nome)+'">'+esc(s.nome)+'</div>'
+      +'<div class="setor-barra"><div class="setor-barra-fill" style="width:'+pct+'%;background:'+cor+'"></div></div>'
+      +'<div class="setor-val">'+fmtNum(s.qtd)+'</div>'
+      +'</div>';
+  });
+  document.getElementById('setoresRanking').innerHTML=html;
+
+  /* Select */
+  var sel=document.getElementById('selSetor');
+  sel.innerHTML='<option value="">Selecione um setor...</option>';
+  arr.forEach(function(s){
+    sel.innerHTML+='<option value="'+esc(s.nome)+'">'+esc(s.nome)+' ('+fmtNum(s.qtd)+')</option>';
+  });
+}
+
+function detalharSetor(){
+  var setor=document.getElementById('selSetor').value;
+  if(!setor){document.getElementById('setorDetalhe').innerHTML='';return}
+
+  var regs=REGISTROS.filter(function(r){return (r.lotacao||'Sem setor')===setor});
+
+  /* Empregados do setor */
+  var emps={};
+  regs.forEach(function(r){
+    var nk=norm(r.nome);
+    if(!emps[nk])emps[nk]={nome:r.nome,siape:r.siape,total:0,cats:{}};
+    emps[nk].total+=r.qtd;
+    emps[nk].cats[r.categoria]=(emps[nk].cats[r.categoria]||0)+r.qtd;
+  });
+  var arr=Object.values(emps).sort(function(a,b){return b.total-a.total});
+
+  var html='<div style="font-size:.8rem;color:var(--sub);margin:.5rem 0">'+arr.length+' empregados, '+fmtNum(regs.length)+' retiradas</div>';
+  html+='<div class="tbl-scroll" style="max-height:400px"><table><thead><tr><th>Empregado</th><th>SIAPE</th><th>Total</th><th>Categorias</th></tr></thead><tbody>';
+  arr.forEach(function(e){
+    var cats=Object.keys(e.cats).map(function(c){return c+' ('+e.cats[c]+')'}).join(', ');
+    html+='<tr><td>'+esc(e.nome)+'</td><td>'+esc(e.siape)+'</td><td><b>'+e.total+'</b></td><td style="font-size:.68rem">'+esc(cats)+'</td></tr>';
+  });
+  html+='</tbody></table></div>';
+  document.getElementById('setorDetalhe').innerHTML=html;
+}
+
+/* ===== GRAFICOS ===== */
+function renderGraficos(){
+  /* Mensal */
+  var porMes={};
+  REGISTROS.forEach(function(r){
+    var m=String(r.data||'').match(/(\d{2})\/(\d{4})$/);
+    if(m){var k=m[2]+'-'+m[1];porMes[k]=(porMes[k]||0)+r.qtd}
+  });
+  var meses=Object.keys(porMes).sort();
+  var mLabels=meses.map(function(m){var p=m.split('-');return p[1]+'/'+p[0]});
+  var mVals=meses.map(function(m){return porMes[m]});
+
+  if(_chartInstances.mensal)_chartInstances.mensal.destroy();
+  _chartInstances.mensal=new Chart(document.getElementById('chartMensal'),{
+    type:'bar',
+    data:{labels:mLabels,datasets:[{label:'Entregas',data:mVals,backgroundColor:'rgba(44,82,130,.7)',borderRadius:3}]},
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true},x:{ticks:{font:{size:9},maxRotation:45}}}}
+  });
+
+  /* Categoria */
+  var porCat={};
+  REGISTROS.forEach(function(r){porCat[r.categoria]=(porCat[r.categoria]||0)+r.qtd});
+  var catLabels=Object.keys(porCat).sort(function(a,b){return porCat[b]-porCat[a]});
+  var catVals=catLabels.map(function(l){return porCat[l]});
+  var catCores=catLabels.map(function(l){return CORES_CAT[l]||'#94a3b8'});
+
+  if(_chartInstances.cat)_chartInstances.cat.destroy();
+  _chartInstances.cat=new Chart(document.getElementById('chartCategoria'),{
+    type:'doughnut',
+    data:{labels:catLabels,datasets:[{data:catVals,backgroundColor:catCores,borderWidth:1,borderColor:'#fff'}]},
+    options:{responsive:true,plugins:{legend:{position:'right',labels:{font:{size:10},boxWidth:12}}}}
+  });
+
+  /* Top 15 Setores */
+  var porSetor={};
+  REGISTROS.forEach(function(r){var s=r.lotacao||'Sem setor';porSetor[s]=(porSetor[s]||0)+r.qtd});
+  var setArr=Object.keys(porSetor).map(function(k){return {n:k,v:porSetor[k]}}).sort(function(a,b){return b.v-a.v}).slice(0,15);
+
+  if(_chartInstances.setores)_chartInstances.setores.destroy();
+  _chartInstances.setores=new Chart(document.getElementById('chartSetores'),{
+    type:'bar',
+    data:{labels:setArr.map(function(s){return s.n.length>30?s.n.substring(0,28)+'...':s.n}),datasets:[{label:'Retiradas',data:setArr.map(function(s){return s.v}),backgroundColor:'rgba(13,148,136,.7)',borderRadius:3}]},
+    options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true},y:{ticks:{font:{size:9}}}}}
+  });
+
+  /* Anual */
+  var porAno={};
+  REGISTROS.forEach(function(r){
+    var m=String(r.data||'').match(/(\d{4})$/);
+    if(m)porAno[m[1]]=(porAno[m[1]]||0)+r.qtd;
+  });
+  var anosArr=Object.keys(porAno).sort();
+
+  if(_chartInstances.anual)_chartInstances.anual.destroy();
+  _chartInstances.anual=new Chart(document.getElementById('chartAnual'),{
+    type:'line',
+    data:{labels:anosArr,datasets:[{label:'Entregas/ano',data:anosArr.map(function(a){return porAno[a]}),borderColor:'var(--azm)',backgroundColor:'rgba(44,82,130,.1)',fill:true,tension:.3,pointRadius:4}]},
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}
+  });
+}
+
+/* ===== INIT ===== */
+document.addEventListener('click',function(e){
+  var dd=document.getElementById('buscaDropdown');
+  if(dd&&!dd.contains(e.target)&&e.target.id!=='buscaEmpInput'){
+    dd.style.display='none';
+  }
+});
+carregarDados();
+</script>
+</body>
+</html>

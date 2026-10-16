@@ -1,0 +1,2116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exportar Dados - Painel Gerencial SOST/SEG</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f0f2f7;
+    --card: #ffffff;
+    --az: #1a2744;
+    --azm: #2c5282;
+    --azl: #ebf4ff;
+    --green: #276749;
+    --greenl: #f0fdf4;
+    --red: #c0392b;
+    --redl: #fef2f2;
+    --amber: #d97706;
+    --amberl: #fffbeb;
+    --borda: #e2e8f0;
+    --txt: #1a202c;
+    --sub: #64748b;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    background: var(--bg); color: var(--txt); min-height: 100vh;
+  }
+  .header {
+    background: linear-gradient(135deg, var(--az) 0%, #2d3a56 100%);
+    color: #fff; padding: .75rem 1.5rem;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: .5rem;
+  }
+  .header h1 { font-size: 1.1rem; font-weight: 600; }
+  .header .sub { color: rgba(255,255,255,.65); font-size: .8rem; }
+  .btn-voltar {
+    display: inline-flex; align-items: center; gap: .35rem;
+    padding: .35rem .75rem; border-radius: 6px; font-size: .8rem; font-weight: 500;
+    font-family: inherit; color: rgba(255,255,255,.7); background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.12); cursor: pointer; text-decoration: none;
+  }
+  .btn-voltar:hover { background: rgba(255,255,255,.15); color: #fff; }
+  .main { max-width: 780px; margin: 1.5rem auto; padding: 0 1rem; }
+  .card {
+    background: var(--card); border: 1px solid var(--borda);
+    border-radius: var(--radius); padding: 1.25rem 1.5rem; margin-bottom: 1rem;
+  }
+  .card-title { font-size: .9rem; font-weight: 600; margin-bottom: .75rem; color: var(--az); }
+  .info-box {
+    background: var(--azl); color: var(--azm);
+    border-radius: 8px; padding: .75rem 1rem;
+    font-size: .82rem; line-height: 1.5; margin-bottom: 1rem;
+  }
+  .config-row {
+    display: flex; align-items: center; gap: .75rem;
+    margin-bottom: .75rem; flex-wrap: wrap;
+  }
+  .config-row label {
+    font-size: .82rem; font-weight: 600; color: var(--sub);
+    min-width: 120px; flex-shrink: 0;
+  }
+  .config-row input {
+    flex: 1; font-family: 'IBM Plex Mono', monospace; font-size: .82rem;
+    padding: .4rem .6rem; border: 1px solid var(--borda); border-radius: 6px;
+    background: #f8fafc; color: var(--txt); min-width: 200px;
+  }
+  .config-row input:focus { outline: none; border-color: var(--azm); background: #fff; }
+  .hint { font-size: .75rem; color: var(--sub); margin-top: .25rem; }
+  .modulo-section { margin-bottom: .5rem; }
+  .modulo-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: .6rem .75rem; border-radius: 8px; margin-bottom: .5rem;
+  }
+  .modulo-header .mod-nome { font-size: .85rem; font-weight: 600; }
+  .modulo-header .mod-status { font-size: .75rem; font-weight: 600; padding: .15rem .5rem; border-radius: 12px; }
+  .mod-ok { background: var(--greenl); color: var(--green); }
+  .mod-warn { background: var(--amberl); color: var(--amber); }
+  .mod-err { background: var(--redl); color: var(--red); }
+  .mod-wait { background: #f1f5f9; color: #94a3b8; }
+  .stat-row { display: flex; gap: .75rem; flex-wrap: wrap; margin-bottom: .5rem; }
+  .stat-item {
+    background: #f8fafc; border: 1px solid var(--borda); border-radius: 8px;
+    padding: .4rem .6rem; text-align: center; min-width: 80px; flex: 1;
+  }
+  .stat-num { font-size: 1.2rem; font-weight: 700; color: var(--azm); }
+  .stat-label { font-size: .6rem; color: var(--sub); font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: .4rem;
+    padding: .6rem 1.5rem; border-radius: 8px; font-size: .9rem; font-weight: 600;
+    font-family: inherit; color: #fff; background: var(--green);
+    border: none; cursor: pointer; transition: background .15s;
+  }
+  .btn-primary:hover { background: #22543d; }
+  .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-secondary {
+    display: inline-flex; align-items: center; gap: .4rem;
+    padding: .45rem 1rem; border-radius: 8px; font-size: .82rem; font-weight: 600;
+    font-family: inherit; color: var(--azm); background: var(--azl);
+    border: 1px solid rgba(44,82,130,.2); cursor: pointer;
+  }
+  .btn-secondary:hover { background: var(--azm); color: #fff; }
+  .actions { display: flex; gap: .75rem; flex-wrap: wrap; align-items: center; }
+  .log-area {
+    font-family: 'IBM Plex Mono', monospace; font-size: .78rem;
+    background: #1a202c; color: #a0aec0; border-radius: 8px;
+    padding: .75rem 1rem; min-height: 100px; max-height: 280px;
+    overflow-y: auto; line-height: 1.6; white-space: pre-wrap; word-break: break-word;
+  }
+  .log-ok { color: #68d391; }
+  .log-warn { color: #fbd38d; }
+  .log-err { color: #fc8181; }
+  .log-info { color: #63b3ed; }
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; vertical-align: middle; margin-right: .4rem; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .footer { text-align: center; padding: 1rem; color: var(--sub); font-size: .7rem; }
+  @media (max-width: 640px) {
+    .main { padding: 0 .75rem; }
+    .config-row { flex-direction: column; align-items: stretch; }
+    .config-row label { min-width: auto; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>Exportar Dados</h1>
+    <div class="sub">Atualiza todos os programas do Painel Gerencial de uma vez</div>
+  </div>
+  <a class="btn-voltar" href="index.html">&#8249; Hub</a>
+</div>
+
+<div class="main">
+
+  <div class="info-box">
+    <strong>Como funciona:</strong> Um clique le os bancos locais de todos os programas
+    e envia tudo para a planilha Google Sheets via Apps Script. Abra esta pagina
+    no mesmo navegador onde usa as ferramentas de SST.
+  </div>
+
+  <div class="card">
+    <div class="card-title">Configuracao</div>
+    <div class="config-row">
+      <label>URL Apps Script:</label>
+      <input type="text" id="cfgUrl" placeholder="https://script.google.com/macros/s/.../exec">
+    </div>
+    <p class="hint">Cole a URL na primeira vez. Fica salva no navegador.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Status dos bancos</div>
+    <div class="modulo-section">
+      <div class="modulo-header">
+        <span class="mod-nome">1. Adicionais de Risco</span>
+        <span class="mod-status mod-wait" id="statusAdic">Aguardando</span>
+      </div>
+      <div class="stat-row" id="statsAdic">
+        <div class="stat-item"><div class="stat-num" id="sAdicTotal">-</div><div class="stat-label">Total</div></div>
+        <div class="stat-item"><div class="stat-num" id="sAdicAtivos">-</div><div class="stat-label">Ativos</div></div>
+        <div class="stat-item"><div class="stat-num" id="sAdicJud">-</div><div class="stat-label">Judiciais</div></div>
+      </div>
+    </div>
+    <div class="modulo-section">
+      <div class="modulo-header">
+        <span class="mod-nome">2. Monitoramento de Laudos</span>
+        <span class="mod-status mod-wait" id="statusMon">Aguardando</span>
+      </div>
+      <div class="stat-row" id="statsMon">
+        <div class="stat-item"><div class="stat-num" id="sMonTotal">-</div><div class="stat-label">Monitorados</div></div>
+        <div class="stat-item"><div class="stat-num" id="sMonMg">-</div><div class="stat-label">MG medio</div></div>
+        <div class="stat-item"><div class="stat-num" id="sMonRevisao">-</div><div class="stat-label">Em revisao</div></div>
+        <div class="stat-item"><div class="stat-num" id="sMonLaudos">-</div><div class="stat-label">Laudos vig.</div></div>
+      </div>
+    </div>
+    <div class="modulo-section">
+      <div class="modulo-header">
+        <span class="mod-nome">3. Gestao de Acidentes</span>
+        <span class="mod-status mod-wait" id="statusAcid">Aguardando</span>
+      </div>
+      <div class="stat-row" id="statsAcid">
+        <div class="stat-item"><div class="stat-num" id="sAcidTotal">-</div><div class="stat-label">Total</div></div>
+        <div class="stat-item"><div class="stat-num" id="sAcidAfast">-</div><div class="stat-label">Com afast.</div></div>
+        <div class="stat-item"><div class="stat-num" id="sAcidBio">-</div><div class="stat-label">Bio/Perfuro</div></div>
+        <div class="stat-item"><div class="stat-num" id="sAcidPend">-</div><div class="stat-label">Sem analise</div></div>
+      </div>
+    </div>
+    <div class="modulo-section">
+      <div class="modulo-header">
+        <span class="mod-nome">4. Nao-Conformidades</span>
+        <span class="mod-status mod-wait" id="statusNC">Aguardando</span>
+      </div>
+      <div class="stat-row" id="statsNC">
+        <div class="stat-item"><div class="stat-num" id="sNCTotal">-</div><div class="stat-label">Total NCs</div></div>
+        <div class="stat-item"><div class="stat-num" id="sNCAlto">-</div><div class="stat-label">Alto</div></div>
+        <div class="stat-item"><div class="stat-num" id="sNCZonas">-</div><div class="stat-label">Zonas</div></div>
+        <div class="stat-item"><div class="stat-num" id="sNCInsp">-</div><div class="stat-label">Inspecoes</div></div>
+      </div>
+    </div>
+    <div class="modulo-section">
+      <div class="modulo-header">
+        <span class="mod-nome">5. Historico de EPI</span>
+        <span class="mod-status mod-wait" id="statusEpi">Aguardando</span>
+      </div>
+      <div class="stat-row" id="statsEpi">
+        <div class="stat-item"><div class="stat-num" id="sEpiRegs">-</div><div class="stat-label">Registros</div></div>
+        <div class="stat-item"><div class="stat-num" id="sEpiEmps">-</div><div class="stat-label">Empregados</div></div>
+        <div class="stat-item"><div class="stat-num" id="sEpiCats">-</div><div class="stat-label">Categorias</div></div>
+        <div class="stat-item"><div class="stat-num" id="sEpiSets">-</div><div class="stat-label">Setores</div></div>
+      </div>
+    </div>
+    <div style="margin-top:.75rem">
+      <button class="btn-secondary" onclick="scanAll()">Escanear bancos</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Exportacao</div>
+    <div class="actions">
+      <button class="btn-primary" id="btnExportar" onclick="exportarTudo()" disabled>Atualizar Painel</button>
+      <button class="btn-secondary" onclick="exportarCsv()">Baixar CSV</button>
+    </div>
+    <p class="hint" style="margin-top:.5rem">Envia os dados de todos os programas para a planilha de uma vez.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Log</div>
+    <div class="log-area" id="logArea">Pronto. Clique em "Escanear bancos" para comecar.\n</div>
+  </div>
+
+</div>
+
+<div class="footer">
+  Painel Gerencial SOST/SEG &middot; USOST &middot; Hospital Universitario de Lagarto &middot; EBSERH
+</div>
+
+<script>
+/* ========================================================================
+   EXPORTADOR UNIFICADO
+   Le dados de TODOS os programas e envia para o Apps Script central.
+
+   Bancos:
+   1. sst_gar_db / store "empregados"  -> Adicionais de Risco
+   2. sst_hul_db / store "dados"       -> Monitoramento de Laudos
+   3. localStorage "gat_hul_v1"        -> Gestao de Acidentes
+
+   Monitoramento: replica a logica de calculo de _monCarregarInner
+   do analise_laudo.html para computar mg, nivel, mesesAbaixo50 etc.
+   ======================================================================== */
+
+var STORAGE_KEY = 'painel_sost_script_url';
+var HOJE = (function(){ var d = new Date(); d.setHours(0,0,0,0); return d; })();
+
+/* Estado global */
+var ADIC_DADOS = [];
+var MON_RESULTADOS = [];
+var ACID_DADOS = [];
+var ACID_CONFIG = {};
+var NC_DADOS = [];
+var EPI_REGS = [];
+var EPI_CAD = [];
+var HIST_ITEMS_SHARED = {};
+var NC_OK = false;
+var ADIC_OK = false;
+var MON_OK = false;
+var ACID_OK = false;
+var EPI_OK = false;
+var EPI_EMP_MAP = {};  /* siape -> {nome, unidade, cargo} do epi_v1_9 */
+
+/* ── URL salva ── */
+(function(){
+  try {
+    var saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) document.getElementById('cfgUrl').value = saved;
+  } catch(e){}
+})();
+document.getElementById('cfgUrl').addEventListener('change', function(){
+  try { localStorage.setItem(STORAGE_KEY, this.value.trim()); } catch(e){}
+});
+
+/* ── LOG ── */
+function log(msg, cls) {
+  var el = document.getElementById('logArea');
+  var span = document.createElement('span');
+  if (cls) span.className = 'log-' + cls;
+  span.textContent = msg + '\n';
+  el.appendChild(span);
+  el.scrollTop = el.scrollHeight;
+}
+function setStatus(id, text, cls) {
+  var el = document.getElementById(id);
+  el.textContent = text;
+  el.className = 'mod-status ' + cls;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   UTILS (replicados do analise_laudo.html)
+   ══════════════════════════════════════════════════════════════════ */
+function normL(s){ return s ? String(s).trim().toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'') : ''; }
+function getColL(row, col){
+  var keys = Object.keys(row);
+  for(var i=0; i<keys.length; i++){ if(normL(keys[i]) === normL(col)) return row[keys[i]]; }
+  return null;
+}
+function findBySiape(dados, cS, siape){
+  if(!siape) return -1;
+  var ns = normL(String(siape));
+  for(var i=0; i<dados.length; i++){
+    var sv = getColL(dados[i], cS);
+    if(normL(String(sv||'')) === ns) return i;
+  }
+  return -1;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   MODULO 1: ADICIONAIS DE RISCO (sst_gar_db)
+   ══════════════════════════════════════════════════════════════════ */
+function openDb(name){
+  return new Promise(function(resolve, reject){
+    var req = indexedDB.open(name);
+    req.onsuccess = function(e){ resolve(e.target.result); };
+    req.onerror = function(){ reject(new Error('Banco ' + name + ' nao encontrado')); };
+  });
+}
+
+function storeGetAll(db, storeName){
+  return new Promise(function(resolve, reject){
+    if(!db.objectStoreNames.contains(storeName)){ resolve([]); return; }
+    var r = db.transaction(storeName,'readonly').objectStore(storeName).getAll();
+    r.onsuccess = function(){ resolve(r.result || []); };
+    r.onerror = function(){ reject(r.error); };
+  });
+}
+
+function storeCursor(db, storeName){
+  return new Promise(function(resolve, reject){
+    if(!db.objectStoreNames.contains(storeName)){ resolve([]); return; }
+    var tx = db.transaction(storeName,'readonly');
+    var store = tx.objectStore(storeName);
+    var items = [];
+    var cursor = store.openCursor();
+    cursor.onsuccess = function(e){
+      var c = e.target.result;
+      if(c){ items.push({key: c.key, value: c.value}); c.continue(); }
+      else resolve(items);
+    };
+    cursor.onerror = function(){ reject(new Error('Erro ao ler store ' + storeName)); };
+  });
+}
+
+function scanAdic(){
+  log('Escaneando sst_gar_db (Adicionais)...', 'info');
+  setStatus('statusAdic', 'Lendo...', 'mod-wait');
+  return openDb('sst_gar_db').then(function(db){
+    return storeGetAll(db, 'empregados').then(function(dados){
+      db.close();
+      ADIC_DADOS = dados;
+      if(!dados.length){
+        setStatus('statusAdic', 'Vazio', 'mod-warn');
+        log('Adicionais: banco vazio ou nao utilizado neste navegador.', 'warn');
+        return;
+      }
+      var ativos = dados.filter(function(e){ return e.situacao === 'ATIVO'; }).length;
+      var judiciais = dados.filter(function(e){ return e.jud === 1; }).length;
+      document.getElementById('sAdicTotal').textContent = dados.length;
+      document.getElementById('sAdicAtivos').textContent = ativos;
+      document.getElementById('sAdicJud').textContent = judiciais;
+      setStatus('statusAdic', dados.length + ' empregados', 'mod-ok');
+      log('Adicionais: ' + dados.length + ' empregados (' + ativos + ' ativos)', 'ok');
+      ADIC_OK = true;
+    });
+  }).catch(function(err){
+    setStatus('statusAdic', 'Erro', 'mod-err');
+    log('Adicionais: ' + err.message, 'err');
+  });
+}
+
+/* Funcoes auxiliares adicionais */
+function parseISO(s){
+  if(!s) return null;
+  var p = s.split('-');
+  if(p.length < 3) return null;
+  var d = new Date(+p[0], +p[1]-1, +p[2]);
+  return isNaN(d) ? null : d;
+}
+function diasAte(d){ return Math.round((d - HOJE) / 86400000); }
+
+function statusRev(e){
+  if(e.situacao !== 'ATIVO') return {bucket:null, txt:'Inativo'};
+  var r = parseISO(e.revisit);
+  if(!r) return {bucket:null, txt:'Sem data'};
+  var dd = diasAte(r);
+  if(dd < 0) return {bucket:'venc', txt:'Vencida'};
+  if(dd <= 90) return {bucket:'vence', txt:'Vencendo'};
+  return {bucket:'dia', txt:'Em dia'};
+}
+
+function adicLabel(e){
+  if(e.jud===1){
+    if(e.adic==='Sem caracterização') return 'Judicial sem caracterização';
+    return 'Judicial grau máximo';
+  }
+  if(e.adic==='Risco de vida') return 'Risco de vida';
+  if(e.adic==='Periculosidade') return 'Periculosidade';
+  if(e.adic==='Sem caracterização') return 'Sem caracterização';
+  if(e.grau==='grau máximo') return 'Insalubridade grau máximo';
+  if(e.adic==='Insalubridade') return 'Insalubridade grau médio';
+  return e.adic || 'Não definido';
+}
+
+function pctNum(e){
+  if(e.jud===1){
+    if(e.sentpct) return e.sentpct;
+    if(e.adic==='Sem caracterização') return '0';
+    return '40';
+  }
+  if(e.adic==='Risco de vida') return '40';
+  if(e.adic==='Periculosidade') return '30';
+  if(e.adic==='Sem caracterização') return '0';
+  if(e.grau==='grau máximo') return '40';
+  if(e.adic==='Insalubridade') return '20';
+  return e.pct || '0';
+}
+
+function fmtData(iso){
+  if(!iso) return '';
+  var p = iso.split('-');
+  if(p.length < 3) return '';
+  return p[2]+'/'+p[1]+'/'+p[0];
+}
+
+function getOneDriveLink(emp){
+  var diretos = ['docs','link','link_onedrive','onedrive','pasta','pasta_onedrive','url','sharepoint','drive','arquivo','documento'];
+  for(var i=0; i<diretos.length; i++){
+    var v = emp[diretos[i]];
+    if(v && String(v).trim()) return String(v).trim();
+  }
+  var keywords = ['link','onedrive','pasta','sharepoint','drive','url'];
+  var keys = Object.keys(emp);
+  for(var i=0; i<keys.length; i++){
+    var k = keys[i].toLowerCase();
+    for(var j=0; j<keywords.length; j++){
+      if(k.indexOf(keywords[j])>=0){
+        var v = (emp[keys[i]]||'').toString().trim();
+        if(v) return v;
+      }
+    }
+  }
+  return '';
+}
+
+function montarAdic(){
+  var dados = ADIC_DADOS;
+  var ativos = dados.filter(function(e){ return e.situacao==='ATIVO'; });
+  var nAtivos = ativos.length;
+  var nInativos = dados.filter(function(e){ return e.situacao==='NÃO ATIVO'; }).length;
+  var nLicenca = dados.filter(function(e){ return e.situacao==='LICENÇA'; }).length;
+  var nJud = dados.filter(function(e){ return e.jud===1; }).length;
+
+  var venc=0, vence=0, dia=0;
+  ativos.forEach(function(e){
+    var b = statusRev(e).bucket;
+    if(b==='venc') venc++;
+    else if(b==='vence') vence++;
+    else if(b==='dia') dia++;
+  });
+
+  var insalubMedio=0, insalubMaximo=0, peric=0, riscoVida=0, sem=0, judSem=0, judMax=0;
+  ativos.forEach(function(e){
+    var label = adicLabel(e);
+    if(label==='Insalubridade grau médio') insalubMedio++;
+    else if(label==='Insalubridade grau máximo') insalubMaximo++;
+    else if(label==='Periculosidade') peric++;
+    else if(label==='Risco de vida') riscoVida++;
+    else if(label==='Sem caracterização') sem++;
+    else if(label==='Judicial grau máximo') judMax++;
+    else if(label==='Judicial sem caracterização') judSem++;
+  });
+
+  var dataHora = new Date().toLocaleString('pt-BR');
+
+  var resumoRows = [
+    ['data_atualizacao','total','ativos','inativos','licenca',
+     'rev_vencida','rev_vencendo','rev_em_dia','judiciais',
+     'insalub_medio','insalub_maximo','periculosidade','risco_vida',
+     'sem_caracterizacao','judicial_gm','judicial_sc'],
+    [dataHora, dados.length, nAtivos, nInativos, nLicenca,
+     venc, vence, dia, nJud,
+     insalubMedio, insalubMaximo, peric, riscoVida,
+     sem, judMax, judSem]
+  ];
+
+  var empHeaders = [
+    'siape','nome','cargo','unidade','posto','situacao',
+    'adicional','percentual','judicial','data_revisitacao',
+    'status_revisitacao','sei','link_onedrive'
+  ];
+
+  var empDataRows = dados
+    .sort(function(a,b){ return (a.nome||'').localeCompare(b.nome||'','pt-BR'); })
+    .map(function(e){
+      var sr = statusRev(e);
+      return [
+        e.siape||'', e.nome||'', e.cargo||'', e.unidade||'', e.posto||'',
+        e.situacao||'', adicLabel(e), pctNum(e)+'%',
+        e.jud===1?'Sim':'Não', fmtData(e.revisit), sr.txt,
+        e.sei||'', getOneDriveLink(e)
+      ];
+    });
+
+  return {
+    resumoRows: resumoRows,
+    empRows: [empHeaders].concat(empDataRows)
+  };
+}
+
+/* ── Helpers compartilhados (Monitoramento + EPI) ── */
+function _normNomeEpi(s){
+  return String(s||'').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim();
+}
+function _normColKey(s){
+  return String(s||'').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Z0-9]/g,'');
+}
+function _buscarCol(obj, cands){
+  if(!obj) return '';
+  var chaves = Object.keys(obj);
+  for(var i=0;i<cands.length;i++){
+    var cn = _normColKey(cands[i]);
+    for(var j=0;j<chaves.length;j++){
+      if(_normColKey(chaves[j]) === cn) return obj[chaves[j]];
+    }
+  }
+  for(var i2=0;i2<cands.length;i2++){
+    var cn2 = _normColKey(cands[i2]);
+    for(var k2=0;k2<chaves.length;k2++){
+      var ck = _normColKey(chaves[k2]);
+      if(ck.indexOf(cn2)!==-1 || cn2.indexOf(ck)!==-1) return obj[chaves[k2]];
+    }
+  }
+  return '';
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   MODULO 2: MONITORAMENTO DE LAUDOS (sst_hul_db)
+   Replica a logica de _monCarregarInner do analise_laudo.html
+   para computar mg, nivel e demais campos calculados.
+   ══════════════════════════════════════════════════════════════════ */
+
+function scanMon(){
+  log('Escaneando sst_hul_db (Monitoramento)...', 'info');
+  setStatus('statusMon', 'Lendo...', 'mod-wait');
+  return openDb('sst_hul_db').then(function(db){
+    return storeCursor(db, 'dados').then(function(items){
+      db.close();
+      log('sst_hul_db: ' + items.length + ' registros totais', 'info');
+
+      /* Separar por prefixo */
+      var monItems = [];     /* mon_<siape> -> empregado monitorado */
+      var expItems = {};     /* exp_<ano>_m<mes> -> dados exposicao */
+      var cfgItems = {};     /* exp_<ano>_cfg -> config colunas */
+      var feriasMap = {};    /* mon_ferias_<siape>_<AAAAMM> */
+      var laudoVigMap = {};  /* laudo_vig_<siape> */
+      var histItems = {};    /* hist_mes_<ano>_m<idx>, hist_planilhas, hist_manuais_lista, hist_cadastro */
+
+      items.forEach(function(it){
+        var k = String(it.key);
+        var val = it.value;
+        if(typeof val === 'string'){ try { val = JSON.parse(val); } catch(e){ return; } }
+        if(!val) return;
+
+        if(k.indexOf('exp_') === 0 && k.indexOf('_cfg') > 0){
+          cfgItems[k] = val;
+        } else if(k.indexOf('exp_') === 0 && k.indexOf('_m') > 0){
+          expItems[k] = val;
+        } else if(k.indexOf('laudo_vig_') === 0){
+          laudoVigMap[k.replace('laudo_vig_','')] = val;
+        } else if(k.indexOf('mon_ferias_') === 0){
+          feriasMap[k] = val;
+        } else if(k.indexOf('hist_') === 0){
+          histItems[k] = val;
+        } else if(k.indexOf('epi_emp_') === 0){
+          var empSiape = k.replace('epi_emp_','');
+          if(typeof val === 'object' && empSiape){
+            EPI_EMP_MAP[empSiape] = val;
+          }
+        } else if(k.indexOf('mon_') === 0){
+          /* Filtrar chaves auxiliares */
+          if(k.indexOf('mon_log') === 0) return;
+          if(k.indexOf('mon_excl_') === 0) return;
+          if(k.indexOf('mon_carga_') === 0) return;
+          if(k === 'mon_ultima_analise') return;
+          if(k.indexOf('mon_cfg_') === 0) return;
+          if(typeof val === 'object' && (val.siape || val.nome)){
+            monItems.push({key: k, data: val});
+          }
+        }
+      });
+
+      var histKeys = Object.keys(histItems);
+      var histMesKeys = histKeys.filter(function(k){ return k.indexOf('hist_mes_') === 0; });
+      log('mon_ empregados: ' + monItems.length + ' | exp_ meses: ' + Object.keys(expItems).length + ' | laudos: ' + Object.keys(laudoVigMap).length, 'info');
+      log('hist_ chaves: ' + histKeys.length + ' (hist_mes_: ' + histMesKeys.length + ', hist_planilhas: ' + (histItems['hist_planilhas']?'sim':'nao') + ', hist_manuais: ' + (histItems['hist_manuais_lista']?'sim':'nao') + ', hist_cadastro: ' + (histItems['hist_cadastro']?'sim':'nao') + ')', 'info');
+
+      if(!monItems.length){
+        setStatus('statusMon', 'Sem dados', 'mod-warn');
+        log('Monitoramento: nenhum empregado monitorado encontrado.', 'warn');
+        return;
+      }
+
+      /* ── Montar cfg unificada ── */
+      var cfgFinal = {};
+      Object.keys(cfgItems).sort().forEach(function(k){ cfgFinal = cfgItems[k]; });
+      var cN = cfgFinal.cNome || 'NOME';
+      var cS = cfgFinal.cSiape || 'SIAPE';
+      var cPI = cfgFinal.cPli || 'PLANTAOINF';
+      var cPT = cfgFinal.cPlt || 'PLANTAO';
+      var cLot = cfgFinal.cLot || 'LOTACAO';
+
+      log('Config colunas: NOME=' + cN + ' SIAPE=' + cS + ' PLI=' + cPI + ' PLT=' + cPT, 'info');
+
+      /* ── Encontrar ultimo mes com dados ── */
+      var anoAtual = new Date().getFullYear();
+      var mesAtual = new Date().getMonth();
+
+      /* Mapear exp_ por chave ano_mes */
+      var mapaDados = {};
+      Object.keys(expItems).forEach(function(k){
+        /* exp_2026_m3 -> 2026_3 */
+        var match = k.match(/exp_(\d+)_m(\d+)/);
+        if(match) mapaDados[match[1] + '_' + match[2]] = expItems[k];
+      });
+
+      var ultimoMesComDados = -1;
+      var ultimoAnoComDados = anoAtual;
+      for(var a2 = anoAtual+1; a2 >= anoAtual-1; a2--){
+        for(var m2 = 11; m2 >= 0; m2--){
+          if(mapaDados[a2+'_'+m2]){
+            if(ultimoMesComDados === -1 || (a2*12+m2) > (ultimoAnoComDados*12+ultimoMesComDados)){
+              ultimoMesComDados = m2;
+              ultimoAnoComDados = a2;
+            }
+          }
+        }
+        if(ultimoMesComDados !== -1) break;
+      }
+      if(ultimoMesComDados === -1){ ultimoMesComDados = mesAtual; ultimoAnoComDados = anoAtual; }
+
+      log('Ultimo mes com dados: ' + (ultimoMesComDados+1) + '/' + ultimoAnoComDados, 'info');
+
+      /* ── Primeira aparicao de cada servidor nos exp_ ── */
+      var primeiraAparicao = {};
+      var primeiraAparicaoSiape = {};
+      Object.keys(mapaDados).forEach(function(key){
+        var ay = key.split('_');
+        var aaa = parseInt(ay[0]), mmm = parseInt(ay[1]);
+        var ref = aaa*12 + mmm;
+        var obj = mapaDados[key];
+        if(!obj || !obj.dados) return;
+        obj.dados.forEach(function(row){
+          var nv = getColL(row, cN), sv = getColL(row, cS);
+          if(!nv) return;
+          var ch = normL(String(nv)) + '||' + normL(String(sv||''));
+          if(primeiraAparicao[ch] === undefined || ref < primeiraAparicao[ch]){
+            primeiraAparicao[ch] = ref;
+          }
+          var ns = normL(String(sv||''));
+          if(ns && (primeiraAparicaoSiape[ns] === undefined || ref < primeiraAparicaoSiape[ns])){
+            primeiraAparicaoSiape[ns] = ref;
+          }
+        });
+      });
+
+      /* ── EPI: ultima retirada de PFF2 por SIAPE ── */
+      var epiMapa = {};   /* siape -> 'AAAA-MM' da ultima retirada PFF2 */
+      var epiTemDado = false;
+
+      function _epiEhPFF2(epi){
+        if(!epi) return false;
+        var u = String(epi).toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+        return u.indexOf('N95')!==-1||u.indexOf('PFF')!==-1||u.indexOf('RESPIRADOR')!==-1||u.indexOf('CARVAO ATIVADO')!==-1||u.indexOf('MASCARA')!==-1;
+      }
+      function _epiDataAAAAMM(dataStr){
+        if(!dataStr) return '';
+        var s = String(dataStr).trim();
+        var m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        if(m) return m[3]+'-'+m[2];
+        var m2 = s.match(/^(\d{4})-(\d{2})/);
+        if(m2) return m2[1]+'-'+m2[2];
+        return '';
+      }
+      /* Cadastro mestre nome->SIAPE */
+      var nomeParaSiape = {};
+      var histCad = histItems['hist_cadastro'];
+      if(Array.isArray(histCad)){
+        histCad.forEach(function(e){
+          var nr = _buscarCol(e, ['NOME','NOME COMPLETO','NOME DO EMPREGADO','EMPREGADO']);
+          var sr = _buscarCol(e, ['SIAPE']);
+          var n = _normNomeEpi(nr), s = String(sr||'').trim();
+          if(n && s) nomeParaSiape[n] = s;
+        });
+      }
+
+      /* Mapa reverso nome->ultima retirada PFF2 (fallback quando SIAPE nao cruza) */
+      var epiMapaNome = {};
+
+      function processarRegsEpi(arr){
+        if(!Array.isArray(arr)) return;
+        arr.forEach(function(r){
+          if(!r) return;
+          /* hist_mes e manuais ja vem filtrados (somente ENTREGUE) */
+          if(!_epiEhPFF2(r.epi)) return;
+          var aaaamm = _epiDataAAAAMM(r.data);
+          if(!aaaamm) return;
+          var siape = String(r.siape||'').trim();
+          if(!siape){
+            var n = _normNomeEpi(r.nome);
+            if(n && nomeParaSiape[n]) siape = nomeParaSiape[n];
+          }
+          /* Indexar por nome tambem, pra fallback */
+          var nomeN = _normNomeEpi(r.nome);
+          if(nomeN){
+            if(!epiMapaNome[nomeN] || aaaamm > epiMapaNome[nomeN]) epiMapaNome[nomeN] = aaaamm;
+          }
+          if(!siape) return;
+          if(!epiMapa[siape] || aaaamm > epiMapa[siape]) epiMapa[siape] = aaaamm;
+        });
+      }
+
+      /* Fallback: se hist_ nao foi encontrado no IndexedDB, tentar localStorage */
+      if(!Object.keys(histItems).filter(function(k){ return k.indexOf('hist_mes_')===0; }).length){
+        log('hist_mes_ nao encontrado no IndexedDB, tentando localStorage...', 'info');
+        for(var li = 0; li < localStorage.length; li++){
+          var lk = localStorage.key(li);
+          if(lk && lk.indexOf('hist_') === 0){
+            try {
+              var lv = JSON.parse(localStorage.getItem(lk));
+              if(lv) histItems[lk] = lv;
+            } catch(e){}
+          }
+        }
+        var lsHistKeys = Object.keys(histItems).filter(function(k){ return k.indexOf('hist_') === 0; });
+        log('localStorage hist_: ' + lsHistKeys.length + ' chaves encontradas', 'info');
+      }
+
+      /* Compartilhar hist_ com scanEpi */
+      HIST_ITEMS_SHARED = histItems;
+
+      /* Planilhas mensais hist_mes_<ano>_m<idx> */
+      var _epiTotalRegs = 0;
+      var _epiTotalPFF2 = 0;
+      Object.keys(histItems).forEach(function(hk){
+        if(hk.indexOf('hist_mes_') === 0){
+          epiTemDado = true;
+          var obj = histItems[hk];
+          if(obj && Array.isArray(obj.dados)){
+            _epiTotalRegs += obj.dados.length;
+            processarRegsEpi(obj.dados);
+          }
+        }
+      });
+      /* hist_planilhas (Registro Eletronico) - dados ja filtrados na importacao */
+      var histPlanMon = histItems['hist_planilhas'];
+      if(Array.isArray(histPlanMon) && histPlanMon.length){
+        histPlanMon.forEach(function(p){
+          if(p && Array.isArray(p.dados)){
+            epiTemDado = true;
+            _epiTotalRegs += p.dados.length;
+            processarRegsEpi(p.dados);
+          }
+        });
+      }
+
+      /* Lancamentos manuais */
+      var histMan = histItems['hist_manuais_lista'];
+      if(Array.isArray(histMan) && histMan.length){
+        epiTemDado = true;
+        _epiTotalRegs += histMan.length;
+        processarRegsEpi(histMan);
+      }
+
+      _epiTotalPFF2 = Object.keys(epiMapa).length;
+
+      function classificarEPI(siape, nome){
+        if(!epiTemDado) return {nivel:'sem-dado', txt:'Sem dado', nivel2:'Sem dado', ultima:''};
+        var ult = epiMapa[siape] || '';
+        /* Fallback: buscar por nome se SIAPE nao encontrou */
+        if(!ult && nome){
+          var nN = _normNomeEpi(nome);
+          ult = epiMapaNome[nN] || '';
+        }
+        if(!ult){
+          return {nivel:'pendente', txt:'Sem registro de PFF-2', nivel2:'Pendente', ultima:''};
+        }
+        var ultTxt = ult.slice(5,7)+'/'+ult.slice(0,4);
+        var hoje = new Date();
+        var hojeAM = hoje.getFullYear()*12 + hoje.getMonth() + 1;
+        var p = ult.split('-');
+        var ultAM = parseInt(p[0])*12 + parseInt(p[1]);
+        var diff = hojeAM - ultAM;
+        if(diff <= 1) return {nivel:'ok', txt:'Ult. retirada: '+ultTxt+' (OK)', nivel2:'OK', ultima:ultTxt};
+        if(diff <= 3) return {nivel:'atencao', txt:'Ult. retirada: '+ultTxt+' ('+diff+' meses)', nivel2:'Atencao', ultima:ultTxt};
+        return {nivel:'pendente', txt:'Ult. retirada: '+ultTxt+' ('+diff+' meses)', nivel2:'Pendente', ultima:ultTxt};
+      }
+
+      log('EPI hist: ' + _epiTotalRegs + ' registros totais, ' + _epiTotalPFF2 + ' SIAPEs com PFF-2' + (!epiTemDado ? ' (NENHUM dado de historico encontrado)' : ''), 'info');
+
+      /* ── Regra padrao ── */
+      var _regraPad = {novoLaudo: 3, criticoConsec: 2, zeroConsec: 1};
+
+      /* ── Calcular resultados para cada servidor ── */
+      MON_RESULTADOS = monItems.map(function(item){
+        var srv = item.data;
+        var siape = String(srv.siape || '').trim();
+
+        /* Janela de 12 meses baseada no ultimo mes com dados */
+        var coords = [];
+        for(var d = 11; d >= 0; d--){
+          var tot = ultimoAnoComDados*12 + ultimoMesComDados - d;
+          var aa = Math.floor(tot/12), mm = tot%12;
+          coords.push({ano: aa, mes: mm});
+        }
+
+        var chSrv = normL(srv.nome) + '||' + normL(siape);
+        var siapeNorm = normL(siape);
+
+        /* Marco temporal: mesIni/anoIni */
+        var marcoMon = (srv.anoIni||0)*12 + (srv.mesIni||0);
+
+        /* Vigencia do laudo (laudo_vig_<siape>) */
+        var vigArr = laudoVigMap[siape] || [];
+        if(!Array.isArray(vigArr)) vigArr = [];
+        var vigConc = null, vigSei = '', vigNum = '';
+        var temRevisao = false; /* v1.70: detecta laudo de revisao emitido */
+        for(var j = 0; j < vigArr.length; j++){
+          var vit = vigArr[j];
+          if(vit.grau === 'maximo' && vit.tipo === 'concessao'){
+            if(!vigConc || vit.vigInicio < vigConc){
+              vigConc = vit.vigInicio;
+              vigSei = vit.sei || '';
+              vigNum = vit.numLaudo || '';
+            }
+          }
+          if(vit.tipo === 'revisao') temRevisao = true;
+        }
+
+        var temLaudoManual = !!(srv.laudoSei && String(srv.laudoSei).trim());
+        var semLaudo = !vigConc && !temLaudoManual;
+
+        if(vigConc){
+          var vp = vigConc.split('-');
+          var vAno = parseInt(vp[0], 10);
+          var vMes = parseInt(vp[1], 10) - 1;
+          marcoMon = vAno*12 + vMes - 1;
+        }
+
+        /* Calcular cada mes da janela */
+        var lotPlan = '';
+        var meses = coords.map(function(c){
+          var refMes = c.ano*12 + c.mes;
+          var preMon = refMes <= marcoMon;
+          var key = c.ano + '_' + c.mes;
+          var obj = mapaDados[key];
+          if(!obj || !obj.dados) return {mes:c.mes, ano:c.ano, cls:'n', pli:0, plt:0, pct:null, preMon:preMon};
+
+          /* Buscar servidor na planilha do mes */
+          var reg = null;
+          for(var i = 0; i < obj.dados.length; i++){
+            var row = obj.dados[i];
+            var nv = getColL(row, cN), sv = getColL(row, cS);
+            if(normL(String(nv||'')) + '||' + normL(String(sv||'')) === chSrv){
+              reg = row; break;
+            }
+          }
+          if(!reg && siapeNorm){
+            var idxS = findBySiape(obj.dados, cS, siape);
+            if(idxS >= 0) reg = obj.dados[idxS];
+          }
+          if(!reg){
+            var primeiraRef0 = primeiraAparicao[chSrv];
+            if(primeiraRef0 === undefined) primeiraRef0 = primeiraAparicaoSiape[siapeNorm];
+            if(primeiraRef0 === undefined || refMes < primeiraRef0){
+              return {mes:c.mes, ano:c.ano, cls:'n', pli:0, plt:0, pct:null, preMon:preMon};
+            }
+            return {mes:c.mes, ano:c.ano, cls:'se', pli:0, plt:0, pct:0, preMon:preMon};
+          }
+
+          var pli = getColL(reg, cPI), plt = getColL(reg, cPT);
+          var lv = getColL(reg, cLot);
+          if(lv != null && String(lv).trim()) lotPlan = String(lv).trim();
+
+          var pliVazio = (pli===null || pli==='' || (typeof pli==='number' && isNaN(pli)));
+          var pltVazio = (plt===null || plt==='' || (typeof plt==='number' && isNaN(plt)));
+          var pltN = pltVazio ? null : Number(plt);
+          var pliN = pliVazio ? 0 : Number(pli);
+
+          var pct, cls;
+          if(!pltVazio && pltN !== null && !isNaN(pltN) && pltN > 0){
+            if(pliN === 0){ pct = 0; cls = 'se'; }
+            else {
+              pct = (pliN/pltN*100);
+              if(pct < 24) cls = 'cr';
+              else if(pct < 50) cls = 'at';
+              else cls = 'g';
+            }
+          } else {
+            var primeiraRef = primeiraAparicao[chSrv];
+            if(primeiraRef === undefined) primeiraRef = primeiraAparicaoSiape[siapeNorm];
+            if(primeiraRef === undefined || refMes < primeiraRef){
+              return {mes:c.mes, ano:c.ano, cls:'n', pli:0, plt:0, pct:null, preMon:preMon};
+            }
+            pct = 0; cls = 'se';
+          }
+
+          /* Ferias */
+          var fk = 'mon_ferias_' + siape + '_' + c.ano + String(c.mes+1).padStart(2,'0');
+          var fer = feriasMap[fk];
+          var ferias = false, ferPresuncao = false;
+          var pltEfetivo = pltN;
+          if(fer){
+            ferias = true;
+            var piso = fer.piso || Math.ceil((fer.cargaPadrao||12)/2);
+            if(fer.pltReal != null && fer.pltReal >= 0) pltEfetivo = fer.pltReal;
+            if(pltEfetivo != null && pltEfetivo < piso){
+              ferPresuncao = true;
+            } else if(pltEfetivo != null && pltEfetivo > 0){
+              pct = (pliN/pltEfetivo*100);
+              if(pliN===0) cls='se';
+              else if(pct<24) cls='cr';
+              else if(pct<50) cls='at';
+              else cls='g';
+            }
+          }
+
+          return {mes:c.mes, ano:c.ano, cls:ferPresuncao?'g':cls, pli:pliN, plt:pltEfetivo, pct:pct, preMon:preMon, ferias:ferias, ferPresuncao:ferPresuncao};
+        });
+
+        /* ── Classificacao do nivel ── */
+        /* Para o PAINEL/EXPORT: quando o servidor tem laudo mas 0 meses
+           pos-vigencia (vigencia recem-concedida), usamos a janela cheia
+           para classificar, em vez de marcar como "pendente". No painel
+           gerencial, queremos mostrar o estado real da exposicao. */
+        var mesesPos = meses.filter(function(m){ return !m.preMon; });
+        var totalMesesPos = mesesPos.length;
+        var mesesPosComDados = mesesPos.filter(function(m){ return m.cls!=='n'; }).length;
+
+        /* Se tem laudo mas sem dados pos-vigencia, usar janela cheia */
+        var mesesParaRegua = mesesPos;
+        if(!semLaudo && (totalMesesPos === 0 || mesesPosComDados === 0)){
+          mesesParaRegua = meses.filter(function(m){ return m.cls !== 'n'; });
+        }
+
+        var mesesAbaixo50 = mesesParaRegua.filter(function(m){ return m.cls==='at'||m.cls==='cr'||m.cls==='se'; }).length;
+        var mesesReguaComDados = mesesParaRegua.filter(function(m){ return m.cls!=='n'; }).length;
+
+        /* mg sobre janela cheia de 12 */
+        var ult12 = meses.slice(-12);
+        var mg = ult12.filter(function(m){ return m.cls==='g'; }).length;
+
+        /* Sequencias consecutivas */
+        var maxConsecCrit=0, ccA=0, maxConsecZero=0, ccZ=0;
+        mesesParaRegua.forEach(function(m){
+          if(m.cls==='cr'||m.cls==='se'){ ccA++; if(ccA>maxConsecCrit) maxConsecCrit=ccA; } else ccA=0;
+          if(m.cls==='se'){ ccZ++; if(ccZ>maxConsecZero) maxConsecZero=ccZ; } else ccZ=0;
+        });
+
+        var limNovo = _regraPad.novoLaudo || 3;
+        var critConsec = _regraPad.criticoConsec || 2;
+        var zeroConsec = _regraPad.zeroConsec || 1;
+
+        /* Regra propria do servidor */
+        if(srv.regra && srv.regra.novoLaudo){
+          limNovo = srv.regra.novoLaudo;
+          critConsec = srv.regra.criticoConsec || critConsec;
+          zeroConsec = srv.regra.zeroConsec || zeroConsec;
+        }
+
+        var nivel;
+        if(semLaudo){
+          nivel = 'pendente';
+        } else if(mesesReguaComDados === 0){
+          nivel = 'pendente';
+        } else if(maxConsecCrit >= critConsec || maxConsecZero >= zeroConsec){
+          nivel = 'revisao';
+        } else if(mesesReguaComDados >= limNovo && mesesAbaixo50 >= limNovo){
+          nivel = 'revisao';
+        } else if(mesesAbaixo50 >= 1){
+          nivel = 'atencao';
+        } else {
+          nivel = 'regular';
+        }
+
+        /* Detectar programa */
+        var programa = 'Grau Maximo';
+        var kLower = String(item.key).toLowerCase();
+        var progField = (srv.programa || srv.tipo_adicional || srv.adicional || '').toLowerCase();
+        if(progField.indexOf('peric') >= 0 || kLower.indexOf('peric') >= 0) programa = 'Periculosidade';
+        if(srv.criterio_l === 6 || srv.CRITERIO_L === 6) programa = 'Periculosidade';
+
+        return {
+          nome: srv.nome || '',
+          siape: siape,
+          cargo: srv.cargo || '',
+          setor: srv.setor || '',
+          lotacao: lotPlan,
+          programa: programa,
+          mg: mg,
+          janela: 12,
+          nivel: temRevisao ? 'revisado' : nivel,
+          mesesAbaixo50: mesesAbaixo50,
+          semLaudo: semLaudo,
+          vigConc: vigConc || '',
+          laudoSei: vigSei || srv.laudoSei || '',
+          laudoNum: vigNum || '',
+          meses: meses,
+          temRevisao: temRevisao,
+          epi: classificarEPI(siape, srv.nome)
+        };
+      });
+
+      /* Filtrar revisados: quem ja tem laudo de revisao emitido
+         nao entra como "monitorado" no painel/export */
+      MON_RESULTADOS = MON_RESULTADOS.filter(function(e){ return !e.temRevisao; });
+
+      /* Ordenar por gravidade */
+      var ordem = {revisao:0, atencao:1, pendente:2, regular:3};
+      MON_RESULTADOS.sort(function(a,b){
+        var d = (ordem[a.nivel]||9) - (ordem[b.nivel]||9);
+        return d !== 0 ? d : (a.nome||'').localeCompare(b.nome||'','pt-BR');
+      });
+
+      /* Stats */
+      var countRevisao = MON_RESULTADOS.filter(function(e){ return e.nivel==='revisao'; }).length;
+      var mgTotal = MON_RESULTADOS.reduce(function(s,e){ return s + e.mg; }, 0);
+      var mgMedio = MON_RESULTADOS.length ? (mgTotal / MON_RESULTADOS.length).toFixed(1) : '0';
+      var countLaudos = MON_RESULTADOS.filter(function(e){ return !e.semLaudo; }).length;
+
+      document.getElementById('sMonTotal').textContent = MON_RESULTADOS.length;
+      document.getElementById('sMonMg').textContent = mgMedio;
+      document.getElementById('sMonRevisao').textContent = countRevisao;
+      document.getElementById('sMonLaudos').textContent = countLaudos;
+
+      var epiOks = MON_RESULTADOS.filter(function(e){ return e.epi.nivel==='ok'; }).length;
+      var epiAts = MON_RESULTADOS.filter(function(e){ return e.epi.nivel==='atencao'; }).length;
+      var epiPds = MON_RESULTADOS.filter(function(e){ return e.epi.nivel==='pendente'; }).length;
+      setStatus('statusMon', MON_RESULTADOS.length + ' monitorados', 'mod-ok');
+      log('Monitoramento: ' + MON_RESULTADOS.length + ' empregados (revisao:' + countRevisao + ' regular:' + MON_RESULTADOS.filter(function(e){ return e.nivel==='regular'; }).length + ')', 'ok');
+      log('EPI: OK=' + epiOks + ' Atencao=' + epiAts + ' Pendente=' + epiPds, 'info');
+      MON_OK = true;
+    });
+  }).catch(function(err){
+    setStatus('statusMon', 'Erro', 'mod-err');
+    log('Monitoramento: ' + err.message, 'err');
+  });
+}
+
+function montarMon(){
+  var countGm = MON_RESULTADOS.filter(function(e){ return e.programa==='Grau Maximo'; }).length;
+  var countPer = MON_RESULTADOS.filter(function(e){ return e.programa==='Periculosidade'; }).length;
+  var countRevisao = MON_RESULTADOS.filter(function(e){ return e.nivel==='revisao'; }).length;
+  var countAtencao = MON_RESULTADOS.filter(function(e){ return e.nivel==='atencao'; }).length;
+  var countRegular = MON_RESULTADOS.filter(function(e){ return e.nivel==='regular'; }).length;
+  var countPendente = MON_RESULTADOS.filter(function(e){ return e.nivel==='pendente'; }).length;
+  var countLaudo = MON_RESULTADOS.filter(function(e){ return !e.semLaudo; }).length;
+
+  var epiOk = MON_RESULTADOS.filter(function(e){ return e.epi.nivel==='ok'; }).length;
+  var epiAtencao = MON_RESULTADOS.filter(function(e){ return e.epi.nivel==='atencao'; }).length;
+  var epiPendente = MON_RESULTADOS.filter(function(e){ return e.epi.nivel==='pendente'; }).length;
+
+  var resumoHeaders = ['data_atualizacao','total','grau_maximo','periculosidade',
+    'revisao','atencao','regular','pendente','com_laudo','epi_ok','epi_atencao','epi_pendente'];
+  var resumoRow = [new Date().toLocaleString('pt-BR'), MON_RESULTADOS.length,
+    countGm, countPer, countRevisao, countAtencao, countRegular, countPendente, countLaudo,
+    epiOk, epiAtencao, epiPendente];
+
+  var empHeaders = ['nome','siape','cargo','setor','unidade','programa','mg','janela','nivel',
+    'meses_abaixo_50','sem_laudo','vig_concessao','laudo_sei','laudo_num','epi_status','epi_ultima_retirada'];
+  var empRows = MON_RESULTADOS.map(function(e){
+    return [e.nome, e.siape, e.cargo, e.setor, e.lotacao, e.programa,
+      e.mg, e.janela, e.nivel, e.mesesAbaixo50,
+      e.semLaudo?'Sim':'Nao', e.vigConc, e.laudoSei, e.laudoNum, e.epi.nivel2, e.epi.ultima];
+  });
+
+  return {
+    resumoRows: [resumoHeaders, resumoRow],
+    empRows: [empHeaders].concat(empRows)
+  };
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   MODULO 3: GESTAO DE ACIDENTES (localStorage gat_hul_v1)
+   Le do mesmo storage que o sistema de gestao de acidentes v0.8.
+   ══════════════════════════════════════════════════════════════════ */
+var ACID_M6 = ['metodo','maoObra','maquina','material','meio','medicao'];
+var ACID_BARREIRAS_PADRAO = [
+  'Protecao coletiva / engenharia',
+  'EPI (NR-06)',
+  'Procedimento / POP',
+  'Treinamento / capacitacao (NR-32)',
+  'Supervisao / gestao',
+  'Imunizacao / PCMSO'
+];
+
+function acidAnaliseFeita(a){
+  if(!a || !a.analise) return false;
+  var an = a.analise;
+  var tem = ACID_M6.some(function(m){ return (an.ishikawa && an.ishikawa[m] || []).some(function(x){ return String(x).trim(); }); });
+  var raiz = an.causaRaiz && an.causaRaiz.trim();
+  var acao = (an.acoes||[]).some(function(x){ return x.oque && x.oque.trim(); });
+  return !!(tem || raiz || acao);
+}
+
+function scanAcid(){
+  log('Escaneando localStorage gat_hul_v1 (Acidentes)...', 'info');
+  setStatus('statusAcid', 'Lendo...', 'mod-wait');
+  return new Promise(function(resolve){
+    try {
+      var raw = localStorage.getItem('gat_hul_v1');
+      if(!raw){
+        setStatus('statusAcid', 'Vazio', 'mod-warn');
+        log('Acidentes: chave gat_hul_v1 nao encontrada neste navegador.', 'warn');
+        resolve();
+        return;
+      }
+      var parsed = JSON.parse(raw);
+      if(!parsed || !Array.isArray(parsed.acidentes) || !parsed.acidentes.length){
+        setStatus('statusAcid', 'Vazio', 'mod-warn');
+        log('Acidentes: banco vazio.', 'warn');
+        resolve();
+        return;
+      }
+      ACID_DADOS = parsed.acidentes;
+      ACID_CONFIG = parsed.config || {hhe:{}, empregados:{}};
+
+      var total = ACID_DADOS.length;
+      var comAfast = ACID_DADOS.filter(function(a){ return a.houveAfastamento; }).length;
+      var bio = ACID_DADOS.filter(function(a){ return a.categoriaAgente==='Biologico' || a.categoriaAgente==='Biológico' || a.categoriaAgente==='Perfurocortante'; }).length;
+      var semAnalise = ACID_DADOS.filter(function(a){ return !acidAnaliseFeita(a); }).length;
+
+      document.getElementById('sAcidTotal').textContent = total;
+      document.getElementById('sAcidAfast').textContent = comAfast;
+      document.getElementById('sAcidBio').textContent = bio;
+      document.getElementById('sAcidPend').textContent = semAnalise;
+
+      setStatus('statusAcid', total + ' acidentes', 'mod-ok');
+      log('Acidentes: ' + total + ' registros (' + comAfast + ' com afastamento, ' + bio + ' biologico/perfuro)', 'ok');
+      ACID_OK = true;
+    } catch(err){
+      setStatus('statusAcid', 'Erro', 'mod-err');
+      log('Acidentes: ' + (err.message || err), 'err');
+    }
+    resolve();
+  });
+}
+
+function montarAcid(){
+  var acidentes = ACID_DADOS;
+  var config = ACID_CONFIG;
+  var dataHora = new Date().toLocaleString('pt-BR');
+
+  /* Agrupar por ano */
+  var anos = {};
+  acidentes.forEach(function(a){
+    var y = a.data ? String(a.data).slice(0,4) : 'sem_data';
+    if(!anos[y]) anos[y] = [];
+    anos[y].push(a);
+  });
+
+  /* KPIs gerais */
+  var total = acidentes.length;
+  var comAfast = acidentes.filter(function(a){ return a.houveAfastamento; }).length;
+  var semAfast = total - comAfast;
+  var obitos = acidentes.filter(function(a){ return a.houveObito; }).length;
+  var tipico = acidentes.filter(function(a){ return a.tipo==='Típico'; }).length;
+  var trajeto = acidentes.filter(function(a){ return a.tipo==='Trajeto'; }).length;
+  var doenca = acidentes.filter(function(a){ return a.tipo==='Doença'; }).length;
+  var biologico = acidentes.filter(function(a){ return a.categoriaAgente==='Biológico'; }).length;
+  var perfuro = acidentes.filter(function(a){ return a.categoriaAgente==='Perfurocortante'; }).length;
+  var quimico = acidentes.filter(function(a){ return a.categoriaAgente==='Químico'; }).length;
+  var analisados = acidentes.filter(function(a){ return acidAnaliseFeita(a); }).length;
+
+  /* Dias afastados */
+  var diasTotal = acidentes.reduce(function(s,a){
+    var d = a.houveAfastamento ? (parseFloat(a.diasAfastados)||0) : 0;
+    if(a.houveObito) d += 6000;
+    return s + d;
+  }, 0);
+
+  /* TF/TG por ano (ABNT NBR 14280) */
+  var taxasPorAno = {};
+  Object.keys(anos).sort().forEach(function(y){
+    if(y === 'sem_data') return;
+    var arr = anos[y];
+    var ca = arr.filter(function(a){ return a.houveAfastamento; }).length;
+    var dd = arr.reduce(function(s,a){
+      var d2 = a.houveAfastamento ? (parseFloat(a.diasAfastados)||0) : 0;
+      if(a.houveObito) d2 += 6000;
+      return s + d2;
+    }, 0);
+    var hhe = parseFloat((config.hhe||{})[y]) || 0;
+    taxasPorAno[y] = {
+      total: arr.length,
+      comAfast: ca,
+      dias: dd,
+      hhe: hhe,
+      tf: hhe > 0 ? (ca * 1e6 / hhe) : null,
+      tg: hhe > 0 ? (dd * 1e6 / hhe) : null
+    };
+  });
+
+  /* Contagem por setor */
+  var setores = {};
+  acidentes.forEach(function(a){ var s = a.setor||'Nao informado'; setores[s] = (setores[s]||0)+1; });
+
+  /* Barreiras que mais falharam */
+  var barrFalhas = {};
+  acidentes.forEach(function(a){
+    if(!a.analise || !a.analise.barreiras) return;
+    a.analise.barreiras.forEach(function(b){
+      if(b.status === 'falhou'){
+        barrFalhas[b.nome] = (barrFalhas[b.nome]||0) + 1;
+      }
+    });
+  });
+
+  /* Vitimas recorrentes */
+  var vitimas = {};
+  acidentes.forEach(function(a){
+    var chave = (a.nome||'').trim().toUpperCase();
+    if(!chave) return;
+    if(!vitimas[chave]) vitimas[chave] = {nome: a.nome, count:0, mat: a.matricula||''};
+    vitimas[chave].count++;
+  });
+  var reincidentes = Object.values(vitimas).filter(function(v){ return v.count >= 2; })
+    .sort(function(a,b){ return b.count - a.count; });
+
+  /* Resumo headers */
+  var resumoHeaders = [
+    'data_atualizacao','total','com_afastamento','sem_afastamento','obitos',
+    'dias_afastados','tipico','trajeto','doenca',
+    'biologico','perfurocortante','quimico','analisados','sem_analise',
+    'reincidentes'
+  ];
+  var resumoRow = [
+    dataHora, total, comAfast, semAfast, obitos,
+    diasTotal, tipico, trajeto, doenca,
+    biologico, perfuro, quimico, analisados, total - analisados,
+    reincidentes.length
+  ];
+
+  /* Taxas por ano */
+  var taxaHeaders = ['ano','total','com_afastamento','dias_debitados','hhe','tf','tg'];
+  var taxaRows = [taxaHeaders];
+  Object.keys(taxasPorAno).sort().forEach(function(y){
+    var t = taxasPorAno[y];
+    taxaRows.push([y, t.total, t.comAfast, t.dias, t.hhe,
+      t.tf !== null ? t.tf.toFixed(2) : 'sem HHE',
+      t.tg !== null ? t.tg.toFixed(2) : 'sem HHE']);
+  });
+
+  /* Setores */
+  var setorHeaders = ['setor','total_acidentes'];
+  var setorRows = [setorHeaders];
+  Object.keys(setores).sort(function(a,b){ return setores[b]-setores[a]; }).forEach(function(s){
+    setorRows.push([s, setores[s]]);
+  });
+
+  /* Barreiras */
+  var barrHeaders = ['barreira','falhas'];
+  var barrRows = [barrHeaders];
+  Object.keys(barrFalhas).sort(function(a,b){ return barrFalhas[b]-barrFalhas[a]; }).forEach(function(b){
+    barrRows.push([b, barrFalhas[b]]);
+  });
+
+  /* Reincidentes */
+  var reincHeaders = ['nome','matricula','acidentes'];
+  var reincRows = [reincHeaders];
+  reincidentes.forEach(function(v){ reincRows.push([v.nome, v.mat, v.count]); });
+
+  /* Registros individuais (sem discrepancias documentais) */
+  var regHeaders = [
+    'data','hora','nome','matricula','setor','tipo_cat',
+    'categoria_agente','agente_causador','parte_corpo','lateralidade',
+    'afastamento','dias_afastados','obito','descricao',
+    'situacao_analise','causa_raiz',
+    'barreiras_que_falharam','acoes_corretivas'
+  ];
+  var regRows = acidentes
+    .sort(function(a,b){ return (b.data||'').localeCompare(a.data||''); })
+    .map(function(a){
+      /* Barreiras que falharam */
+      var bf = [];
+      if(a.analise && a.analise.barreiras){
+        a.analise.barreiras.forEach(function(b){
+          if(b.status === 'falhou') bf.push(b.nome);
+        });
+      }
+      /* Acoes corretivas */
+      var ac = [];
+      if(a.analise && a.analise.acoes){
+        a.analise.acoes.forEach(function(x){
+          if(x.oque && x.oque.trim()) ac.push(x.oque.trim());
+        });
+      }
+      return [
+        fmtData(a.data), a.hora||'', a.nome||'', a.matricula||'',
+        a.setor||'', a.tipo||'',
+        a.categoriaAgente||'', a.agenteCausador||'',
+        a.parteCorpo||'', a.lateralidade||'',
+        a.houveAfastamento ? 'Sim' : 'Nao',
+        a.houveAfastamento ? (a.diasAfastados||0) : 0,
+        a.houveObito ? 'Sim' : 'Nao',
+        (a.descricao||'').replace(/\n/g,' '),
+        acidAnaliseFeita(a) ? 'Analisada' : 'Pendente',
+        (a.analise && a.analise.causaRaiz || '').replace(/\n/g,' '),
+        bf.join('; '),
+        ac.join('; ')
+      ];
+    });
+
+  return {
+    resumoRows: [resumoHeaders, resumoRow],
+    taxaRows: taxaRows,
+    setorRows: setorRows,
+    barrRows: barrRows,
+    reincRows: reincRows,
+    regRows: [regHeaders].concat(regRows)
+  };
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   MODULO 4: NAO-CONFORMIDADES (hul_ncs_db)
+   Le do IndexedDB hul_ncs_db / store "ncs" (keyPath: "chave")
+   ══════════════════════════════════════════════════════════════════ */
+var NC_AGENTES = ['FÍSICO','QUÍMICO','BIOLÓGICO','ERGONÔMICO','ACIDENTES','NENHUM'];
+var NC_FAIXAS = ['ALTO','MODERADO','BAIXO'];
+var NC_SETORES_UNIFICADOS = {
+  'LABORATÓRIO DE ANÁLISES CLÍNICAS': 'Laboratório e Agência Transfusional',
+  'AGÊNCIA TRANSFUSIONAL': 'Laboratório e Agência Transfusional',
+  'AG. TRANSFUSIONAL': 'Laboratório e Agência Transfusional',
+  'AG TRANSFUSIONAL': 'Laboratório e Agência Transfusional',
+  'LABORATÓRIO': 'Laboratório e Agência Transfusional'
+};
+
+function ncNormSetor(s){
+  if(!s) return s;
+  var k = String(s).trim().toUpperCase();
+  return NC_SETORES_UNIFICADOS[k] || s;
+}
+
+function ncLeitor(nc, campo){
+  if(!nc) return '';
+  var ad = nc.atributos_derivados || {};
+  if(campo === 'faixa') return ad.f || nc.faixa || '';
+  if(campo === 'agente') return ad.a || nc.agente || '';
+  if(campo === 'severidade') return ad.s != null ? ad.s : (nc.severidade || '');
+  if(campo === 'probab') return ad.p != null ? ad.p : (nc.probabilidade || '');
+  if(campo === 'risco') return ad.r != null ? ad.r : (nc.risco || '');
+  if(campo === 'normativo') return ad.n || nc.normativo || '';
+  return nc[campo] || '';
+}
+
+function scanNC(){
+  log('Escaneando hul_ncs_db (Nao-Conformidades)...', 'info');
+  setStatus('statusNC', 'Lendo...', 'mod-wait');
+  return openDb('hul_ncs_db').then(function(db){
+    return storeGetAll(db, 'ncs').then(function(dados){
+      db.close();
+      /* Normalizar setores */
+      dados.forEach(function(n){ n.setor = ncNormSetor(n.setor); });
+      NC_DADOS = dados;
+      if(!dados.length){
+        setStatus('statusNC', 'Vazio', 'mod-warn');
+        log('NCs: banco vazio ou nao utilizado neste navegador.', 'warn');
+        return;
+      }
+
+      var alto = dados.filter(function(n){ return ncLeitor(n,'faixa')==='ALTO'; }).length;
+      var zonas = {};
+      var insps = {};
+      dados.forEach(function(n){
+        if(n.setor) zonas[n.setor] = 1;
+        var ik = (n.data||'') + '|' + (n.setor||'') + '|' + (n.inspetor||'');
+        insps[ik] = 1;
+      });
+
+      document.getElementById('sNCTotal').textContent = dados.length;
+      document.getElementById('sNCAlto').textContent = alto;
+      document.getElementById('sNCZonas').textContent = Object.keys(zonas).length;
+      document.getElementById('sNCInsp').textContent = Object.keys(insps).length;
+
+      setStatus('statusNC', dados.length + ' NCs', 'mod-ok');
+      log('NCs: ' + dados.length + ' registros (' + alto + ' alto, ' + Object.keys(zonas).length + ' zonas)', 'ok');
+      NC_OK = true;
+    });
+  }).catch(function(err){
+    setStatus('statusNC', 'Erro', 'mod-err');
+    log('NCs: ' + err.message, 'err');
+  });
+}
+
+function montarNC(){
+  var dados = NC_DADOS;
+  var dataHora = new Date().toLocaleString('pt-BR');
+
+  /* Contagens gerais */
+  var alto=0, moderado=0, baixo=0;
+  var porAgente = {};
+  NC_AGENTES.forEach(function(a){ porAgente[a] = 0; });
+  var porZona = {};
+  var insps = {};
+
+  dados.forEach(function(n){
+    var f = ncLeitor(n,'faixa');
+    if(f==='ALTO') alto++;
+    else if(f==='MODERADO') moderado++;
+    else baixo++;
+
+    var ag = ncLeitor(n,'agente');
+    if(porAgente[ag] !== undefined) porAgente[ag]++;
+
+    var z = n.setor || '(sem setor)';
+    if(!porZona[z]) porZona[z] = { total:0, alto:0, moderado:0, baixo:0, agentes:{}, insps:{} };
+    porZona[z].total++;
+    if(f==='ALTO') porZona[z].alto++;
+    else if(f==='MODERADO') porZona[z].moderado++;
+    else porZona[z].baixo++;
+    porZona[z].agentes[ag] = (porZona[z].agentes[ag]||0) + 1;
+
+    var ik = (n.data||'') + '|' + z + '|' + (n.inspetor||'');
+    insps[ik] = 1;
+    porZona[z].insps[ik] = 1;
+  });
+
+  /* NC_RESUMO */
+  var resumoHeaders = [
+    'data_atualizacao','total_ncs','alto','moderado','baixo',
+    'zonas','inspecoes',
+    'fisico','quimico','biologico','ergonomico','acidentes','nenhum'
+  ];
+  var resumoRow = [
+    dataHora, dados.length, alto, moderado, baixo,
+    Object.keys(porZona).length, Object.keys(insps).length,
+    porAgente['FÍSICO']||0, porAgente['QUÍMICO']||0,
+    porAgente['BIOLÓGICO']||0, porAgente['ERGONÔMICO']||0,
+    porAgente['ACIDENTES']||0, porAgente['NENHUM']||0
+  ];
+
+  /* NC_POR_ZONA */
+  var zonaHeaders = ['zona','total','alto','moderado','baixo','inspecoes','agente_dominante'];
+  var zonaRows = [zonaHeaders];
+  Object.keys(porZona).sort(function(a,b){ return porZona[b].total - porZona[a].total; }).forEach(function(z){
+    var pz = porZona[z];
+    /* Agente dominante */
+    var bestAg = '', maxAg = 0;
+    Object.keys(pz.agentes).forEach(function(k){ if(pz.agentes[k]>maxAg){ maxAg=pz.agentes[k]; bestAg=k; } });
+    zonaRows.push([z, pz.total, pz.alto, pz.moderado, pz.baixo, Object.keys(pz.insps).length, bestAg]);
+  });
+
+  /* NC_REGISTROS (individual NCs for painel_nc.html to read) */
+  var regHeaders = [
+    'chave','setor','zona_id','ano','data','descricao','termo_canonico',
+    'acao','local','condicao','observacoes','inspetor','processo_sei',
+    'faixa','agente','severidade','probabilidade','risco','normativo',
+    'prioridade','n_item'
+  ];
+  var regRows = dados
+    .sort(function(a,b){ return (b.data||'').localeCompare(a.data||''); })
+    .map(function(n){
+      return [
+        n.chave||'', n.setor||'', n.zona_id||'',
+        n.ano||'', n.data||'',
+        (n.descricao||'').replace(/\n/g,' '),
+        n.termo_canonico||'',
+        (n.acao||'').replace(/\n/g,' '),
+        n.local||'', n.condicao||'',
+        (n.observacoes||'').replace(/\n/g,' '),
+        n.inspetor||'', n.processo_sei||'',
+        ncLeitor(n,'faixa'), ncLeitor(n,'agente'),
+        ncLeitor(n,'severidade'), ncLeitor(n,'probab'),
+        ncLeitor(n,'risco'), ncLeitor(n,'normativo'),
+        n.prioridade||'', n.n_item||''
+      ];
+    });
+
+  return {
+    resumoRows: [resumoHeaders, resumoRow],
+    zonaRows: zonaRows,
+    regRows: [regHeaders].concat(regRows)
+  };
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   MODULO 5: HISTORICO DE EPI (sst_hul_db hist_*)
+   Le hist_cadastro, hist_planilhas, hist_mes_*, hist_manuais_lista
+   do IndexedDB sst_hul_db, normaliza nomes de EPI por categoria
+   e gera abas EPI_CADASTRO e EPI_REGISTROS.
+   ══════════════════════════════════════════════════════════════════ */
+var CATEGORIAS_EPI = {
+  'RESPIRADOR PFF2': ['RESPIRADOR PFF','PFF2','PFF-2','N95','MASCARA N95','REGULADOR PFF'],
+  'OCULOS DE SEGURANCA': ['OCULOS DE SEGURANCA','OCULOS DE PROTECAO','OCULOS SEGURANCA'],
+  'PROTETOR FACIAL': ['PROTETOR FACIAL','FACE SHIELD'],
+  'MASCARA SEMIFACIAL': ['MASCARA SEMIFACIAL','MASCARA SEMI'],
+  'PROTETOR AURICULAR': ['PROTETOR AUDITIVO','PROTETOR AURICULAR','ABAFADOR AUDITIVO'],
+  'SAPATO DE SEGURANCA': ['SAPATO DE SEGURANCA','SAPATO FECHADO','CALCADO DE SEGURANCA','BOTA DE SEGURANCA','SAPATO'],
+  'LUVA': ['LUVA NITRILICA','LUVA DE BORRACHA','LUVAS DE PROTECAO','LUVA'],
+  'FILTRO RESPIRADOR': ['FILTRO P2','FILTRO LIBUS','FILTRO PARA RESPIRADOR','FILTRO QUIMICO','FILTROS P2','FILTROS PARA RESPIRADOR','FILTRO'],
+  'JALECO': ['JALECO'],
+  'MASCARA DESCARTAVEL': ['MASCARA']
+};
+var EPI_SKIP = ['1 VEZ','PERDA','ATUALIZACAO DE INFORMACAO','ACOMPANHANTE','CARIMBO'];
+
+function categorizarEpi(nomeEpi){
+  if(!nomeEpi) return 'OUTROS';
+  var n = normL(nomeEpi).replace(/\(.*?\)/g,'').trim();
+  if(!n) return 'OUTROS';
+  for(var i=0; i<EPI_SKIP.length; i++){
+    if(n.indexOf(EPI_SKIP[i]) !== -1) return null;
+  }
+  var cats = Object.keys(CATEGORIAS_EPI);
+  for(var c=0; c<cats.length; c++){
+    var termos = CATEGORIAS_EPI[cats[c]];
+    for(var t=0; t<termos.length; t++){
+      if(n.indexOf(termos[t]) !== -1) return cats[c];
+    }
+  }
+  return 'OUTROS';
+}
+
+function parseDataBr(d){
+  if(!d) return '';
+  var s = String(d).trim();
+  var m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(m){
+    var dd = ('0'+m[1]).slice(-2), mm = ('0'+m[2]).slice(-2);
+    return dd+'/'+mm+'/'+m[3];
+  }
+  return '';
+}
+
+function extrairCA(nomeEpi, caField){
+  if(caField && String(caField).trim()) return String(caField).trim();
+  var m = String(nomeEpi||'').match(/\((\d{4,6})\)/);
+  return m ? m[1] : '';
+}
+
+function _processarHistEpi(histItems){
+      /* 1. CADASTRO */
+      var cadastroRaw = histItems['hist_cadastro'] || [];
+      var cadastro = [];
+      var siapeSet = {};
+      var mapaLotacao = {};
+      var mapaNomeLotacao = {};
+
+      if(Array.isArray(cadastroRaw)){
+        cadastroRaw.forEach(function(e){
+          var nome = String(_buscarCol(e,['NOME','NOME COMPLETO','NOME DO EMPREGADO','EMPREGADO'])||'').trim();
+          var siape = String(_buscarCol(e,['SIAPE'])||'').trim();
+          var cargo = String(_buscarCol(e,['CARGO'])||'').trim();
+          var lotacao = String(_buscarCol(e,['LOTACAO','LOTAÇÃO'])||'').trim();
+          if(!nome) return;
+          if(siape && siapeSet[siape]) return;
+          if(siape) siapeSet[siape] = true;
+          cadastro.push({NOME:nome, SIAPE:siape, CARGO:cargo, LOTACAO:lotacao});
+          if(siape) mapaLotacao[siape] = lotacao;
+          mapaNomeLotacao[normL(nome)] = lotacao;
+        });
+      }
+
+      /* 1b. Enriquecer lotacao com dados do epi_emp (Ficha de EPI) */
+      Object.keys(EPI_EMP_MAP).forEach(function(siape){
+        var emp = EPI_EMP_MAP[siape];
+        if(emp.unidade && emp.unidade.trim()){
+          if(!mapaLotacao[siape]) mapaLotacao[siape] = emp.unidade.trim();
+          if(emp.nome){
+            var nn = normL(emp.nome);
+            if(!mapaNomeLotacao[nn]) mapaNomeLotacao[nn] = emp.unidade.trim();
+          }
+        }
+      });
+
+      /* 1c. Mapa nome->siape para enriquecer registros sem SIAPE */
+      var mapaNomeSiape = {};
+      cadastro.forEach(function(e){
+        if(e.SIAPE && e.NOME){
+          mapaNomeSiape[normL(e.NOME)] = e.SIAPE;
+        }
+      });
+      Object.keys(EPI_EMP_MAP).forEach(function(siape){
+        var emp = EPI_EMP_MAP[siape];
+        if(emp.nome) mapaNomeSiape[normL(emp.nome)] = siape;
+      });
+
+      /* 1d. Carregar preset de CA por categoria/ano (hist_ca_preset) */
+      var _caPresetExport = [];
+      var caPresetRaw = histItems['hist_ca_preset'];
+      if(Array.isArray(caPresetRaw)) _caPresetExport = caPresetRaw;
+      if(_caPresetExport.length) log('EPI: CA preset carregado (' + _caPresetExport.length + ' mapeamentos)', 'info');
+
+      function _buscarCAPreset(categoria, ano){
+        if(!categoria || !ano || !_caPresetExport.length) return '';
+        var catN = normL(categoria);
+        var anoStr = String(ano);
+        for(var i=0; i<_caPresetExport.length; i++){
+          var p = _caPresetExport[i];
+          if(normL(p.categoria||'') === catN && String(p.ano) === anoStr){
+            return String(p.ca||'').replace(/\D/g,'');
+          }
+        }
+        return '';
+      }
+
+      /* 2. REGISTROS */
+      var registros = [];
+      var seen = {};
+      var _addRegChamadas = 0;
+
+      function addReg(nome, siape, epi, ca, data, qtd, fonte){
+        /* Ignorar nomes invalidos */
+        var nomeS = String(nome||'').trim();
+        if(!nomeS || nomeS.toUpperCase()==='NÃO CADASTRADO' || nomeS.toUpperCase()==='NAO CADASTRADO') return;
+        var cat = categorizarEpi(epi);
+        if(cat === null) return;
+        var dataN = parseDataBr(data);
+        if(!dataN) return;
+        /* Filtrar datas fora do range razoavel e datas futuras */
+        var anoMatch = dataN.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        if(anoMatch){
+          var ano = parseInt(anoMatch[3],10);
+          if(ano < 2015) return;
+          var dataObj = new Date(ano, parseInt(anoMatch[2],10)-1, parseInt(anoMatch[1],10));
+          if(dataObj > HOJE) return;
+        }
+        var caLimpo = extrairCA(epi, ca);
+        /* Fallback: CA do preset por categoria+ano */
+        if(!caLimpo && cat && dataN){
+          var _anoM = dataN.match(/\/(\d{4})$/);
+          if(_anoM) caLimpo = _buscarCAPreset(cat, _anoM[1]);
+        }
+        var siapeS = String(siape||'').trim();
+        /* Enriquecer SIAPE faltante via cadastro/epi_emp */
+        if(!siapeS){
+          var nomeKey = normL(nomeS);
+          if(mapaNomeSiape[nomeKey]) siapeS = mapaNomeSiape[nomeKey];
+        }
+        /* Buscar lotacao: primeiro epi_emp, depois cadastro, depois por nome */
+        var lotacao = '';
+        if(siapeS && mapaLotacao[siapeS]) lotacao = mapaLotacao[siapeS];
+        else if(mapaNomeLotacao[normL(nome)]) lotacao = mapaNomeLotacao[normL(nome)];
+
+        _addRegChamadas++;
+        /* Deduplicar — CA vazio = coringa (mesma logica do dedupRegistros do historico).
+           Chave base = nome+cat+data. Se ja existe registro com CA para essa base,
+           registro sem CA e descartado. Entre registros sem CA, so 1 sobrevive.
+           Dois registros com CAs diferentes na mesma base sao ambos mantidos. */
+        var chaveBase = normL(nomeS)+'|'+cat+'|'+dataN;
+        var chaveFull = chaveBase+'|'+caLimpo;
+        if(caLimpo){
+          if(seen[chaveFull]) return;
+          seen[chaveFull] = true;
+          /* Marcar que essa base tem versao com CA */
+          if(!seen['_ca_'+chaveBase]) seen['_ca_'+chaveBase] = [];
+          seen['_ca_'+chaveBase].push(registros.length);
+          /* Se havia registro sem CA para essa base, remover (CA prevalece) */
+          if(seen['_vazio_'+chaveBase] !== undefined){
+            registros[seen['_vazio_'+chaveBase]] = null;
+            delete seen['_vazio_'+chaveBase];
+          }
+        } else {
+          /* Sem CA: so entra se nao existe nenhum com CA para essa base,
+             e no maximo 1 sem CA por base */
+          if(seen['_ca_'+chaveBase]) return;
+          if(seen['_vazio_'+chaveBase] !== undefined) return;
+          seen['_vazio_'+chaveBase] = registros.length;
+        }
+
+        registros.push({
+          NOME: String(nome||'').trim(),
+          SIAPE: siapeS,
+          EPI: String(epi||'').trim(),
+          CATEGORIA: cat,
+          CA: caLimpo,
+          DATA: dataN,
+          QTD: String(qtd||'1').trim(),
+          FONTE: String(fonte||'').trim(),
+          LOTACAO: lotacao
+        });
+      }
+
+      /* hist_planilhas (Registro Eletronico de Fornecimento)
+         Dados ja filtrados para ENTREGUE pelo hist_v2 na importacao */
+      var histPlan = histItems['hist_planilhas'];
+      if(Array.isArray(histPlan) && histPlan.length){
+        histPlan.forEach(function(p){
+          if(p && Array.isArray(p.dados)){
+            p.dados.forEach(function(r){
+              addReg(r.nome, r.siape, r.epi, r.ca, r.data, r.qtd, 'Registro Eletrônico de Fornecimento');
+            });
+          }
+        });
+      }
+
+      /* Planilhas mensais hist_mes_<ano>_m<idx> (fichas fisicas / legado) */
+      Object.keys(histItems).forEach(function(hk){
+        if(hk.indexOf('hist_mes_')===0){
+          var obj = histItems[hk];
+          if(obj && Array.isArray(obj.dados)){
+            obj.dados.forEach(function(r){
+              addReg(r.nome, r.siape, r.epi, r.ca, r.data, r.qtd, 'Ficha de EPI Físico');
+            });
+          }
+        }
+      });
+
+      /* Lancamentos manuais (tratados como ficha fisica) */
+      var histMan = histItems['hist_manuais_lista'];
+      if(Array.isArray(histMan)){
+        histMan.forEach(function(r){
+          addReg(r.nome, r.siape, r.epi, r.ca, r.data, r.qtd, 'Ficha de EPI Físico');
+        });
+      }
+
+      EPI_CAD = cadastro;
+      /* Limpar registros anulados pela dedup (CA coringa substituido por CA concreto) */
+      registros = registros.filter(function(r){ return r !== null; });
+      EPI_REGS = registros;
+
+      if(!registros.length && !cadastro.length){
+        setStatus('statusEpi', 'Vazio', 'mod-warn');
+        log('EPI: nenhum dado historico encontrado.', 'warn');
+        return;
+      }
+
+      /* Stats */
+      var emps = {};
+      var cats = {};
+      var sets = {};
+      registros.forEach(function(r){
+        emps[normL(r.NOME)] = 1;
+        cats[r.CATEGORIA] = (cats[r.CATEGORIA]||0) + 1;
+        if(r.LOTACAO) sets[r.LOTACAO] = 1;
+      });
+
+      document.getElementById('sEpiRegs').textContent = registros.length;
+      document.getElementById('sEpiEmps').textContent = Object.keys(emps).length;
+      document.getElementById('sEpiCats').textContent = Object.keys(cats).length;
+      document.getElementById('sEpiSets').textContent = Object.keys(sets).length;
+
+      var removidos = _addRegChamadas - registros.length;
+
+      setStatus('statusEpi', registros.length + ' registros', 'mod-ok');
+      log('EPI: ' + registros.length + ' registros apos dedup' + (removidos > 0 ? ' (' + removidos + ' duplicatas removidas)' : '') + ', ' + cadastro.length + ' no cadastro, ' + Object.keys(cats).length + ' categorias', 'ok');
+
+      /* Log categorias */
+      var catKeys = Object.keys(cats).sort(function(a,b){ return cats[b]-cats[a]; });
+      catKeys.forEach(function(c){ log('  ' + c + ': ' + cats[c], 'info'); });
+
+      EPI_OK = true;
+}
+
+function scanEpi(){
+  log('Processando historico de EPI...', 'info');
+  setStatus('statusEpi', 'Lendo...', 'mod-wait');
+  return new Promise(function(resolve){
+    try {
+      /* Usa dados compartilhados pelo scanMon (que ja leu sst_hul_db) */
+      var histItems = HIST_ITEMS_SHARED;
+
+      /* Se scanMon nao rodou ou falhou, tentar ler direto */
+      if(!histItems || !Object.keys(histItems).length){
+        log('EPI: hist_ nao disponivel via Monitoramento, tentando leitura direta...', 'info');
+        openDb('sst_hul_db').then(function(db){
+          return storeCursor(db, 'dados').then(function(items){
+            db.close();
+            var hi = {};
+            items.forEach(function(it){
+              var k = String(it.key);
+              var val = it.value;
+              if(typeof val === 'string'){ try { val = JSON.parse(val); } catch(e){ return; } }
+              if(!val) return;
+              /* Capturar epi_emp_ para enriquecer lotacao/siape */
+              if(k.indexOf('epi_emp_') === 0){
+                var empSiape2 = k.replace('epi_emp_','');
+                if(typeof val === 'object' && empSiape2) EPI_EMP_MAP[empSiape2] = val;
+                return;
+              }
+              if(k.indexOf('hist_') !== 0) return;
+              hi[k] = val;
+            });
+            /* Fallback localStorage */
+            if(!Object.keys(hi).filter(function(k){ return k.indexOf('hist_mes_')===0; }).length){
+              for(var li=0; li<localStorage.length; li++){
+                var lk = localStorage.key(li);
+                if(lk && lk.indexOf('hist_')===0){
+                  try { var lv = JSON.parse(localStorage.getItem(lk)); if(lv) hi[lk] = lv; } catch(e){}
+                }
+              }
+            }
+            _processarHistEpi(hi);
+            resolve();
+          });
+        }).catch(function(err){
+          setStatus('statusEpi', 'Erro', 'mod-err');
+          log('EPI: ' + err.message, 'err');
+          resolve();
+        });
+        return;
+      }
+
+      _processarHistEpi(histItems);
+    } catch(err){
+      setStatus('statusEpi', 'Erro', 'mod-err');
+      log('EPI: ' + (err.message||err), 'err');
+    }
+    resolve();
+  });
+}
+
+function montarEpi(){
+  var cadHeaders = ['NOME','SIAPE','CARGO','LOTACAO'];
+  var cadRows = EPI_CAD
+    .sort(function(a,b){ return (a.NOME||'').localeCompare(b.NOME||'','pt-BR'); })
+    .map(function(e){ return [e.NOME, e.SIAPE, e.CARGO, e.LOTACAO]; });
+
+  /* Filtrar registros de empregados inativos e sem setor para o painel */
+  var regsParaExport = EPI_REGS.filter(function(r){
+    var lot = normL(r.LOTACAO);
+    if(lot === 'NAO ATIVO' || lot === 'INATIVO' || lot === 'NAO ATIVO') return false;
+    if(!lot || lot === 'SEM SETOR' || lot === '(SEM SETOR)') return false;
+    return true;
+  });
+
+  /* STATUS por tipo de EPI */
+  var DESCARTAVEIS = {
+    'RESPIRADOR PFF2':1, 'LUVA':1, 'FILTRO RESPIRADOR':1,
+    'JALECO':1, 'MASCARA DESCARTAVEL':1
+  };
+
+  var regHeaders = ['NOME','SIAPE','EPI','CATEGORIA','CA','DATA','QTD','FONTE','LOTACAO','STATUS'];
+  var regRows = regsParaExport
+    .sort(function(a,b){ return (b.DATA||'').localeCompare(a.DATA||''); })
+    .map(function(r){
+      var status = '';
+      if(DESCARTAVEIS[r.CATEGORIA]) status = 'Descartável';
+      return [r.NOME, r.SIAPE, r.EPI, r.CATEGORIA, r.CA, r.DATA, r.QTD, r.FONTE, r.LOTACAO, status];
+    });
+
+  /* ── Alertas de validade: apenas proteção ocular (óculos de segurança) ──
+     Protetor facial removido da avaliação — era fornecido só na pandemia,
+     não é mais reposto. Decisão USOST out/2026. */
+  var VALIDADE_OCULAR_ANOS = 5;
+  var PROXIMO_MESES = 6;
+  /* Protetor facial removido: era fornecido só na pandemia, não é mais
+     reposto — mantê-lo gerava alertas irremovíveis. Decisão USOST out/2026. */
+  var CATS_OCULAR = {'OCULOS DE SEGURANCA':1};
+
+  /* Agrupar por empregado: pegar a entrega MAIS RECENTE de proteção ocular */
+  var empOcular = {};
+  function _dataComp(d){
+    var m = (d||'').match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    return m ? m[3]+m[2]+m[1] : '00000000';
+  }
+
+  regsParaExport.forEach(function(r){
+    if(!CATS_OCULAR[r.CATEGORIA]) return;
+    /* Chave por SIAPE (primário) ou nome (fallback).
+       Evita duplicar empregado quando nome muda (ex: casamento). */
+    var chave = (r.SIAPE||'').trim() ? r.SIAPE.trim() : normL(r.NOME);
+    if(!empOcular[chave]){
+      empOcular[chave] = {reg: r, dataComp: _dataComp(r.DATA)};
+    } else if(_dataComp(r.DATA) > empOcular[chave].dataComp){
+      empOcular[chave] = {reg: r, dataComp: _dataComp(r.DATA)};
+    }
+  });
+
+  var alertHeaders = ['STATUS','EMPREGADO','SIAPE','EPI','ULTIMA RETIRADA','VALIDADE','TEMPO DECORRIDO','SETOR'];
+  var alertRows = [];
+  var hoje = new Date();
+
+  Object.keys(empOcular).forEach(function(ch){
+    var r = empOcular[ch].reg;
+    var m = (r.DATA||'').match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if(!m) return;
+    var dataEntrega = new Date(parseInt(m[3],10), parseInt(m[2],10)-1, parseInt(m[1],10));
+    var diffMs = hoje - dataEntrega;
+    var diffAnos = diffMs / (365.25 * 24 * 60 * 60 * 1000);
+    var diffAnosArred = Math.round(diffAnos * 10) / 10;
+
+    var status = '';
+    if(diffAnos >= VALIDADE_OCULAR_ANOS){
+      status = 'Vencido';
+    } else if(diffAnos >= VALIDADE_OCULAR_ANOS - (PROXIMO_MESES/12)){
+      status = 'Próximo';
+    }
+    if(!status) return;
+
+    alertRows.push([status, r.NOME, r.SIAPE, r.EPI, r.DATA,
+      VALIDADE_OCULAR_ANOS + ' anos', diffAnosArred + ' anos', r.LOTACAO]);
+  });
+
+  /* Ordenar: vencidos primeiro, depois por tempo decorrido desc */
+  alertRows.sort(function(a,b){
+    if(a[0] !== b[0]) return a[0] === 'Vencido' ? -1 : 1;
+    return parseFloat(b[6]) - parseFloat(a[6]);
+  });
+
+  return {
+    cadRows: [cadHeaders].concat(cadRows),
+    regRows: [regHeaders].concat(regRows),
+    alertRows: [alertHeaders].concat(alertRows),
+    alertCount: alertRows.length
+  };
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   SCAN E EXPORTACAO UNIFICADOS
+   ══════════════════════════════════════════════════════════════════ */
+function scanAll(){
+  ADIC_OK = false; MON_OK = false; ACID_OK = false; NC_OK = false; EPI_OK = false;
+  HIST_ITEMS_SHARED = {};
+  document.getElementById('btnExportar').disabled = true;
+  log('--- Iniciando escaneamento ---', 'info');
+  Promise.all([scanAdic(), scanMon(), scanAcid(), scanNC()]).then(function(){
+    /* scanEpi depende dos hist_ lidos pelo scanMon, entao roda depois */
+    return scanEpi();
+  }).then(function(){
+    log('--- Escaneamento concluido ---', 'info');
+    if(ADIC_OK || MON_OK || ACID_OK || NC_OK || EPI_OK){
+      document.getElementById('btnExportar').disabled = false;
+      var modulos = [];
+      if(ADIC_OK) modulos.push('Adicionais');
+      if(MON_OK) modulos.push('Monitoramento');
+      if(ACID_OK) modulos.push('Acidentes');
+      if(NC_OK) modulos.push('Nao-Conformidades');
+      if(EPI_OK) modulos.push('Historico EPI');
+      log('Pronto para exportar: ' + modulos.join(' + '), 'ok');
+    } else {
+      log('Nenhum dado encontrado em nenhum banco.', 'warn');
+    }
+  });
+}
+
+function exportarTudo(){
+  var url = document.getElementById('cfgUrl').value.trim();
+  if(!url){
+    log('URL do Apps Script nao configurada.', 'err');
+    return;
+  }
+  if(!ADIC_OK && !MON_OK && !ACID_OK && !NC_OK && !EPI_OK){
+    log('Nenhum dado para exportar. Escaneie primeiro.', 'warn');
+    return;
+  }
+
+  var btn = document.getElementById('btnExportar');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Enviando...';
+
+  log('--- Preparando exportacao ---', 'info');
+
+  var sheets = [];
+
+  if(ADIC_OK && ADIC_DADOS.length > 0){
+    var adic = montarAdic();
+    sheets.push({name: 'Resumo', rows: adic.resumoRows});
+    sheets.push({name: 'Empregados', rows: adic.empRows});
+    log('Adicionais: ' + ADIC_DADOS.length + ' empregados preparados', 'ok');
+  }
+
+  if(MON_OK && MON_RESULTADOS.length > 0){
+    var mon = montarMon();
+    sheets.push({name: 'MON_RESUMO', rows: mon.resumoRows});
+    sheets.push({name: 'MON_EMPREGADOS', rows: mon.empRows});
+    log('Monitoramento: ' + MON_RESULTADOS.length + ' empregados preparados (com mg/nivel calculados)', 'ok');
+  }
+
+  if(ACID_OK && ACID_DADOS.length > 0){
+    var acid = montarAcid();
+    sheets.push({name: 'GAT_RESUMO', rows: acid.resumoRows});
+    sheets.push({name: 'GAT_TAXAS', rows: acid.taxaRows});
+    sheets.push({name: 'GAT_SETORES', rows: acid.setorRows});
+    sheets.push({name: 'GAT_BARREIRAS', rows: acid.barrRows});
+    sheets.push({name: 'GAT_REINCIDENTES', rows: acid.reincRows});
+    sheets.push({name: 'GAT_ACIDENTES', rows: acid.regRows});
+    log('Acidentes: ' + ACID_DADOS.length + ' registros preparados (6 abas GAT_*)', 'ok');
+  }
+
+  if(NC_OK && NC_DADOS.length > 0){
+    var nc = montarNC();
+    sheets.push({name: 'NC_RESUMO', rows: nc.resumoRows});
+    sheets.push({name: 'NC_POR_ZONA', rows: nc.zonaRows});
+    sheets.push({name: 'NC_REGISTROS', rows: nc.regRows});
+    log('NCs: ' + NC_DADOS.length + ' registros preparados (3 abas NC_*)', 'ok');
+  }
+
+  if(EPI_OK && EPI_REGS.length > 0){
+    var epi = montarEpi();
+    sheets.push({name: 'EPI_CADASTRO', rows: epi.cadRows});
+    sheets.push({name: 'EPI_REGISTROS', rows: epi.regRows});
+    if(epi.alertRows.length > 1){
+      sheets.push({name: 'EPI_ALERTAS', rows: epi.alertRows});
+    }
+    var regCount = epi.regRows.length - 1;
+    log('EPI: ' + regCount + ' registros + ' + EPI_CAD.length + ' cadastro + ' + epi.alertCount + ' alertas validade ocular preparados', 'ok');
+  }
+
+  var payload = {
+    modulo: 'painel_completo',
+    sheets: sheets
+  };
+
+  log('Enviando ' + sheets.length + ' abas para Apps Script...', 'info');
+
+  fetch(url, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: {'Content-Type': 'text/plain'},
+    body: JSON.stringify(payload)
+  }).then(function(){
+    log('Dados enviados com sucesso! (' + new Date().toLocaleString('pt-BR') + ')', 'ok');
+    log('Abas atualizadas: ' + sheets.map(function(s){ return s.name; }).join(', '), 'ok');
+  }).catch(function(err){
+    log('ERRO no envio: ' + err.message, 'err');
+  }).finally(function(){
+    btn.disabled = false;
+    btn.innerHTML = 'Atualizar Painel';
+  });
+}
+
+/* ── CSV ── */
+function exportarCsv(){
+  if(!ADIC_OK && !MON_OK && !ACID_OK && !NC_OK && !EPI_OK){
+    log('Nenhum dado. Escaneie primeiro.', 'warn');
+    return;
+  }
+  var lines = [];
+  var ts = new Date().toISOString().slice(0,10);
+
+  if(ADIC_OK && ADIC_DADOS.length > 0){
+    var adic = montarAdic();
+    lines.push('=== ADICIONAIS: EMPREGADOS ===');
+    adic.empRows.forEach(function(r){
+      lines.push(r.map(function(v){ return String(v||'').replace(/;/g,','); }).join(';'));
+    });
+    lines.push('');
+  }
+
+  if(MON_OK && MON_RESULTADOS.length > 0){
+    var mon = montarMon();
+    lines.push('=== MONITORAMENTO: EMPREGADOS ===');
+    mon.empRows.forEach(function(r){
+      lines.push(r.map(function(v){ return String(v||'').replace(/;/g,','); }).join(';'));
+    });
+    lines.push('');
+  }
+
+  if(ACID_OK && ACID_DADOS.length > 0){
+    var acid = montarAcid();
+    lines.push('=== ACIDENTES: REGISTROS ===');
+    acid.regRows.forEach(function(r){
+      lines.push(r.map(function(v){ return String(v||'').replace(/;/g,','); }).join(';'));
+    });
+    lines.push('');
+  }
+
+  if(NC_OK && NC_DADOS.length > 0){
+    var nc = montarNC();
+    lines.push('=== NAO-CONFORMIDADES: POR ZONA ===');
+    nc.zonaRows.forEach(function(r){
+      lines.push(r.map(function(v){ return String(v||'').replace(/;/g,','); }).join(';'));
+    });
+    lines.push('');
+    lines.push('=== NAO-CONFORMIDADES: REGISTROS ===');
+    nc.regRows.forEach(function(r){
+      lines.push(r.map(function(v){ return String(v||'').replace(/;/g,','); }).join(';'));
+    });
+    lines.push('');
+  }
+
+  if(EPI_OK && EPI_REGS.length > 0){
+    var epi = montarEpi();
+    lines.push('=== EPI: CADASTRO ===');
+    epi.cadRows.forEach(function(r){
+      lines.push(r.map(function(v){ return String(v||'').replace(/;/g,','); }).join(';'));
+    });
+    lines.push('');
+    lines.push('=== EPI: REGISTROS ===');
+    epi.regRows.forEach(function(r){
+      lines.push(r.map(function(v){ return String(v||'').replace(/;/g,','); }).join(';'));
+    });
+    if(epi.alertRows.length > 1){
+      lines.push('');
+      lines.push('=== EPI: ALERTAS VALIDADE OCULAR ===');
+      epi.alertRows.forEach(function(r){
+        lines.push(r.map(function(v){ return String(v||'').replace(/;/g,','); }).join(';'));
+      });
+    }
+  }
+
+  var csv = '﻿' + lines.join('\n');
+  var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'painel_sst_completo_' + ts + '.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  log('CSV baixado: ' + a.download, 'ok');
+}
+
+/* ── Auto-scan ao abrir ── */
+scanAll();
+</script>
+
+</body>
+</html>
