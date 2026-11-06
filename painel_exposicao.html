@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<!--
+  Painel de Exposição Ocupacional v1.0
+  Bio (NR-15 Anexo 14) + Radiação Ionizante (NR-16)
+  USOST · HU Lagarto · HU Brasil/EBSERH
+  Outubro 2026
+-->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exposição Ocupacional · USOST/HUL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════
+   DESIGN TOKENS
+   ══════════════════════════════════════ */
+:root {
+  --az: #1a2744; --azm: #1a3a6c; --azc: #e8f0fb;
+  --vr: #c0392b; --vrc: #fdf0ef; --vrb: #f5c6c3;
+  --vd: #1a5c33; --vc: #eaf5ec; --vm: #1a5c33;
+  --am: #d4a017; --amc: #fef9e7;
+  --lj: #e67e22; --ljc: #fdf2e9;
+  --bg: #f7f8fa; --bd: #dde1e7; --mt: #6b7280;
+  --tx: #1a1d23; --br: #ffffff;
+  --r: 8px; --sh: 0 1px 4px rgba(0,0,0,0.07);
+  --f: 'IBM Plex Sans',sans-serif; --m: 'IBM Plex Mono',monospace;
+  --rad: #8e44ad; --radc: #f5eef8;
+  --bio: #2563eb; --bioc: #eff6ff;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--f);background:var(--bg);color:var(--tx);font-size:14px;line-height:1.5;min-height:100vh;display:flex;flex-direction:column}
+
+/* ── Top bar ── */
+.top-bar{height:3px;background:linear-gradient(90deg,var(--bio),var(--rad))}
+
+/* ── Header ── */
+.hdr{background:var(--az);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.hdr-mid{flex:1;min-width:200px}
+.hdr-tit{font-size:17px;font-weight:700;letter-spacing:.3px}
+.hdr-sub{font-size:11px;opacity:.7;margin-top:2px}
+.hdr-right{display:flex;align-items:center;gap:8px}
+.hdr-ver{font-family:var(--m);font-size:10px;opacity:.5;background:rgba(255,255,255,.1);padding:2px 8px;border-radius:10px}
+.hdr-btn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;padding:6px 12px;border-radius:var(--r);cursor:pointer;font-size:12px;font-family:var(--f);transition:.2s}
+.hdr-btn:hover{background:rgba(255,255,255,.22)}
+
+/* ── Nav tabs ── */
+.nav{background:var(--br);border-bottom:1px solid var(--bd);display:flex;gap:0;padding:0 24px}
+.nav-tab{padding:10px 18px;font-size:13px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;color:var(--mt);transition:.2s}
+.nav-tab:hover{color:var(--tx)}
+.nav-tab.active{color:var(--az);border-bottom-color:var(--az);font-weight:600}
+
+/* ── Main ── */
+.main{max-width:1200px;width:100%;margin:0 auto;padding:20px 16px;flex:1}
+.view{display:none}
+.view.active{display:block}
+
+/* ── Cards ── */
+.card{background:var(--br);border:1px solid var(--bd);border-radius:var(--r);box-shadow:var(--sh);margin-bottom:16px;overflow:visible}
+.card-title{background:var(--az);color:#fff;padding:10px 16px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;border-radius:var(--r) var(--r) 0 0}
+.card-title::before{content:'';width:6px;height:6px;background:var(--vr);border-radius:50%;flex-shrink:0}
+.card-body{padding:16px}
+
+/* ── KPIs ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+.kpi{background:var(--br);border:1px solid var(--bd);border-radius:var(--r);padding:14px;text-align:center}
+.kpi-val{font-size:28px;font-weight:700;line-height:1.1}
+.kpi-label{font-size:11px;color:var(--mt);margin-top:4px;text-transform:uppercase;letter-spacing:.3px}
+.kpi-bio .kpi-val{color:var(--bio)}
+.kpi-rad .kpi-val{color:var(--rad)}
+.kpi-ok .kpi-val{color:var(--vd)}
+.kpi-warn .kpi-val{color:var(--lj)}
+.kpi-danger .kpi-val{color:var(--vr)}
+
+/* ── Status badge ── */
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.badge-g{background:#dcfce7;color:#166534}
+.badge-n{background:#fee2e2;color:#991b1b}
+.badge-na{background:#f3f4f6;color:#6b7280}
+
+/* ── Tables ── */
+.tbl-wrap{overflow-x:auto;margin-top:8px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:var(--az);color:#fff;padding:8px 10px;text-align:left;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;position:sticky;top:0;z-index:2}
+td{padding:7px 10px;border-bottom:1px solid #eee}
+tr:hover td{background:#f8f9fa}
+.tc{text-align:center}
+.tr{text-align:right}
+.tm{font-family:var(--m);font-size:12px}
+
+/* ── KPI subtitles ── */
+.kpi-sub{font-size:10px;color:var(--mt);margin-top:2px;line-height:1.3;font-weight:400;text-transform:none;letter-spacing:0}
+.kpi-sub b{font-weight:600}
+
+/* ── Search ── */
+.search-box{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.search-box input,.search-box select{padding:8px 12px;border:1px solid var(--bd);border-radius:var(--r);font-family:var(--f);font-size:13px;flex:1;min-width:180px}
+.search-box select{flex:0;min-width:120px}
+.search-box input:focus,.search-box select:focus{outline:none;border-color:var(--az);box-shadow:0 0 0 2px rgba(26,39,68,.12)}
+
+/* ── Individual card ── */
+.emp-card{background:var(--br);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:16px;overflow:hidden}
+.emp-header{padding:14px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--bd)}
+.emp-name{font-size:16px;font-weight:700;color:var(--az)}
+.emp-meta{font-size:12px;color:var(--mt)}
+.emp-body{padding:16px}
+.emp-section{margin-bottom:16px}
+.emp-section-title{font-size:13px;font-weight:700;color:var(--az);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.emp-section-title .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot-bio{background:var(--bio)}
+.dot-rad{background:var(--rad)}
+
+/* ── Bar chart (mini) ── */
+.bar-wrap{height:6px;background:#e5e7eb;border-radius:3px;width:80px;display:inline-block;vertical-align:middle;margin-left:6px}
+.bar-fill{height:100%;border-radius:3px;transition:width .3s}
+.bar-bio{background:var(--bio)}
+.bar-rad{background:var(--rad)}
+.bar-green{background:var(--vd)}
+
+/* ── Info rows ── */
+.info-row{display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-bottom:1px solid #f3f4f6}
+.info-row span:first-child{color:var(--mt)}
+.info-row b{font-weight:600}
+
+/* ── Loading ── */
+.loading{text-align:center;padding:40px;color:var(--mt)}
+.loading .spinner{display:inline-block;width:24px;height:24px;border:3px solid var(--bd);border-top-color:var(--az);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Footer ── */
+.footer{text-align:center;font-size:11px;color:var(--mt);padding:12px;border-top:1px solid var(--bd);margin-top:auto;background:var(--br)}
+
+/* ── Empty state ── */
+.empty{text-align:center;padding:40px;color:var(--mt);font-size:13px}
+
+/* ── Responsive ── */
+@media(max-width:600px){
+  .hdr{padding:12px 16px}
+  .nav{padding:0 12px;overflow-x:auto}
+  .nav-tab{padding:8px 12px;font-size:12px;white-space:nowrap}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .kpi-val{font-size:22px}
+}
+
+/* ── Print ── */
+@media print{
+  .hdr,.nav,.search-box,.hdr-btn,.footer{display:none!important}
+  .view{display:block!important}
+  body{background:#fff}
+}
+</style>
+</head>
+<body>
+
+<div class="top-bar"></div>
+
+<div class="hdr">
+  <div class="hdr-mid">
+    <div class="hdr-tit">Painel de Exposicao Ocupacional</div>
+    <div class="hdr-sub">USOST-HUL/EBSERH &middot; Biologico (NR-15) &middot; Radiacao Ionizante (NR-16)</div>
+  </div>
+  <div class="hdr-right">
+    <span class="hdr-ver">v1.1</span>
+    <button class="hdr-btn" onclick="carregarDados()">&#8635; Atualizar</button>
+  </div>
+</div>
+
+<div class="nav">
+  <div class="nav-tab active" data-view="visao-geral">Visao Geral</div>
+  <div class="nav-tab" data-view="bio-detalhe">Biologico</div>
+  <div class="nav-tab" data-view="rad-detalhe">Radiacao</div>
+  <div class="nav-tab" data-view="individual">Individual</div>
+</div>
+
+<div class="main">
+
+  <!-- ════════ VISAO GERAL ════════ -->
+  <div class="view active" id="visao-geral">
+    <div class="loading" id="loadingMsg">
+      <div class="spinner"></div>
+      <p style="margin-top:12px">Carregando dados da planilha...</p>
+    </div>
+    <div id="conteudoGeral" style="display:none">
+      <div class="kpi-grid" id="kpiGrid"></div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="card-title">Resumo por Tipo de Exposicao</div>
+        <div class="card-body">
+          <div class="tbl-wrap">
+            <table id="tblResumo"></table>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px" id="chartsRow">
+        <div class="card">
+          <div class="card-title">Biologico: Evolucao Mensal</div>
+          <div class="card-body"><canvas id="chartBio" height="220"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Radiacao: Evolucao Mensal</div>
+          <div class="card-body"><canvas id="chartRad" height="220"></canvas></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Ultima Atualizacao</div>
+        <div class="card-body" id="infoAtualizacao" style="font-size:12px;color:var(--mt)">-</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ BIOLOGICO DETALHE ════════ -->
+  <div class="view" id="bio-detalhe">
+    <div class="search-box">
+      <input type="text" id="filtroBioNome" placeholder="Filtrar por nome ou SIAPE..." oninput="filtrarBio()">
+      <select id="filtroBioAno" onchange="filtrarBio()">
+        <option value="">Todos os anos</option>
+      </select>
+      <select id="filtroBioMes" onchange="filtrarBio()">
+        <option value="">Todos os meses</option>
+      </select>
+      <select id="filtroBioRes" onchange="filtrarBio()">
+        <option value="">Todos</option>
+        <option value="CARACTERIZADA">Caracterizada</option>
+        <option value="NAO CARACTERIZADA">Nao Caracterizada</option>
+      </select>
+    </div>
+    <div class="card">
+      <div class="card-title">Exposicao Biologica (Infectocontagiosas) &mdash; NR-15 Anexo 14</div>
+      <div class="card-body">
+        <div class="tbl-wrap" style="max-height:500px;overflow-y:auto">
+          <table id="tblBio"></table>
+        </div>
+        <div id="bioCount" style="margin-top:8px;font-size:11px;color:var(--mt)"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ RADIACAO DETALHE ════════ -->
+  <div class="view" id="rad-detalhe">
+    <div class="search-box">
+      <input type="text" id="filtroRadNome" placeholder="Filtrar por nome ou matricula..." oninput="filtrarRad()">
+      <select id="filtroRadAno" onchange="filtrarRad()">
+        <option value="">Todos os anos</option>
+      </select>
+      <select id="filtroRadMes" onchange="filtrarRad()">
+        <option value="">Todos os meses</option>
+      </select>
+      <select id="filtroRadRes" onchange="filtrarRad()">
+        <option value="">Todos</option>
+        <option value="CARACTERIZADA">Caracterizada</option>
+        <option value="NAO CARACTERIZADA">Nao Caracterizada</option>
+      </select>
+    </div>
+    <div class="card">
+      <div class="card-title">Exposicao a Radiacao Ionizante (Arco Cirurgico) &mdash; NR-16</div>
+      <div class="card-body">
+        <div class="tbl-wrap" style="max-height:500px;overflow-y:auto">
+          <table id="tblRad"></table>
+        </div>
+        <div id="radCount" style="margin-top:8px;font-size:11px;color:var(--mt)"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ INDIVIDUAL ════════ -->
+  <div class="view" id="individual">
+    <div class="search-box">
+      <input type="text" id="buscaIndividual" placeholder="Digite nome, SIAPE ou matricula..." oninput="buscarIndividual()">
+    </div>
+    <div id="resultIndividual"></div>
+  </div>
+
+</div>
+
+<div class="footer">
+  Painel Gerencial SOST/SEG &middot; USOST &middot; Hospital Universitario de Lagarto &middot; EBSERH
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   PAINEL DE EXPOSICAO OCUPACIONAL
+   Le dados das abas EXP_RESUMO, EXP_BIO e EXP_RAD da planilha
+   Google Sheets via endpoint gviz (JSONP).
+   ══════════════════════════════════════════════════════════════════ */
+
+var SHEET_ID = '1BAcopQ8Jacx4Q8ojBuU-2MpGH85NUKzi73xd6rmo2rQ';
+var MESES = ['Janeiro','Fevereiro','Marco','Abril','Maio','Junho',
+             'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+/* Estado global */
+var DATA_RESUMO = [];
+var DATA_BIO = [];
+var DATA_RAD = [];
+var LOADED = false;
+
+/* ── Nav tabs ── */
+document.querySelectorAll('.nav-tab').forEach(function(tab){
+  tab.addEventListener('click', function(){
+    document.querySelectorAll('.nav-tab').forEach(function(t){ t.classList.remove('active'); });
+    document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('active'); });
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.view).classList.add('active');
+  });
+});
+
+/* ══════════════════════════════════════════════════════════════════
+   GVIZ: Leitura da planilha Google Sheets via JSONP
+   Usa injecao de <script> com callback para evitar bloqueio CORS
+   (mesmo padrao do painel_epi.html).
+   ══════════════════════════════════════════════════════════════════ */
+
+var _gvizCbId = 0;
+
+function fetchGviz(sheetName){
+  return new Promise(function(resolve, reject){
+    var cbName = '_gviz_cb_' + (++_gvizCbId);
+    var q = encodeURIComponent("SELECT * WHERE A IS NOT NULL");
+    var url = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID +
+              '/gviz/tq?tqx=responseHandler:' + cbName +
+              '&sheet=' + encodeURIComponent(sheetName) +
+              '&tq=' + q;
+
+    window[cbName] = function(json){
+      delete window[cbName];
+      if(json.status === 'error'){
+        reject(new Error(json.errors ? json.errors[0].detailed_message : 'Erro gviz'));
+        return;
+      }
+      var table = json.table;
+      if(!table || !table.rows){
+        resolve([]);
+        return;
+      }
+      var cols = table.cols.map(function(c){ return c.label || c.id; });
+      var rows = table.rows.map(function(r){
+        var obj = {};
+        r.c.forEach(function(cell, i){
+          obj[cols[i]] = cell ? (cell.f || cell.v) : '';
+        });
+        return obj;
+      });
+      resolve(rows);
+    };
+
+    var s = document.createElement('script');
+    s.src = url;
+    s.onerror = function(){
+      delete window[cbName];
+      reject(new Error('Falha ao carregar aba ' + sheetName));
+    };
+    document.head.appendChild(s);
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   CARREGAR DADOS
+   ══════════════════════════════════════════════════════════════════ */
+
+function carregarDados(){
+  document.getElementById('loadingMsg').style.display = '';
+  document.getElementById('conteudoGeral').style.display = 'none';
+  LOADED = false;
+
+  Promise.all([
+    fetchGviz('EXP_RESUMO'),
+    fetchGviz('EXP_BIO'),
+    fetchGviz('EXP_RAD')
+  ]).then(function(results){
+    DATA_RESUMO = results[0];
+    /* Filtrar processos SEI que aparecem na coluna NOME (ex: 23523.031641/2024-98) */
+    var reSEI = /^\d{5}\.\d{5,6}\/\d{4}-\d{2}$/;
+    DATA_BIO = results[1].filter(function(r){
+      var nome = String(r.NOME || '').trim();
+      if(!nome) return false;
+      if(reSEI.test(nome)) return false;
+      /* Nome sem nenhuma letra = provavelmente numero/codigo, nao pessoa */
+      if(!/[a-zA-ZÀ-ÿ]/.test(nome)) return false;
+      return true;
+    });
+    DATA_RAD = results[2];
+    LOADED = true;
+
+    document.getElementById('loadingMsg').style.display = 'none';
+    document.getElementById('conteudoGeral').style.display = '';
+
+    renderVisaoGeral();
+    renderTabelaBio();
+    renderTabelaRad();
+    popularFiltros();
+
+    document.getElementById('infoAtualizacao').textContent =
+      'Dados carregados em ' + new Date().toLocaleString('pt-BR') +
+      ' | Bio: ' + DATA_BIO.length + ' registros | Rad: ' + DATA_RAD.length + ' registros';
+
+  }).catch(function(err){
+    document.getElementById('loadingMsg').innerHTML =
+      '<p style="color:var(--vr)">Erro ao carregar dados: ' + err.message + '</p>' +
+      '<p style="margin-top:8px;font-size:12px">Verifique se a planilha esta publicada na web e compartilhada.</p>' +
+      '<button class="hdr-btn" style="margin-top:12px;background:var(--az);color:#fff" onclick="carregarDados()">Tentar novamente</button>';
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   VISAO GERAL
+   ══════════════════════════════════════════════════════════════════ */
+
+function renderVisaoGeral(){
+  /* ── Empregados unicos (distintos por SIAPE/MATRICULA) ── */
+  var bioEmps = {};
+  DATA_BIO.forEach(function(r){ if(r.SIAPE) bioEmps[r.SIAPE] = true; });
+  var radEmps = {};
+  DATA_RAD.forEach(function(r){ if(r.MATRICULA) radEmps[r.MATRICULA] = true; });
+
+  /* ── Contagens de resultado (registros, nao pessoas) ── */
+  var bioCarac = DATA_BIO.filter(function(r){ return r.RESULTADO === 'CARACTERIZADA'; }).length;
+  var bioNao = DATA_BIO.filter(function(r){ return r.RESULTADO === 'NAO CARACTERIZADA'; }).length;
+  var radCarac = DATA_RAD.filter(function(r){ return r.RESULTADO === 'CARACTERIZADA'; }).length;
+  var radNao = DATA_RAD.filter(function(r){ return r.RESULTADO === 'NAO CARACTERIZADA'; }).length;
+
+  /* ── Empregados unicos com insalubridade/periculosidade ── */
+  var bioEmpCarac = {};
+  DATA_BIO.forEach(function(r){
+    if(r.RESULTADO === 'CARACTERIZADA' && r.SIAPE) bioEmpCarac[r.SIAPE] = true;
+  });
+  var radEmpCarac = {};
+  DATA_RAD.forEach(function(r){
+    if(r.RESULTADO === 'CARACTERIZADA' && r.MATRICULA) radEmpCarac[r.MATRICULA] = true;
+  });
+
+  /* ── Meses unicos monitorados ── */
+  var bioMeses = {};
+  DATA_BIO.forEach(function(r){ bioMeses[r.ANO + '_' + r.MES] = true; });
+  var radMeses = {};
+  DATA_RAD.forEach(function(r){ radMeses[r.ANO + '_' + r.MES] = true; });
+
+  var nBioEmps = Object.keys(bioEmps).length;
+  var nRadEmps = Object.keys(radEmps).length;
+  var nBioMeses = Object.keys(bioMeses).length;
+  var nRadMeses = Object.keys(radMeses).length;
+  var nBioEmpCarac = Object.keys(bioEmpCarac).length;
+  var nRadEmpCarac = Object.keys(radEmpCarac).length;
+
+  /* ── KPIs com subtitulos explicativos para gestao ── */
+  var kpis = [
+    {val: nBioEmps, label: 'Empregados Monitorados', sub: 'Exposicao Biologica', cls: 'kpi-bio'},
+    {val: DATA_BIO.length, label: 'Registros Mensais', sub: nBioEmps + ' empregados x ' + nBioMeses + ' meses', cls: 'kpi-bio'},
+    {val: nBioEmpCarac, label: 'Com Insalubridade', sub: 'de ' + nBioEmps + ' monitorados (' + (nBioEmps ? Math.round(nBioEmpCarac/nBioEmps*100) : 0) + '%)', cls: 'kpi-danger'},
+    {val: nRadEmps, label: 'Profissionais Monitorados', sub: 'Radiacao Ionizante', cls: 'kpi-rad'},
+    {val: DATA_RAD.length, label: 'Registros Mensais', sub: nRadEmps + ' profissionais x ' + nRadMeses + ' meses', cls: 'kpi-rad'},
+    {val: nRadEmpCarac, label: 'Com Periculosidade', sub: 'de ' + nRadEmps + ' monitorados (' + (nRadEmps ? Math.round(nRadEmpCarac/nRadEmps*100) : 0) + '%)', cls: 'kpi-warn'}
+  ];
+
+  var html = '';
+  kpis.forEach(function(k){
+    html += '<div class="kpi ' + k.cls + '">';
+    html += '<div class="kpi-val">' + k.val + '</div>';
+    html += '<div class="kpi-label">' + k.label + '</div>';
+    if(k.sub) html += '<div class="kpi-sub">' + k.sub + '</div>';
+    html += '</div>';
+  });
+  document.getElementById('kpiGrid').innerHTML = html;
+
+  /* ── Tabela resumo (linguagem para gestao) ── */
+  var tbl = '<thead><tr>' +
+    '<th>Tipo de Exposicao</th>' +
+    '<th class="tc">Empregados</th>' +
+    '<th class="tc">Registros Mensais</th>' +
+    '<th class="tc">Caracterizados</th>' +
+    '<th class="tc">Nao Caract.</th>' +
+    '<th>Base Legal</th>' +
+    '<th>Criterio de Caracterizacao</th>' +
+    '<th>Direito do Empregado</th>' +
+    '</tr></thead><tbody>';
+
+  tbl += '<tr>';
+  tbl += '<td><b>Biologico</b><br><span style="font-size:11px;color:var(--mt)">Infectocontagiosas</span></td>';
+  tbl += '<td class="tc">' + nBioEmps + '</td>';
+  tbl += '<td class="tc">' + DATA_BIO.length + '</td>';
+  tbl += '<td class="tc"><b style="color:var(--vr)">' + bioCarac + '</b></td>';
+  tbl += '<td class="tc">' + bioNao + '</td>';
+  tbl += '<td>NR-15 Anexo 14</td>';
+  tbl += '<td>Indice PLI/PLT &ge; 50%</td>';
+  tbl += '<td>Insalubridade Grau Maximo (40%)</td>';
+  tbl += '</tr>';
+
+  tbl += '<tr>';
+  tbl += '<td><b>Radiacao Ionizante</b><br><span style="font-size:11px;color:var(--mt)">Arco Cirurgico</span></td>';
+  tbl += '<td class="tc">' + nRadEmps + '</td>';
+  tbl += '<td class="tc">' + DATA_RAD.length + '</td>';
+  tbl += '<td class="tc"><b style="color:var(--vr)">' + radCarac + '</b></td>';
+  tbl += '<td class="tc">' + radNao + '</td>';
+  tbl += '<td>NR-16</td>';
+  tbl += '<td>Dias exposicao/plantao &ge; 25%</td>';
+  tbl += '<td>Periculosidade (30%)</td>';
+  tbl += '</tr>';
+
+  tbl += '</tbody>';
+  document.getElementById('tblResumo').innerHTML = tbl;
+
+  /* Charts */
+  renderCharts();
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   CHARTS (Canvas simples, sem dependencia)
+   ══════════════════════════════════════════════════════════════════ */
+
+function agruparPorMes(data, campoRes){
+  var mapa = {};
+  data.forEach(function(r){
+    var key = r.ANO + '-' + (r.MES || '').substring(0,3);
+    if(!mapa[key]) mapa[key] = {label: key, carac: 0, nao: 0, total: 0};
+    mapa[key].total++;
+    if(r.RESULTADO === 'CARACTERIZADA') mapa[key].carac++;
+    else mapa[key].nao++;
+  });
+  /* Ordenar */
+  var mesIdx = {};
+  MESES.forEach(function(m,i){ mesIdx[m.substring(0,3)] = i; });
+  return Object.keys(mapa).sort(function(a,b){
+    var pa = a.split('-'), pb = b.split('-');
+    var ya = parseInt(pa[0]), yb = parseInt(pb[0]);
+    if(ya !== yb) return ya - yb;
+    return (mesIdx[pa[1]]||0) - (mesIdx[pb[1]]||0);
+  }).map(function(k){ return mapa[k]; });
+}
+
+function drawBarChart(canvasId, dados, corCarac, corNao, label1, label2){
+  var canvas = document.getElementById(canvasId);
+  if(!canvas || !dados.length) return;
+  var ctx = canvas.getContext('2d');
+  var W = canvas.parentElement.offsetWidth - 32;
+  canvas.width = Math.max(W, 300);
+  canvas.height = 220;
+
+  var H = canvas.height;
+  var padL = 40, padR = 16, padT = 30, padB = 50;
+  var chartW = canvas.width - padL - padR;
+  var chartH = H - padT - padB;
+
+  var maxVal = 0;
+  dados.forEach(function(d){ if(d.total > maxVal) maxVal = d.total; });
+  if(maxVal === 0) maxVal = 1;
+
+  var barGroupW = chartW / dados.length;
+  var barW = Math.min(barGroupW * 0.35, 20);
+  var gap = 2;
+
+  ctx.clearRect(0,0,canvas.width,H);
+
+  /* Grid */
+  ctx.strokeStyle = '#e5e7eb';
+  ctx.lineWidth = 1;
+  for(var g = 0; g <= 4; g++){
+    var gy = padT + chartH - (chartH * g / 4);
+    ctx.beginPath(); ctx.moveTo(padL, gy); ctx.lineTo(padL + chartW, gy); ctx.stroke();
+    ctx.fillStyle = '#9ca3af'; ctx.font = '10px IBM Plex Mono';
+    ctx.textAlign = 'right';
+    ctx.fillText(Math.round(maxVal * g / 4), padL - 4, gy + 4);
+  }
+
+  dados.forEach(function(d, i){
+    var x = padL + i * barGroupW + barGroupW / 2;
+
+    /* Barra carac */
+    var h1 = (d.carac / maxVal) * chartH;
+    ctx.fillStyle = corCarac;
+    ctx.fillRect(x - barW - gap/2, padT + chartH - h1, barW, h1);
+
+    /* Barra nao carac */
+    var h2 = (d.nao / maxVal) * chartH;
+    ctx.fillStyle = corNao;
+    ctx.fillRect(x + gap/2, padT + chartH - h2, barW, h2);
+
+    /* Label */
+    ctx.save();
+    ctx.fillStyle = '#6b7280'; ctx.font = '10px IBM Plex Sans';
+    ctx.textAlign = 'center';
+    ctx.translate(x, padT + chartH + 14);
+    ctx.rotate(-0.4);
+    ctx.fillText(d.label, 0, 0);
+    ctx.restore();
+  });
+
+  /* Legenda */
+  var lx = padL;
+  ctx.fillStyle = corCarac;
+  ctx.fillRect(lx, 6, 10, 10);
+  ctx.fillStyle = '#374151'; ctx.font = '10px IBM Plex Sans'; ctx.textAlign = 'left';
+  ctx.fillText(label1, lx + 14, 15);
+
+  lx += ctx.measureText(label1).width + 30;
+  ctx.fillStyle = corNao;
+  ctx.fillRect(lx, 6, 10, 10);
+  ctx.fillStyle = '#374151';
+  ctx.fillText(label2, lx + 14, 15);
+}
+
+function renderCharts(){
+  var bioMes = agruparPorMes(DATA_BIO);
+  var radMes = agruparPorMes(DATA_RAD);
+
+  drawBarChart('chartBio', bioMes, '#2563eb', '#93c5fd', 'Caracterizada', 'Nao Caract.');
+  drawBarChart('chartRad', radMes, '#8e44ad', '#d8b4fe', 'Caracterizada', 'Nao Caract.');
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   TABELA BIOLOGICO
+   ══════════════════════════════════════════════════════════════════ */
+
+function renderTabelaBio(data){
+  var rows = data || DATA_BIO;
+  var html = '<thead><tr><th>Ano</th><th>Mes</th><th>SIAPE</th><th>Nome</th><th>Cargo</th><th class="tc">Plt Inf</th><th class="tc">Plantao</th><th class="tc">Indice</th><th class="tc">Resultado</th></tr></thead><tbody>';
+  if(!rows.length){
+    html += '<tr><td colspan="9" class="empty">Nenhum registro encontrado</td></tr>';
+  }
+  rows.forEach(function(r){
+    var pct = String(r.INDICE_PCT || '0%').replace('%','');
+    var pctNum = parseFloat(pct) || 0;
+    var bc = pctNum >= 50 ? 'g' : 'n';
+    var barW = Math.min(pctNum, 100);
+    html += '<tr>';
+    html += '<td class="tm">' + (r.ANO||'') + '</td>';
+    html += '<td>' + (r.MES||'') + '</td>';
+    html += '<td class="tm">' + (r.SIAPE||'') + '</td>';
+    html += '<td>' + (r.NOME||'') + '</td>';
+    html += '<td>' + (r.CARGO||'') + '</td>';
+    html += '<td class="tc tm">' + (r.PLANTAO_INF||'0') + '</td>';
+    html += '<td class="tc tm">' + (r.PLANTAO||'0') + '</td>';
+    html += '<td class="tc">';
+    html += '<span class="badge badge-' + bc + '">' + pctNum + '%</span>';
+    if(pctNum > 0){
+      html += '<div class="bar-wrap"><div class="bar-fill bar-bio" style="width:' + barW + '%"></div></div>';
+    }
+    html += '</td>';
+    html += '<td class="tc"><span class="badge badge-' + (r.RESULTADO === 'CARACTERIZADA' ? 'g' : 'n') + '">' + (r.RESULTADO||'') + '</span></td>';
+    html += '</tr>';
+  });
+  html += '</tbody>';
+  document.getElementById('tblBio').innerHTML = html;
+  document.getElementById('bioCount').textContent = rows.length + ' registro(s)';
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   TABELA RADIACAO
+   ══════════════════════════════════════════════════════════════════ */
+
+function renderTabelaRad(data){
+  var rows = data || DATA_RAD;
+  var html = '<thead><tr><th>Ano</th><th>Mes</th><th>Matricula</th><th>Nome</th><th>Cargo</th><th class="tc">Cirurgias</th><th class="tc">Dias Exp</th><th class="tc">Plt Esp</th><th class="tc">Indice</th><th class="tc">Resultado</th></tr></thead><tbody>';
+  if(!rows.length){
+    html += '<tr><td colspan="10" class="empty">Nenhum registro encontrado</td></tr>';
+  }
+  rows.forEach(function(r){
+    var pct = String(r.INDICE_PCT || '0%').replace('%','');
+    var pctNum = parseFloat(pct) || 0;
+    var bc = pctNum >= 25 ? 'g' : 'n';
+    var barW = Math.min(pctNum * 2, 100); /* escalar pra visualizacao */
+    html += '<tr>';
+    html += '<td class="tm">' + (r.ANO||'') + '</td>';
+    html += '<td>' + (r.MES||'') + '</td>';
+    html += '<td class="tm">' + (r.MATRICULA||'') + '</td>';
+    html += '<td>' + (r.NOME||'') + '</td>';
+    html += '<td>' + (r.CARGO||'') + '</td>';
+    html += '<td class="tc tm">' + (r.CIRURGIAS||'0') + '</td>';
+    html += '<td class="tc tm">' + (r.DIAS_EXPOSICAO||'0') + '</td>';
+    html += '<td class="tc tm">' + (r.PLANTAO_ESPERADO||'0') + '</td>';
+    html += '<td class="tc">';
+    html += '<span class="badge badge-' + bc + '">' + pctNum + '%</span>';
+    if(pctNum > 0){
+      html += '<div class="bar-wrap"><div class="bar-fill bar-rad" style="width:' + barW + '%"></div></div>';
+    }
+    html += '</td>';
+    html += '<td class="tc"><span class="badge badge-' + (r.RESULTADO === 'CARACTERIZADA' ? 'g' : 'n') + '">' + (r.RESULTADO||'') + '</span></td>';
+    html += '</tr>';
+  });
+  html += '</tbody>';
+  document.getElementById('tblRad').innerHTML = html;
+  document.getElementById('radCount').textContent = rows.length + ' registro(s)';
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   FILTROS
+   ══════════════════════════════════════════════════════════════════ */
+
+var MESES_ORDEM = ['JANEIRO','FEVEREIRO','MARCO','ABRIL','MAIO','JUNHO',
+  'JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
+
+function _mesIdx(m){
+  var up = String(m||'').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  var i = MESES_ORDEM.indexOf(up);
+  return i >= 0 ? i : 99;
+}
+
+function _popularAnoMes(data, campoAno, campoMes, selAnoId, selMesId){
+  var anos = {}, meses = {};
+  data.forEach(function(r){
+    if(r[campoAno]) anos[r[campoAno]] = true;
+    if(r[campoMes]) meses[r[campoMes]] = true;
+  });
+
+  /* Ano: ordem numerica decrescente */
+  var selA = document.getElementById(selAnoId);
+  selA.innerHTML = '<option value="">Todos os anos</option>';
+  Object.keys(anos).sort(function(a,b){ return Number(b) - Number(a); }).forEach(function(a){
+    selA.innerHTML += '<option value="' + a + '">' + a + '</option>';
+  });
+
+  /* Mes: ordem cronologica */
+  var selM = document.getElementById(selMesId);
+  selM.innerHTML = '<option value="">Todos os meses</option>';
+  Object.keys(meses).sort(function(a,b){ return _mesIdx(a) - _mesIdx(b); }).forEach(function(m){
+    selM.innerHTML += '<option value="' + m + '">' + m + '</option>';
+  });
+}
+
+function popularFiltros(){
+  _popularAnoMes(DATA_BIO, 'ANO', 'MES', 'filtroBioAno', 'filtroBioMes');
+  _popularAnoMes(DATA_RAD, 'ANO', 'MES', 'filtroRadAno', 'filtroRadMes');
+}
+
+function _norm(s){ return String(s||'').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }
+
+function filtrarBio(){
+  var txt = _norm(document.getElementById('filtroBioNome').value);
+  var ano = document.getElementById('filtroBioAno').value;
+  var mes = document.getElementById('filtroBioMes').value;
+  var res = document.getElementById('filtroBioRes').value;
+
+  var filtered = DATA_BIO.filter(function(r){
+    if(txt && _norm(r.NOME).indexOf(txt) === -1 && _norm(r.SIAPE).indexOf(txt) === -1) return false;
+    if(ano && String(r.ANO) !== ano) return false;
+    if(mes && String(r.MES) !== mes) return false;
+    if(res && r.RESULTADO !== res) return false;
+    return true;
+  });
+  renderTabelaBio(filtered);
+}
+
+function filtrarRad(){
+  var txt = _norm(document.getElementById('filtroRadNome').value);
+  var ano = document.getElementById('filtroRadAno').value;
+  var mes = document.getElementById('filtroRadMes').value;
+  var res = document.getElementById('filtroRadRes').value;
+
+  var filtered = DATA_RAD.filter(function(r){
+    if(txt && _norm(r.NOME).indexOf(txt) === -1 && _norm(r.MATRICULA).indexOf(txt) === -1) return false;
+    if(ano && String(r.ANO) !== ano) return false;
+    if(mes && String(r.MES) !== mes) return false;
+    if(res && r.RESULTADO !== res) return false;
+    return true;
+  });
+  renderTabelaRad(filtered);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   CONSULTA INDIVIDUAL
+   ══════════════════════════════════════════════════════════════════ */
+
+function buscarIndividual(){
+  var txt = _norm(document.getElementById('buscaIndividual').value);
+  var el = document.getElementById('resultIndividual');
+  if(!txt || txt.length < 2){
+    el.innerHTML = '<div class="empty">Digite ao menos 2 caracteres para buscar</div>';
+    return;
+  }
+
+  /* Encontrar empregados que batem */
+  var empMap = {}; /* chave -> {nome, id, cargo, bio:[], rad:[]} */
+
+  DATA_BIO.forEach(function(r){
+    if(_norm(r.NOME).indexOf(txt) === -1 && _norm(r.SIAPE).indexOf(txt) === -1) return;
+    var key = (r.SIAPE || r.NOME || '').toUpperCase();
+    if(!empMap[key]) empMap[key] = {nome: r.NOME, id: r.SIAPE, cargo: r.CARGO, bio: [], rad: []};
+    empMap[key].bio.push(r);
+  });
+
+  DATA_RAD.forEach(function(r){
+    if(_norm(r.NOME).indexOf(txt) === -1 && _norm(r.MATRICULA).indexOf(txt) === -1) return;
+    /* Tentar casar com empregado existente pelo nome */
+    var key = null;
+    Object.keys(empMap).forEach(function(k){
+      if(_norm(empMap[k].nome) === _norm(r.NOME)) key = k;
+    });
+    if(!key){
+      key = (r.MATRICULA || r.NOME || '').toUpperCase();
+      if(!empMap[key]) empMap[key] = {nome: r.NOME, id: r.MATRICULA, cargo: r.CARGO, bio: [], rad: []};
+    }
+    empMap[key].rad.push(r);
+  });
+
+  if(!Object.keys(empMap).length){
+    el.innerHTML = '<div class="empty">Nenhum empregado encontrado para "' + document.getElementById('buscaIndividual').value + '"</div>';
+    return;
+  }
+
+  var html = '';
+  Object.keys(empMap).forEach(function(key){
+    var emp = empMap[key];
+    html += renderEmpCard(emp);
+  });
+  el.innerHTML = html;
+}
+
+function renderEmpCard(emp){
+  var html = '<div class="emp-card">';
+  html += '<div class="emp-header">';
+  html += '<div>';
+  html += '<div class="emp-name">' + (emp.nome||'') + '</div>';
+  html += '<div class="emp-meta">';
+  if(emp.id) html += 'SIAPE/Matricula: <b>' + emp.id + '</b>';
+  if(emp.cargo) html += ' &middot; ' + emp.cargo;
+  html += '</div>';
+  html += '</div>';
+  html += '</div>';
+  html += '<div class="emp-body">';
+
+  /* ── BIO ── */
+  if(emp.bio.length > 0){
+    html += '<div class="emp-section">';
+    html += '<div class="emp-section-title"><span class="dot dot-bio"></span>Exposicao Biologica (NR-15 Anexo 14)</div>';
+
+    /* Resumo */
+    var bioCarac = emp.bio.filter(function(r){ return r.RESULTADO === 'CARACTERIZADA'; }).length;
+    var bioTotal = emp.bio.length;
+    var bioPctMedio = 0;
+    emp.bio.forEach(function(r){ bioPctMedio += parseFloat(String(r.INDICE_PCT||'0').replace('%','')); });
+    bioPctMedio = bioTotal > 0 ? Math.round(bioPctMedio / bioTotal) : 0;
+
+    html += '<div class="info-row"><span>Meses monitorados</span><b>' + bioTotal + '</b></div>';
+    html += '<div class="info-row"><span>Meses caracterizados (&ge;50%)</span><b style="color:' + (bioCarac > 0 ? 'var(--vd)' : '') + '">' + bioCarac + '</b></div>';
+    html += '<div class="info-row"><span>Indice medio</span><b>' + bioPctMedio + '%</b></div>';
+
+    /* Tabela mensal */
+    html += '<div class="tbl-wrap" style="margin-top:8px">';
+    html += '<table><thead><tr><th>Ano</th><th>Mes</th><th class="tc">Plt Inf</th><th class="tc">Plantao</th><th class="tc">Indice</th><th class="tc">Resultado</th></tr></thead><tbody>';
+    emp.bio.forEach(function(r){
+      var pctNum = parseFloat(String(r.INDICE_PCT||'0').replace('%',''));
+      var bc = pctNum >= 50 ? 'g' : (pctNum > 0 ? 'n' : 'na');
+      html += '<tr>';
+      html += '<td class="tm">' + (r.ANO||'') + '</td>';
+      html += '<td>' + (r.MES||'') + '</td>';
+      html += '<td class="tc tm">' + (r.PLANTAO_INF||'0') + '</td>';
+      html += '<td class="tc tm">' + (r.PLANTAO||'0') + '</td>';
+      html += '<td class="tc"><span class="badge badge-' + bc + '">' + pctNum + '%</span>';
+      if(pctNum > 0){
+        var bw = Math.min(pctNum, 100);
+        html += '<div class="bar-wrap"><div class="bar-fill ' + (pctNum >= 50 ? 'bar-green' : 'bar-bio') + '" style="width:' + bw + '%"></div></div>';
+      }
+      html += '</td>';
+      html += '<td class="tc"><span class="badge badge-' + (r.RESULTADO === 'CARACTERIZADA' ? 'g' : 'n') + '">' + (r.RESULTADO||'') + '</span></td>';
+      html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+    html += '</div>';
+  }
+
+  /* ── RAD ── */
+  if(emp.rad.length > 0){
+    html += '<div class="emp-section">';
+    html += '<div class="emp-section-title"><span class="dot dot-rad"></span>Exposicao a Radiacao Ionizante (NR-16)</div>';
+
+    var radCarac = emp.rad.filter(function(r){ return r.RESULTADO === 'CARACTERIZADA'; }).length;
+    var radTotal = emp.rad.length;
+    var totalCir = 0, totalDias = 0;
+    emp.rad.forEach(function(r){
+      totalCir += parseInt(r.CIRURGIAS||0);
+      totalDias += parseInt(r.DIAS_EXPOSICAO||0);
+    });
+
+    html += '<div class="info-row"><span>Meses monitorados</span><b>' + radTotal + '</b></div>';
+    html += '<div class="info-row"><span>Meses caracterizados (&ge;25%)</span><b style="color:' + (radCarac > 0 ? 'var(--rad)' : '') + '">' + radCarac + '</b></div>';
+    html += '<div class="info-row"><span>Total de cirurgias</span><b>' + totalCir + '</b></div>';
+    html += '<div class="info-row"><span>Total dias com exposicao</span><b>' + totalDias + '</b></div>';
+
+    html += '<div class="tbl-wrap" style="margin-top:8px">';
+    html += '<table><thead><tr><th>Ano</th><th>Mes</th><th class="tc">Cirurgias</th><th class="tc">Dias Exp</th><th class="tc">Plt Esp</th><th class="tc">Indice</th><th class="tc">Resultado</th></tr></thead><tbody>';
+    emp.rad.forEach(function(r){
+      var pctNum = parseFloat(String(r.INDICE_PCT||'0').replace('%',''));
+      var bc = pctNum >= 25 ? 'g' : (pctNum > 0 ? 'n' : 'na');
+      html += '<tr>';
+      html += '<td class="tm">' + (r.ANO||'') + '</td>';
+      html += '<td>' + (r.MES||'') + '</td>';
+      html += '<td class="tc tm">' + (r.CIRURGIAS||'0') + '</td>';
+      html += '<td class="tc tm">' + (r.DIAS_EXPOSICAO||'0') + '</td>';
+      html += '<td class="tc tm">' + (r.PLANTAO_ESPERADO||'0') + '</td>';
+      html += '<td class="tc"><span class="badge badge-' + bc + '">' + pctNum + '%</span>';
+      if(pctNum > 0){
+        var bw = Math.min(pctNum * 2, 100);
+        html += '<div class="bar-wrap"><div class="bar-fill ' + (pctNum >= 25 ? 'bar-green' : 'bar-rad') + '" style="width:' + bw + '%"></div></div>';
+      }
+      html += '</td>';
+      html += '<td class="tc"><span class="badge badge-' + (r.RESULTADO === 'CARACTERIZADA' ? 'g' : 'n') + '">' + (r.RESULTADO||'') + '</span></td>';
+      html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+    html += '</div>';
+  }
+
+  /* Se nao tem nenhum dos dois */
+  if(!emp.bio.length && !emp.rad.length){
+    html += '<div class="empty">Nenhum dado de exposicao encontrado</div>';
+  }
+
+  html += '</div></div>';
+  return html;
+}
+
+/* ── Init ── */
+carregarDados();
+
+/* ── Resize charts ── */
+window.addEventListener('resize', function(){
+  if(LOADED) renderCharts();
+});
+</script>
+
+</body>
+</html>
