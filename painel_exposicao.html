@@ -378,6 +378,13 @@ function carregarDados(){
       if(reSEI.test(nome)) return false;
       /* Nome sem nenhuma letra = provavelmente numero/codigo, nao pessoa */
       if(!/[a-zA-ZÀ-ÿ]/.test(nome)) return false;
+      /* SIAPE real tem 7 digitos. Valores curtos (1,2,3...) sao IDs de agentes biologicos,
+         nao empregados (ex: ADENOVIRUS com SIAPE=1) */
+      var siape = String(r.SIAPE || '').replace(/\D/g,'');
+      if(siape.length > 0 && siape.length < 6) return false;
+      /* Nomes que sao agentes biologicos conhecidos (palavra unica, sem sobrenome) */
+      var palavras = nome.split(/\s+/);
+      if(palavras.length === 1 && nome === nome.toUpperCase() && siape.length < 7) return false;
       return true;
     });
     DATA_RAD = results[2];
