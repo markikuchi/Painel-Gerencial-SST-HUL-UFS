@@ -105,11 +105,11 @@
     letter-spacing: 0;
   }
   .agent-chip.ativo .ac-letter { box-shadow: 0 0 0 2px rgba(255,255,255,.4); }
-  .ac-letter.ac-fis { background: #dc2626; }
-  .ac-letter.ac-qui { background: #0891b2; }
-  .ac-letter.ac-bio { background: #059669; }
-  .ac-letter.ac-erg { background: #7c3aed; }
-  .ac-letter.ac-aci { background: #d97706; }
+  .ac-letter.ac-fis { background: #276749; }
+  .ac-letter.ac-qui { background: #c0392b; }
+  .ac-letter.ac-bio { background: #8B4513; }
+  .ac-letter.ac-erg { background: #d97706; }
+  .ac-letter.ac-aci { background: #2c5282; }
   .ac-letter.ac-nen { background: #94a3b8; }
   .ac-letter.ac-all { background: var(--azm); }
   .agent-chip .ac-name { font-weight: 600; }
@@ -147,9 +147,23 @@
   /* ── MAIN ── */
   .main { margin: 0; padding: .75rem 1.5rem 1rem; min-height: calc(100vh - 180px); display: flex; flex-direction: column; }
 
+  /* ── BOTÃO INSPEÇÕES ── */
+  .btn-insp-log {
+    display: inline-flex; align-items: center; gap: .35rem;
+    padding: .4rem .85rem; border-radius: 6px; font-size: .78rem; font-weight: 600;
+    font-family: inherit; color: var(--azm); background: var(--azl);
+    border: 1.5px solid rgba(44,82,130,.2); cursor: pointer;
+    transition: all .15s; white-space: nowrap; margin-left: auto;
+  }
+  .btn-insp-log:hover { background: #dbeafe; border-color: var(--azm); box-shadow: var(--shadow-sm); }
+  .btn-insp-log .bil-count {
+    font-size: .68rem; font-weight: 700; background: var(--azm); color: #fff;
+    padding: .1rem .4rem; border-radius: 4px;
+  }
+
   /* VIEW STATES */
-  .view-zonas, .view-inspecoes, .view-ncs { display: none; }
-  .view-zonas.ativo, .view-inspecoes.ativo, .view-ncs.ativo { display: flex; flex-direction: column; flex: 1; }
+  .view-zonas, .view-inspecoes, .view-ncs, .view-todas-insp, .view-ncs-from-log { display: none; }
+  .view-zonas.ativo, .view-inspecoes.ativo, .view-ncs.ativo, .view-todas-insp.ativo, .view-ncs-from-log.ativo { display: flex; flex-direction: column; flex: 1; }
 
   /* ── ZONE CARDS GRID ── */
   .zone-grid {
@@ -233,11 +247,11 @@
   .ana-bar-fill.f-red { background: var(--red); }
   .ana-bar-fill.f-amber { background: var(--amber); }
   .ana-bar-fill.f-green { background: var(--green); }
-  .ana-bar-fill.f-bio { background: #059669; }
-  .ana-bar-fill.f-acid { background: #d97706; }
-  .ana-bar-fill.f-ergo { background: #7c3aed; }
-  .ana-bar-fill.f-quim { background: #0891b2; }
-  .ana-bar-fill.f-fis { background: #dc2626; }
+  .ana-bar-fill.f-bio { background: #8B4513; }
+  .ana-bar-fill.f-acid { background: #2c5282; }
+  .ana-bar-fill.f-ergo { background: #d97706; }
+  .ana-bar-fill.f-quim { background: #c0392b; }
+  .ana-bar-fill.f-fis { background: #276749; }
   .ana-bar-fill.f-none { background: #94a3b8; }
   .ana-bar-val { width: 32px; text-align: right; font-weight: 700; color: var(--azm); font-size: .72rem; flex-shrink: 0; }
 
@@ -438,6 +452,75 @@
   .nc-detail .dl dt { font-weight: 600; color: var(--sub); text-transform: uppercase; font-size: .62rem; letter-spacing: .04em; padding-top: .1rem; }
   .nc-detail .dl dd { color: var(--txt); line-height: 1.4; }
 
+  /* ── ALL INSPECTIONS VIEW ── */
+  .insp-summary {
+    background: linear-gradient(135deg, var(--az) 0%, #2d3a56 100%);
+    border-radius: var(--radius); padding: 1rem 1.5rem; margin-bottom: .75rem;
+    color: #fff; box-shadow: var(--shadow-md);
+  }
+  .insp-summary h2 { font-size: 1rem; font-weight: 700; margin-bottom: .55rem; }
+  .insp-summary .is-stats { display: flex; gap: .5rem; flex-wrap: wrap; }
+  .insp-summary .is-item {
+    background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.12);
+    border-radius: 8px; padding: .4rem .75rem; text-align: center; min-width: 80px;
+  }
+  .insp-summary .is-num { font-size: 1.15rem; font-weight: 700; color: #fff; }
+  .insp-summary .is-lbl { font-size: .58rem; color: rgba(255,255,255,.6); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+
+  .insp-year-header {
+    display: flex; align-items: center; gap: .75rem;
+    margin: .75rem 0 .4rem; padding: 0 .25rem;
+  }
+  .insp-year-header .iyh-label {
+    font-size: .82rem; font-weight: 700; color: var(--az);
+    white-space: nowrap;
+  }
+  .insp-year-header .iyh-count {
+    font-size: .68rem; font-weight: 600; color: var(--sub);
+    background: var(--azl); padding: .15rem .5rem; border-radius: 4px;
+    white-space: nowrap;
+  }
+  .insp-year-header .iyh-line { flex: 1; height: 1px; background: var(--borda); }
+
+  .insp-table {
+    width: 100%; border-collapse: separate; border-spacing: 0;
+    background: var(--card); border: 1px solid var(--borda);
+    border-radius: var(--radius); overflow: hidden;
+    box-shadow: var(--shadow-sm); margin-bottom: .5rem;
+  }
+  .insp-table thead th {
+    font-size: .65rem; font-weight: 700; color: var(--sub);
+    text-transform: uppercase; letter-spacing: .04em;
+    padding: .55rem .75rem; background: #f8fafc;
+    border-bottom: 2px solid var(--borda); text-align: left;
+    position: sticky; top: 0; z-index: 2;
+  }
+  .insp-table thead th.th-center { text-align: center; }
+  .insp-table tbody tr {
+    cursor: pointer; transition: background .1s;
+  }
+  .insp-table tbody tr:hover { background: var(--azl); }
+  .insp-table tbody td {
+    font-size: .78rem; padding: .55rem .75rem;
+    border-bottom: 1px solid #f1f3f7;
+    vertical-align: middle;
+  }
+  .insp-table tbody tr:last-child td { border-bottom: none; }
+  .insp-table .td-num { font-weight: 700; color: var(--azm); }
+  .insp-table .td-date { font-weight: 600; color: var(--az); white-space: nowrap; }
+  .insp-table .td-setor { font-weight: 500; color: var(--txt); max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .insp-table .td-inspetor { color: var(--sub); font-weight: 400; }
+  .insp-table .td-sei { font-size: .68rem; color: var(--sub); font-weight: 500; }
+  .insp-table .td-faixas { display: flex; gap: .2rem; justify-content: center; }
+  .insp-table .td-arrow { color: var(--borda); font-size: .9rem; text-align: center; }
+  .insp-table tbody tr:hover .td-arrow { color: var(--azm); }
+  @media (max-width: 768px) {
+    .insp-table { font-size: .72rem; }
+    .insp-table thead th, .insp-table tbody td { padding: .4rem .5rem; }
+    .insp-table .td-setor { max-width: 120px; }
+    .insp-table .hide-sm { display: none; }
+  }
+
   /* ── LOADING ── */
   .loading { text-align: center; padding: 4rem 1rem; color: var(--sub); }
   .loading .spin {
@@ -516,6 +599,10 @@
         <button class="ativo" id="btnQuadrados" onclick="app.setViewMode('quadrados')">Quadrados</button>
         <button id="btnPlanta" onclick="app.setViewMode('planta')">Planta</button>
       </div>
+      <button class="btn-insp-log" onclick="app.switchTab('inspLog')" title="Ver registro de todas as inspecoes">
+        &#128203; Inspecoes
+        <span class="bil-count" id="tabInspCount">-</span>
+      </button>
     </div>
     <div id="zonaGrid" class="zone-grid" style="display:none"></div>
     <div id="mapaContainer" class="mapa-container" style="display:none">
@@ -563,6 +650,37 @@
       </div>
     </div>
     <div id="ncList"></div>
+  </div>
+
+  <div class="view-todas-insp" id="viewTodasInsp">
+    <div class="nav-strip">
+      <button class="nav-back" onclick="app.switchTab('zonas')">
+        <svg viewBox="0 0 16 16"><path d="M10.3 12.7L5.6 8l4.7-4.7L9 2 3.3 7.7a.4.4 0 000 .6L9 14z"/></svg>
+        Voltar
+      </button>
+      <div class="nav-trail">
+        <a class="nt-link" onclick="app.switchTab('zonas')">Zonas</a>
+        <span class="nt-sep">&#8250;</span>
+        <span class="nt-active">Registro de Inspecoes</span>
+      </div>
+    </div>
+    <div id="inspLogSummary"></div>
+    <div id="inspLogContent"></div>
+  </div>
+
+  <div class="view-ncs-from-log" id="viewNcsFromLog">
+    <div class="nav-strip">
+      <button class="nav-back" onclick="app.voltarInspLog()">
+        <svg viewBox="0 0 16 16"><path d="M10.3 12.7L5.6 8l4.7-4.7L9 2 3.3 7.7a.4.4 0 000 .6L9 14z"/></svg>
+        Voltar
+      </button>
+      <div class="nav-trail">
+        <a class="nt-link" onclick="app.voltarInspLog()">Inspecoes</a>
+        <span class="nt-sep">&#8250;</span>
+        <span class="nt-active" id="bcInspLog">-</span>
+      </div>
+    </div>
+    <div id="ncListFromLog"></div>
   </div>
 
 </div>
@@ -669,8 +787,10 @@ var state = {
   zonaAtual: null,
   inspAtual: null,
   _inspArr: [],
+  _allInspArr: [],
   filtroAgente: '',
-  viewMode: 'quadrados'
+  viewMode: 'quadrados',
+  activeTab: 'zonas'
 };
 
 /* Mapa de letra + classe CSS para cada agente */
@@ -807,7 +927,51 @@ function domAgente(ncs) {
 }
 
 function inspKey(nc) {
-  return sortKeyData(nc.data) + '|' + (nc.setor || '') + '|' + (nc.inspetor || '');
+  /* Chave de agrupamento de inspeção:
+     - Se tem processo SEI: data + SEI (identifica unicamente a inspeção)
+     - Se não tem SEI: data + setor (fallback)
+     Inspetor não entra na chave porque grafias variam. */
+  var sei = (nc.processo_sei || '').trim();
+  if (sei) return sortKeyData(nc.data) + '|SEI:' + sei;
+  return sortKeyData(nc.data) + '|' + (nc.setor || '');
+}
+
+/* Ao agrupar NCs por inspeção, escolher o valor mais completo de uma lista */
+function melhorNome(nomes) {
+  if (!nomes || !nomes.length) return '';
+  var best = '';
+  nomes.forEach(function(n) {
+    var s = String(n || '').trim();
+    if (!isLixo(s) && s.length > best.length) best = s;
+  });
+  return best;
+}
+
+/* Padrões de lixo que aparecem em campos texto vindos do Sheets */
+var LIXO_PATTERNS = [
+  /imagem\s+meramente/i,
+  /ilustrativ/i,
+  /google/i,
+  /^http/i,
+  /\.png$/i,
+  /\.jpg$/i
+];
+
+function isLixo(s) {
+  if (!s) return true;
+  var t = String(s).trim();
+  if (!t || t === '-') return true;
+  return LIXO_PATTERNS.some(function(p) { return p.test(t); });
+}
+
+function melhorInspetor(nomes) {
+  if (!nomes || !nomes.length) return '';
+  var best = '';
+  nomes.forEach(function(n) {
+    var s = String(n || '').trim();
+    if (!isLixo(s) && s.length > best.length) best = s;
+  });
+  return best;
 }
 
 /* ── GVIZ FETCH (JSONP) ── */
@@ -1014,9 +1178,14 @@ var app = {
     renderAgentChips();
     this.renderKpis();
     this.renderZonas();
+    this.renderInspLog();
     state.zonaAtual = null;
     state.inspAtual = null;
-    this.showView('zonas');
+    /* Update inspection count on button */
+    var insps = {};
+    state.filtered.forEach(function(n) { insps[inspKey(n)] = 1; });
+    document.getElementById('tabInspCount').textContent = Object.keys(insps).length;
+    this.showView(state.activeTab === 'inspLog' ? 'todasInsp' : 'zonas');
   },
 
   filtrarAgente: function(ag) {
@@ -1159,8 +1328,14 @@ var app = {
     var insps = {};
     ncs.forEach(function(n) {
       var k = inspKey(n);
-      if (!insps[k]) insps[k] = { data: n.data, setor: n.setor, inspetor: n.inspetor, count: 0 };
+      if (!insps[k]) insps[k] = { data: n.data, _setores: [], _inspetores: [], count: 0 };
       insps[k].count++;
+      if (n.setor) insps[k]._setores.push(n.setor);
+      if (n.inspetor) insps[k]._inspetores.push(n.inspetor);
+    });
+    Object.values(insps).forEach(function(insp) {
+      insp.inspetor = melhorInspetor(insp._inspetores);
+      insp.setor = melhorNome(insp._setores);
     });
     var inspList = Object.values(insps).sort(function(a,b) {
       return sortKeyData(b.data).localeCompare(sortKeyData(a.data));
@@ -1216,10 +1391,15 @@ var app = {
     var insps = {};
     ncsZona.forEach(function(n) {
       var k = inspKey(n);
-      if (!insps[k]) insps[k] = { data: n.data, setor: n.setor, inspetor: n.inspetor, sei: n.processo_sei, ncs: [] };
+      if (!insps[k]) insps[k] = { data: n.data, _setores: [], _inspetores: [], sei: n.processo_sei, ncs: [] };
       insps[k].ncs.push(n);
-      /* Capturar SEI se disponivel */
+      if (n.setor) insps[k]._setores.push(n.setor);
+      if (n.inspetor) insps[k]._inspetores.push(n.inspetor);
       if (n.processo_sei && !insps[k].sei) insps[k].sei = n.processo_sei;
+    });
+    Object.values(insps).forEach(function(insp) {
+      insp.inspetor = melhorInspetor(insp._inspetores);
+      insp.setor = melhorNome(insp._setores) || zona;
     });
 
     var inspArr = Object.values(insps).sort(function(a, b) {
@@ -1424,6 +1604,200 @@ var app = {
     });
   },
 
+  /* ── TAB SWITCHING ── */
+  switchTab: function(tab) {
+    state.activeTab = tab;
+    if (tab === 'inspLog') {
+      this.showView('todasInsp');
+    } else {
+      state.zonaAtual = null;
+      state.inspAtual = null;
+      this.showView('zonas');
+    }
+  },
+
+  /* ── INSPECTION LOG ── */
+  renderInspLog: function() {
+    var ncs = state.filtered;
+    var insps = {};
+    ncs.forEach(function(n) {
+      var k = inspKey(n);
+      if (!insps[k]) insps[k] = { data: n.data, _setores: [], _inspetores: [], sei: n.processo_sei, ncs: [] };
+      insps[k].ncs.push(n);
+      if (n.setor) insps[k]._setores.push(n.setor);
+      if (n.inspetor) insps[k]._inspetores.push(n.inspetor);
+      if (n.processo_sei && !insps[k].sei) insps[k].sei = n.processo_sei;
+    });
+    Object.values(insps).forEach(function(insp) {
+      insp.inspetor = melhorInspetor(insp._inspetores);
+      insp.setor = melhorNome(insp._setores);
+    });
+
+    var inspArr = Object.values(insps).sort(function(a, b) {
+      return sortKeyData(b.data).localeCompare(sortKeyData(a.data));
+    });
+    state._allInspArr = inspArr;
+
+    if (!inspArr.length) {
+      document.getElementById('inspLogSummary').innerHTML = '';
+      document.getElementById('inspLogContent').innerHTML =
+        '<div class="empty-msg">Nenhuma inspecao encontrada para o filtro selecionado.</div>';
+      return;
+    }
+
+    /* KPIs */
+    var totalNcs = ncs.length;
+    var totalInsps = inspArr.length;
+    var avgNc = totalInsps > 0 ? (totalNcs / totalInsps).toFixed(1) : '0';
+    var setoresVisitados = {};
+    inspArr.forEach(function(insp) { if (insp.setor) setoresVisitados[insp.setor] = 1; });
+    var nSetores = Object.keys(setoresVisitados).length;
+    var inspComAlto = inspArr.filter(function(insp) {
+      return insp.ncs.some(function(n) { return leitorNC(n, 'faixa') === 'ALTO'; });
+    }).length;
+
+    document.getElementById('inspLogSummary').innerHTML =
+      '<div class="insp-summary">' +
+        '<h2>Registro de Inspecoes</h2>' +
+        '<div class="is-stats">' +
+          '<div class="is-item"><div class="is-num">' + totalInsps + '</div><div class="is-lbl">Inspecoes</div></div>' +
+          '<div class="is-item"><div class="is-num">' + totalNcs + '</div><div class="is-lbl">Total NCs</div></div>' +
+          '<div class="is-item"><div class="is-num">' + avgNc + '</div><div class="is-lbl">Media NCs/Insp.</div></div>' +
+          '<div class="is-item"><div class="is-num">' + nSetores + '</div><div class="is-lbl">Setores</div></div>' +
+          '<div class="is-item" style="' + (inspComAlto > 0 ? '' : 'opacity:.5') + '"><div class="is-num" style="color:#fca5a5">' + inspComAlto + '</div><div class="is-lbl">Com NC Alto</div></div>' +
+        '</div>' +
+      '</div>';
+
+    /* Agrupar por ano */
+    var porAno = {};
+    inspArr.forEach(function(insp) {
+      var pd = parseData(insp.data);
+      var anoKey = pd ? String(pd.ano) : 'Sem data';
+      if (!porAno[anoKey]) porAno[anoKey] = [];
+      porAno[anoKey].push(insp);
+    });
+
+    var anosOrdenados = Object.keys(porAno).sort().reverse();
+
+    var html = '';
+    anosOrdenados.forEach(function(ano) {
+      var lista = porAno[ano];
+      var ncAno = 0;
+      lista.forEach(function(insp) { ncAno += insp.ncs.length; });
+
+      html += '<div class="insp-year-header">' +
+        '<span class="iyh-label">' + esc(ano) + '</span>' +
+        '<span class="iyh-count">' + lista.length + ' inspecoes &middot; ' + ncAno + ' NCs</span>' +
+        '<span class="iyh-line"></span>' +
+      '</div>';
+
+      html += '<table class="insp-table"><thead><tr>' +
+        '<th>#</th>' +
+        '<th>Data</th>' +
+        '<th>Setor / Local</th>' +
+        '<th class="hide-sm">Inspetor</th>' +
+        '<th class="hide-sm">Processo SEI</th>' +
+        '<th class="th-center">NCs</th>' +
+        '<th class="th-center">Faixas</th>' +
+        '<th></th>' +
+      '</tr></thead><tbody>';
+
+      lista.forEach(function(insp, idx) {
+        var globalIdx = state._allInspArr.indexOf(insp);
+        var ai = 0, mi = 0, bi = 0;
+        insp.ncs.forEach(function(n) {
+          var f = leitorNC(n, 'faixa');
+          if (f === 'ALTO') ai++; else if (f === 'MODERADO') mi++; else bi++;
+        });
+        var dom = domFaixa(insp.ncs);
+
+        html += '<tr onclick="app.abrirInspFromLog(' + globalIdx + ')">' +
+          '<td style="color:var(--sub);font-size:.7rem;font-weight:600">' + (idx + 1) + '</td>' +
+          '<td class="td-date">' + fmtData(insp.data) + '</td>' +
+          '<td class="td-setor" title="' + esc(insp.setor || '') + '">' + esc(insp.setor || '-') + '</td>' +
+          '<td class="td-inspetor hide-sm">' + esc(insp.inspetor || '-') + '</td>' +
+          '<td class="td-sei hide-sm">' + (insp.sei ? esc(insp.sei) : '-') + '</td>' +
+          '<td class="td-num" style="text-align:center">' + insp.ncs.length + '</td>' +
+          '<td><div class="td-faixas">' +
+            (ai ? '<span class="fx alto">' + ai + ' A</span>' : '') +
+            (mi ? '<span class="fx mod">' + mi + ' M</span>' : '') +
+            (bi ? '<span class="fx baixo">' + bi + ' B</span>' : '') +
+          '</div></td>' +
+          '<td class="td-arrow">&#8250;</td>' +
+        '</tr>';
+      });
+
+      html += '</tbody></table>';
+    });
+
+    document.getElementById('inspLogContent').innerHTML = html;
+  },
+
+  abrirInspFromLog: function(idx) {
+    var insp = state._allInspArr[idx];
+    if (!insp) return;
+    document.getElementById('bcInspLog').textContent =
+      fmtData(insp.data) + ' - ' + (insp.setor || '-') + (insp.inspetor ? ' (' + insp.inspetor + ')' : '');
+
+    var ncs = insp.ncs.sort(function(a, b) {
+      var order = { ALTO: 0, MODERADO: 1, BAIXO: 2 };
+      return (order[leitorNC(a, 'faixa')] || 9) - (order[leitorNC(b, 'faixa')] || 9);
+    });
+
+    var html = '';
+    ncs.forEach(function(nc, i) {
+      var faixa = leitorNC(nc, 'faixa');
+      var cls = faixa === 'ALTO' ? 'alto' : faixa === 'MODERADO' ? 'mod' : 'baixo';
+      var agente = leitorNC(nc, 'agente');
+      var sev = leitorNC(nc, 'severidade');
+      var prob = leitorNC(nc, 'probab');
+      var risco = leitorNC(nc, 'risco');
+      var norm = leitorNC(nc, 'normativo');
+
+      html += '<div class="nc-card ' + cls + '" onclick="app.toggleNcLog(' + i + ')">' +
+        '<div class="nc-top">' +
+          '<div class="nc-info">' +
+            '<div class="nc-titulo">' + esc(nc.termo_canonico || nc.descricao || 'NC #' + (i + 1)) + '</div>' +
+            (nc.descricao && nc.termo_canonico
+              ? '<div class="nc-desc">' + esc(nc.descricao).substring(0, 140) + (nc.descricao.length > 140 ? '...' : '') + '</div>'
+              : '') +
+            '<div class="nc-badges">' +
+              '<span class="badge b-' + cls + '">' + esc(faixa) + '</span>' +
+              (agente ? '<span class="badge b-agente">' + esc(agente) + '</span>' : '') +
+              (risco ? '<span class="badge b-norm">R=' + esc(String(risco)) + '</span>' : '') +
+              (nc.processo_sei ? '<span class="badge b-sei">SEI ' + esc(nc.processo_sei) + '</span>' : '') +
+            '</div>' +
+          '</div>' +
+          '<div class="nc-expand-icon" title="Expandir detalhes">&#9662;</div>' +
+        '</div>' +
+        '<div class="nc-detail" id="ncDetLog' + i + '">' +
+          '<div class="dl">' +
+            '<dt>Setor</dt><dd>' + esc(nc.setor || '-') + '</dd>' +
+            (nc.local ? '<dt>Local</dt><dd>' + esc(nc.local) + '</dd>' : '') +
+            (nc.condicao ? '<dt>Condicao</dt><dd>' + esc(nc.condicao) + '</dd>' : '') +
+            (sev ? '<dt>Severidade</dt><dd>' + esc(String(sev)) + '</dd>' : '') +
+            (prob ? '<dt>Probabilidade</dt><dd>' + esc(String(prob)) + '</dd>' : '') +
+            (norm ? '<dt>Normativo</dt><dd>' + esc(norm) + '</dd>' : '') +
+            (nc.acao ? '<dt>Acao</dt><dd>' + esc(nc.acao) + '</dd>' : '') +
+            (nc.observacoes ? '<dt>Observacoes</dt><dd>' + esc(nc.observacoes) + '</dd>' : '') +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    });
+
+    document.getElementById('ncListFromLog').innerHTML = html;
+    this.showView('ncsFromLog');
+  },
+
+  toggleNcLog: function(i) {
+    var el = document.getElementById('ncDetLog' + i);
+    if (el) el.classList.toggle('aberto');
+  },
+
+  voltarInspLog: function() {
+    this.showView('todasInsp');
+  },
+
   voltarZonas: function() {
     state.zonaAtual = null;
     state.inspAtual = null;
@@ -1439,6 +1813,9 @@ var app = {
     document.getElementById('viewZonas').className = 'view-zonas' + (view === 'zonas' ? ' ativo' : '');
     document.getElementById('viewInsp').className = 'view-inspecoes' + (view === 'inspecoes' ? ' ativo' : '');
     document.getElementById('viewNcs').className = 'view-ncs' + (view === 'ncs' ? ' ativo' : '');
+    document.getElementById('viewTodasInsp').className = 'view-todas-insp' + (view === 'todasInsp' ? ' ativo' : '');
+    document.getElementById('viewNcsFromLog').className = 'view-ncs-from-log' + (view === 'ncsFromLog' ? ' ativo' : '');
+    
     window.scrollTo(0, 0);
   }
 };
