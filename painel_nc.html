@@ -554,6 +554,92 @@
     .kpi-bar { gap: .35rem; }
     .kpi-item .val { font-size: .95rem; }
   }
+
+  /* ── TAGS MODAL (painel grande central para gestores) ── */
+  .btn-tags-tb{padding:6px 12px;background:#fff;border:1.5px solid var(--borda);border-radius:6px;font-size:.72rem;font-weight:600;cursor:pointer;color:var(--az);font-family:inherit;display:inline-flex;align-items:center;gap:5px;transition:all .15s}
+  .btn-tags-tb:hover{background:var(--azl)}
+  .btn-tags-tb.ativo{background:var(--az);color:#fff;border-color:var(--az)}
+  .tags-backdrop{position:fixed;inset:0;background:rgba(14,39,66,.4);z-index:499;animation:fadeIn .15s ease-out}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes scaleIn{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}
+  .tags-modal{
+    position:fixed;top:3vh;left:5vw;right:5vw;bottom:3vh;
+    background:#fff;border-radius:14px;z-index:500;
+    display:flex;flex-direction:column;
+    box-shadow:0 20px 60px rgba(0,0,0,.25);
+    animation:scaleIn .2s ease-out;
+    overflow:hidden;
+  }
+  .tags-modal .tm-header{
+    background:var(--az);color:#fff;padding:16px 24px;
+    display:flex;justify-content:space-between;align-items:center;
+    flex-shrink:0;
+  }
+  .tags-modal .tm-header h2{margin:0;font-family:Georgia,serif;font-size:1.15rem;font-weight:700;letter-spacing:.02em}
+  .tags-modal .tm-header .tm-subtitle{font-size:.78rem;opacity:.7;margin-top:2px}
+  .tags-modal .tm-close{background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px;font-weight:700;transition:background .15s}
+  .tags-modal .tm-close:hover{background:rgba(255,255,255,.3)}
+  .tm-filtro-ativo{
+    background:#fff3cd;border-bottom:1px solid #f0e6b8;padding:10px 24px;
+    display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+  }
+  .tm-filtro-ativo span{font-size:.82rem;font-weight:600;color:#856404}
+  .tm-filtro-ativo button{background:#856404;color:#fff;border:none;padding:5px 14px;border-radius:6px;font-size:.72rem;font-weight:600;cursor:pointer;font-family:inherit}
+  .tm-body{flex:1;overflow-y:auto;padding:20px 24px}
+  /* Grid de agentes */
+  .tm-agents-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:16px}
+  .tm-ag-card{border:1.5px solid #e2e8f0;border-radius:10px;overflow:hidden;background:#fff}
+  .tm-ag-head{
+    padding:12px 16px;font-weight:700;font-size:.85rem;color:#fff;
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .tm-ag-head.FISICO{background:#2d6a3d}.tm-ag-head.QUIMICO{background:#a52a2a}.tm-ag-head.BIOLOGICO{background:#5d3a1e}
+  .tm-ag-head.ERGONOMICO{background:#c4a236}.tm-ag-head.ACIDENTES{background:#2e5d8e}.tm-ag-head.NENHUM{background:#67737d}
+  .tm-ag-head .tm-ag-count{font-size:.72rem;opacity:.8;font-weight:400}
+  .tm-ag-body{padding:12px 14px}
+  /* Tags dentro do card */
+  .tm-tag-grupo{margin-bottom:8px}
+  .tm-tag-row{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+  .tm-tag-chip{
+    padding:7px 14px;background:#fff;border:1.5px solid #d0d8e0;border-radius:8px;
+    font-size:.82rem;font-weight:600;color:#334155;cursor:pointer;font-family:inherit;
+    transition:all .12s;display:inline-flex;align-items:center;gap:6px;
+  }
+  .tm-tag-chip:hover{border-color:var(--az);color:var(--az);background:var(--azl)}
+  .tm-tag-chip.ativo{background:var(--az);color:#fff;border-color:var(--az)}
+  .tm-tag-chip .tcnt{
+    font-family:Georgia,serif;font-weight:700;font-size:.78rem;
+    background:rgba(0,0,0,.06);padding:2px 7px;border-radius:10px;
+  }
+  .tm-tag-chip.ativo .tcnt{background:rgba(255,255,255,.2)}
+  .tm-tag-expand{
+    background:#f1f5f9;border:1px solid #dde3e9;border-radius:6px;
+    padding:4px 10px;font-size:.72rem;cursor:pointer;color:#64748b;
+    font-family:inherit;font-weight:600;transition:all .12s;
+    display:inline-flex;align-items:center;gap:4px;
+  }
+  .tm-tag-expand:hover{background:#e2e8f0}
+  .tm-tag-expand.aberto{background:#e2e8f0;color:var(--az)}
+  .tm-subtags{
+    padding:6px 0 6px 24px;display:flex;flex-wrap:wrap;gap:6px;
+    border-left:2px solid #e2e8f0;margin-left:8px;margin-top:2px;
+  }
+  .tm-tag-chip.sub{
+    font-size:.75rem;padding:5px 12px;background:#f8fafc;border-color:#e2e8f0;
+    color:#475569;
+  }
+  .tm-tag-chip.sub:hover{background:var(--azl);border-color:var(--azm);color:var(--azm)}
+  .tm-tag-chip.sub.ativo{background:var(--azm);color:#fff;border-color:var(--azm)}
+  .tm-empty{text-align:center;padding:40px;color:var(--sub);font-size:.9rem}
+  /* busca na toolbar */
+  .tb-busca{padding:5px 10px;border:1.5px solid var(--borda);border-radius:6px;font-size:.72rem;font-family:inherit;width:140px;transition:border-color .15s}
+  .tb-busca:focus{outline:none;border-color:var(--azm);box-shadow:0 0 0 2px rgba(44,82,130,.15)}
+  @media (max-width: 768px) {
+    .tags-modal{top:1vh;left:2vw;right:2vw;bottom:1vh;border-radius:10px}
+    .tm-agents-grid{grid-template-columns:1fr}
+    .tm-body{padding:12px 14px}
+    .tb-busca{width:100px}
+  }
 </style>
 </head>
 <body>
@@ -584,7 +670,12 @@
   <div class="tb-sep"></div>
   <label>Agente:</label>
   <div class="agent-chips" id="agentChips"></div>
+  <div class="tb-sep"></div>
+  <span id="btnTagsWrap"></span>
+  <div class="tb-sep"></div>
+  <input type="text" class="tb-busca" id="buscaGlobal" placeholder="Buscar NC..." oninput="app.filtrar()">
 </div>
+<div id="painelTagsContainer"></div>
 
 <div class="main">
 
@@ -789,6 +880,11 @@ var state = {
   _inspArr: [],
   _allInspArr: [],
   filtroAgente: '',
+  filtroTag: null,
+  filtroSubTag: null,
+  painelTagsAberto: false,
+  tagsExpandidas: {},
+  buscaGlobal: '',
   viewMode: 'quadrados',
   activeTab: 'zonas'
 };
@@ -1033,7 +1129,7 @@ function carregarDados() {
       'chave','setor','zona_id','ano','data','descricao','termo_canonico',
       'acao','local','condicao','observacoes','inspetor','processo_sei',
       'faixa','agente','severidade','probabilidade','risco','normativo',
-      'prioridade','n_item'
+      'prioridade','n_item','tag','sub_tag'
     ];
 
     var primeiraRow = rows[0];
@@ -1088,6 +1184,27 @@ function carregarDados() {
       nc.local = nc.local || '';
       nc.condicao = nc.condicao || '';
       nc.atributos_derivados = {};
+
+      /* Reconstruir _tags a partir das colunas tag e sub_tag da planilha */
+      nc._tags = [];
+      var tagStr = nc.tag || '';
+      var subTagStr = nc.sub_tag || '';
+      var agNC = nc.agente || 'NENHUM';
+      if (tagStr) {
+        tagStr.split(';').forEach(function(t) {
+          t = t.trim();
+          if (t) nc._tags.push({ nome: t, parent: null, agente: agNC });
+        });
+      }
+      if (subTagStr) {
+        subTagStr.split(';').forEach(function(s) {
+          s = s.trim();
+          if (!s) return;
+          /* Tentar associar sub_tag ao primeiro pai disponivel */
+          var pai = (nc._tags.length && nc._tags[0].parent === null) ? nc._tags[0].nome : '';
+          nc._tags.push({ nome: s, parent: pai, agente: agNC });
+        });
+      }
 
       /* Extrair ano da data se campo ano estiver vazio */
       if (!nc.ano && nc.data) {
@@ -1163,6 +1280,159 @@ function renderAgentChips() {
   document.getElementById('agentChips').innerHTML = html;
 }
 
+/* ── TAGS FUNCTIONS ── */
+function escJ(s) { return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
+function coletarTagsNCs() {
+  var mapa = {};
+  state.allNcs.forEach(function(n) {
+    if (!n._tags || !n._tags.length) return;
+    n._tags.forEach(function(t) {
+      var nome = typeof t === 'string' ? t : t.nome;
+      var agente = typeof t === 'string' ? (leitorNC(n, 'agente') || 'NENHUM') : (t.agente || 'NENHUM');
+      var parent = (typeof t === 'object' && t.parent) ? t.parent : null;
+      if (!nome) return;
+      if (!mapa[nome]) mapa[nome] = { nome: nome, agente: agente, count: 0, parent: parent, children: [] };
+      mapa[nome].count++;
+    });
+  });
+  var todos = [];
+  Object.keys(mapa).forEach(function(k) { todos.push(mapa[k]); });
+  todos.forEach(function(t) {
+    if (t.parent && mapa[t.parent]) {
+      var pai = mapa[t.parent];
+      var jaExiste = pai.children.some(function(c) { return c.nome === t.nome; });
+      if (!jaExiste) pai.children.push(t);
+    }
+  });
+  return todos;
+}
+
+function renderBtnTags() {
+  var tags = coletarTagsNCs();
+  if (!tags.length) { document.getElementById('btnTagsWrap').innerHTML = ''; return; }
+  var totalTagged = 0;
+  var vistos = {};
+  state.allNcs.forEach(function(n) {
+    if (n._tags && n._tags.length && !vistos[n.chave]) { totalTagged++; vistos[n.chave] = 1; }
+  });
+  var filtroAtivo = state.filtroTag || state.filtroSubTag;
+  var label = state.filtroSubTag
+    ? esc(state.filtroTag) + ' > ' + esc(state.filtroSubTag)
+    : (state.filtroTag ? esc(state.filtroTag) : 'Tags');
+  document.getElementById('btnTagsWrap').innerHTML =
+    '<button class="btn-tags-tb ' + (filtroAtivo ? 'ativo' : '') + '" onclick="app.abrirPainelTags()">' +
+    label + ' <span style="font-family:Georgia,serif;font-weight:700">' + totalTagged + '</span></button>';
+}
+
+function renderPainelTags() {
+  var tags = coletarTagsNCs();
+  var AGENTES_ORDEM = ['FISICO', 'QUIMICO', 'BIOLOGICO', 'ERGONOMICO', 'ACIDENTES', 'NENHUM'];
+  var AG_NORM = function(a) { return (a||'').normalize('NFKD').replace(/[̀-ͯ]/g,'').toUpperCase().replace(/\s+/g,''); };
+  var porAgente = {};
+  var normParaOriginal = {};
+  var AG_LABELS = {
+    'FISICO':'Fisico (NR-15 An. 3, 7, 8)',
+    'QUIMICO':'Quimico (NR-15 An. 11, 13)',
+    'BIOLOGICO':'Biologico (NR-32)',
+    'ERGONOMICO':'Ergonomico (NR-17)',
+    'ACIDENTES':'Acidentes (NR-12, NR-23, NR-10)',
+    'NENHUM':'Sem classificacao'
+  };
+  var AG_DESC = {
+    'FISICO':'Ruido, temperatura, umidade, radiacoes',
+    'QUIMICO':'Produtos quimicos, FISPQ, gases',
+    'BIOLOGICO':'Agentes biologicos, materiais perfurocortantes',
+    'ERGONOMICO':'Postura, mobiliario, espaco de trabalho',
+    'ACIDENTES':'Eletricidade, queda, incendio, material',
+    'NENHUM':'Nao-conformidades sem agente definido'
+  };
+  AGENTES_ORDEM.forEach(function(a) { porAgente[a] = []; normParaOriginal[AG_NORM(a)] = a; });
+  tags.forEach(function(t) {
+    if (t.parent) return;
+    var agRaw = t.agente || 'NENHUM';
+    var ag = normParaOriginal[AG_NORM(agRaw)] || 'NENHUM';
+    porAgente[ag].push(t);
+  });
+
+  var totalTags = tags.filter(function(t) { return !t.parent; }).length;
+  var totalSub = tags.filter(function(t) { return !!t.parent; }).length;
+  var filtroAtivo = state.filtroTag || state.filtroSubTag;
+
+  var html = '<div class="tags-backdrop" onclick="app.fecharPainelTags()"></div>' +
+    '<div class="tags-modal">' +
+    '<div class="tm-header"><div>' +
+    '<h2>Classificacao por Tags</h2>' +
+    '<div class="tm-subtitle">' + totalTags + ' tags principais, ' + totalSub + ' sub-tags &middot; Clique para filtrar as NCs</div>' +
+    '</div><div style="display:flex;align-items:center;gap:10px">' +
+    (filtroAtivo ? '<button style="background:rgba(255,255,255,.2);border:none;color:#fff;padding:6px 16px;border-radius:6px;font-size:.78rem;cursor:pointer;font-weight:600;font-family:inherit" onclick="app.limparFiltroTag()">Limpar filtro</button>' : '') +
+    '<button class="tm-close" onclick="app.fecharPainelTags()">&times;</button>' +
+    '</div></div>';
+
+  if (filtroAtivo) {
+    var labelFiltro = state.filtroSubTag
+      ? esc(state.filtroTag) + ' &rsaquo; ' + esc(state.filtroSubTag)
+      : esc(state.filtroTag);
+    var countFiltro = state.filtered.length;
+    html += '<div class="tm-filtro-ativo">' +
+      '<span>Filtro ativo: <strong>' + labelFiltro + '</strong> (' + countFiltro + ' NCs)</span>' +
+      '<button onclick="app.limparFiltroTag()">Remover filtro</button></div>';
+  }
+
+  html += '<div class="tm-body"><div class="tm-agents-grid">';
+
+  AGENTES_ORDEM.forEach(function(ag) {
+    var tagsAg = porAgente[ag].sort(function(a,b) { return b.count - a.count; });
+    if (!tagsAg.length) return;
+    var totalAg = 0;
+    tagsAg.forEach(function(t) { totalAg += t.count; });
+
+    html += '<div class="tm-ag-card">' +
+      '<div class="tm-ag-head ' + AG_NORM(ag) + '">' +
+      '<div><div>' + (AG_LABELS[ag] || ag) + '</div>' +
+      '<div style="font-size:.68rem;font-weight:400;opacity:.75;margin-top:2px">' + (AG_DESC[ag] || '') + '</div></div>' +
+      '<div style="text-align:right"><div class="tm-ag-count">' + tagsAg.length + ' tags</div>' +
+      '<div style="font-size:.68rem;opacity:.7">' + totalAg + ' NCs</div></div>' +
+      '</div><div class="tm-ag-body">';
+
+    tagsAg.forEach(function(t) {
+      var temFilhos = t.children && t.children.length > 0;
+      var expandida = state.tagsExpandidas[t.nome];
+      var ativa = state.filtroTag === t.nome && !state.filtroSubTag;
+
+      html += '<div class="tm-tag-grupo"><div class="tm-tag-row">' +
+        '<button class="tm-tag-chip ' + (ativa ? 'ativo' : '') + '" onclick="app.filtrarTag(\'' + escJ(t.nome) + '\')">' +
+        esc(t.nome) + ' <span class="tcnt">' + t.count + '</span></button>';
+      if (temFilhos) {
+        html += '<button class="tm-tag-expand ' + (expandida ? 'aberto' : '') + '" onclick="app.toggleTagExpand(\'' + escJ(t.nome) + '\')">' +
+          (expandida ? '&#9662;' : '&#9656;') + ' ' + t.children.length + ' sub-tags</button>';
+      }
+      html += '</div>';
+
+      if (temFilhos && expandida) {
+        var filhosOrd = t.children.slice().sort(function(a,b) { return b.count - a.count; });
+        html += '<div class="tm-subtags">';
+        filhosOrd.forEach(function(f) {
+          var fAtiva = state.filtroSubTag === f.nome && state.filtroTag === t.nome;
+          html += '<button class="tm-tag-chip sub ' + (fAtiva ? 'ativo' : '') + '" onclick="app.filtrarSubTag(\'' + escJ(t.nome) + '\',\'' + escJ(f.nome) + '\')">' +
+            esc(f.nome) + ' <span class="tcnt">' + f.count + '</span></button>';
+        });
+        html += '</div>';
+      }
+      html += '</div>';
+    });
+
+    html += '</div></div>';
+  });
+
+  if (!totalTags) {
+    html += '<div class="tm-empty">Nenhuma tag encontrada.<br>Execute a exportacao com tags no exportar.html primeiro.</div>';
+  }
+
+  html += '</div></div></div>';
+  document.getElementById('painelTagsContainer').innerHTML = html;
+}
+
 /* ── APP LOGIC ── */
 var app = {
 
@@ -1175,7 +1445,32 @@ var app = {
     if (state.filtroAgente) {
       state.filtered = state.filtered.filter(function(n) { return leitorNC(n, 'agente') === state.filtroAgente; });
     }
+    /* Filtro por tag */
+    if (state.filtroTag) {
+      if (state.filtroSubTag) {
+        state.filtered = state.filtered.filter(function(n) {
+          return (n._tags || []).some(function(t) { return typeof t === 'object' && t.nome === state.filtroSubTag && t.parent === state.filtroTag; });
+        });
+      } else {
+        state.filtered = state.filtered.filter(function(n) {
+          return (n._tags || []).some(function(t) {
+            var nome = typeof t === 'string' ? t : t.nome;
+            var parent = typeof t === 'object' ? t.parent : null;
+            return nome === state.filtroTag || parent === state.filtroTag;
+          });
+        });
+      }
+    }
+    /* Busca textual */
+    var buscaTermo = (document.getElementById('buscaGlobal').value || '').toLowerCase().trim();
+    if (buscaTermo) {
+      state.filtered = state.filtered.filter(function(n) {
+        var blob = [n.descricao, n.termo_canonico, n.acao, n.local, n.condicao, n.observacoes, n.inspetor, n.normativo, n.setor].filter(Boolean).join(' ').toLowerCase();
+        return blob.indexOf(buscaTermo) >= 0;
+      });
+    }
     renderAgentChips();
+    renderBtnTags();
     this.renderKpis();
     this.renderZonas();
     this.renderInspLog();
@@ -1191,6 +1486,38 @@ var app = {
   filtrarAgente: function(ag) {
     state.filtroAgente = ag;
     this.filtrar();
+  },
+
+  /* Tag actions */
+  abrirPainelTags: function() {
+    state.painelTagsAberto = true;
+    renderPainelTags();
+  },
+  fecharPainelTags: function() {
+    state.painelTagsAberto = false;
+    document.getElementById('painelTagsContainer').innerHTML = '';
+  },
+  filtrarTag: function(t) {
+    state.filtroTag = t || null;
+    state.filtroSubTag = null;
+    this.fecharPainelTags();
+    this.filtrar();
+  },
+  filtrarSubTag: function(pai, filho) {
+    state.filtroTag = pai || null;
+    state.filtroSubTag = filho || null;
+    this.fecharPainelTags();
+    this.filtrar();
+  },
+  limparFiltroTag: function() {
+    state.filtroTag = null;
+    state.filtroSubTag = null;
+    this.fecharPainelTags();
+    this.filtrar();
+  },
+  toggleTagExpand: function(nome) {
+    state.tagsExpandidas[nome] = !state.tagsExpandidas[nome];
+    renderPainelTags();
   },
 
   renderKpis: function() {
