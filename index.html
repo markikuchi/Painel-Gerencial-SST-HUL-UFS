@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #f4f6fb;
+    --bg: #f0f2f8;
     --card: #ffffff;
     --az: #1a2744;
     --az2: #243352;
@@ -21,7 +21,7 @@
     --borda: #dfe3ec;
     --txt: #1e2a3a;
     --sub: #64748b;
-    --radius: 10px;
+    --radius: 12px;
     --sombra: 0 1px 3px rgba(26,39,68,.06), 0 4px 16px rgba(26,39,68,.04);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -36,63 +36,104 @@
 
   /* ── Header ── */
   .header {
-    background: linear-gradient(135deg, var(--az) 0%, var(--az2) 100%);
+    background: linear-gradient(135deg, var(--az) 0%, var(--az2) 60%, #2a4068 100%);
     color: #fff;
-    padding: 1.25rem 2rem;
+    padding: 0 2.5rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
     gap: .5rem;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(26,39,68,.18);
   }
-  .header-left { display: flex; align-items: center; gap: 1rem; }
+  .header-left { display: flex; align-items: center; gap: .85rem; }
   .header-logo {
-    width: 40px; height: 40px;
+    width: 36px; height: 36px;
     border-radius: 8px;
-    background: rgba(255,255,255,.12);
+    background: rgba(255,255,255,.1);
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.1rem; font-weight: 700;
+    font-size: .85rem; font-weight: 700;
     letter-spacing: -.02em;
     flex-shrink: 0;
-    border: 1px solid rgba(255,255,255,.1);
+    border: 1px solid rgba(255,255,255,.08);
   }
-  .header h1 { font-size: 1.2rem; font-weight: 600; letter-spacing: -.01em; line-height: 1.3; }
-  .header .sub { color: rgba(255,255,255,.55); font-size: .8rem; font-weight: 400; margin-top: .1rem; }
-  .header-right { text-align: right; }
-  .header-right .dept { font-size: .75rem; color: rgba(255,255,255,.45); font-weight: 400; }
+  .header h1 { font-size: 1.1rem; font-weight: 600; letter-spacing: -.01em; }
+  .header .sub-h { color: rgba(255,255,255,.45); font-size: .78rem; font-weight: 400; margin-left: .5rem; }
+  .header-right { display: flex; align-items: center; gap: 1.5rem; }
+  .header-right .dept { font-size: .72rem; color: rgba(255,255,255,.4); font-weight: 400; }
+  .header-stat {
+    display: flex; align-items: center; gap: .4rem;
+    font-size: .72rem; color: rgba(255,255,255,.55);
+  }
+  .header-stat .dot-h { width: 7px; height: 7px; border-radius: 50%; background: #34d399; }
 
-  /* ── Main ── */
+  /* ── Hero ── */
+  .hero {
+    background: linear-gradient(135deg, var(--az2) 0%, #1e3a5f 100%);
+    padding: 2.5rem 3rem 2rem;
+    color: #fff;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .hero-text h2 {
+    font-size: 1.6rem; font-weight: 700; letter-spacing: -.02em; line-height: 1.2;
+  }
+  .hero-text p {
+    color: rgba(255,255,255,.5); font-size: .88rem; margin-top: .35rem; font-weight: 400;
+  }
+  .hero-kpis {
+    display: flex; gap: 1.5rem; flex-wrap: wrap;
+  }
+  .kpi {
+    text-align: center; padding: .6rem 1rem;
+    background: rgba(255,255,255,.06);
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,.06);
+    min-width: 100px;
+  }
+  .kpi-val { font-size: 1.5rem; font-weight: 700; line-height: 1; }
+  .kpi-label { font-size: .65rem; color: rgba(255,255,255,.45); margin-top: .3rem; text-transform: uppercase; letter-spacing: .06em; }
+
+  /* ── Grid de módulos ── */
   .main {
     flex: 1;
-    padding: 2rem;
-    max-width: 960px;
-    width: 100%;
-    margin: 0 auto;
+    padding: 2rem 3rem 3rem;
   }
-
-  /* ── Seção de módulos ── */
-  .modulos-header {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    margin-bottom: 1.25rem;
-  }
-  .modulos-titulo {
-    font-size: .7rem;
+  .section-label {
+    font-size: .68rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: .1em;
     color: var(--sub);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: .6rem;
   }
-  .modulos-count {
-    font-size: .75rem;
-    color: var(--sub);
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--borda);
   }
 
-  /* ── Card de módulo ── */
-  .modulo-card {
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1.25rem;
+  }
+
+  /* ── Card ── */
+  .card {
     display: flex;
-    align-items: stretch;
+    flex-direction: column;
     background: var(--card);
     border: 1px solid var(--borda);
     border-radius: var(--radius);
@@ -101,133 +142,143 @@
     color: inherit;
     transition: border-color .2s, box-shadow .2s, transform .15s;
     overflow: hidden;
-    margin-bottom: 1rem;
+    position: relative;
   }
-  .modulo-card:hover {
+  .card:hover {
     border-color: var(--azm);
-    box-shadow: 0 2px 8px rgba(44,82,130,.1), 0 8px 24px rgba(44,82,130,.06);
-    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(44,82,130,.12);
+    transform: translateY(-2px);
   }
-  .modulo-card:active { transform: translateY(0); }
+  .card:active { transform: translateY(0); }
 
-  .modulo-barra {
-    width: 4px;
-    flex-shrink: 0;
+  .card-top {
+    height: 4px;
+    width: 100%;
   }
-  .barra-ativo { background: var(--green); }
-  .barra-breve { background: var(--borda); }
+  .top-ativo { background: linear-gradient(90deg, var(--green), #2ecc71); }
+  .top-breve { background: var(--borda); }
 
-  .modulo-body {
+  .card-body {
+    padding: 1.5rem 1.5rem 1.25rem;
     flex: 1;
-    padding: 1.25rem 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 1.25rem;
-  }
-
-  .modulo-icon {
-    width: 48px; height: 48px;
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.4rem;
-    flex-shrink: 0;
-  }
-  .icon-adic { background: #fef3c7; }
-  .icon-contr { background: #e0e7ff; }
-
-  .modulo-info { flex: 1; min-width: 0; }
-  .modulo-nome {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--az);
-    line-height: 1.3;
-  }
-  .modulo-desc {
-    font-size: .85rem;
-    color: var(--sub);
-    margin-top: .2rem;
-    line-height: 1.45;
-  }
-
-  .modulo-meta {
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
-    gap: .4rem;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: .75rem;
+    margin-bottom: .85rem;
+  }
+
+  .card-icon {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem;
     flex-shrink: 0;
   }
 
   .badge-status {
     display: inline-flex;
     align-items: center;
-    gap: .35rem;
-    font-size: .7rem;
+    gap: .3rem;
+    font-size: .65rem;
     font-weight: 600;
-    padding: .2rem .65rem;
+    padding: .15rem .55rem;
     border-radius: 20px;
     white-space: nowrap;
+    margin-top: .25rem;
   }
   .badge-ativo { background: var(--greenl); color: var(--green); }
   .badge-breve { background: var(--amberl); color: var(--amber); }
-
   .badge-dot {
-    width: 6px; height: 6px;
+    width: 5px; height: 5px;
     border-radius: 50%;
     flex-shrink: 0;
   }
   .dot-ativo { background: var(--green); }
   .dot-breve { background: var(--amber); }
 
-  .modulo-seta {
-    color: var(--borda);
-    font-size: 1.2rem;
-    transition: color .2s, transform .2s;
+  .card-nome {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--az);
+    line-height: 1.3;
+    margin-bottom: .4rem;
   }
-  .modulo-card:hover .modulo-seta { color: var(--azm); transform: translateX(2px); }
+  .card-desc {
+    font-size: .82rem;
+    color: var(--sub);
+    line-height: 1.55;
+    flex: 1;
+  }
+
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: .75rem 1.5rem;
+    border-top: 1px solid #f0f2f5;
+  }
+  .card-link {
+    font-size: .75rem;
+    font-weight: 600;
+    color: var(--azm);
+    display: flex;
+    align-items: center;
+    gap: .3rem;
+    transition: gap .2s;
+  }
+  .card:hover .card-link { gap: .5rem; }
+  .card-link svg {
+    width: 14px; height: 14px;
+    transition: transform .2s;
+  }
+  .card:hover .card-link svg { transform: translateX(2px); }
 
   /* ── Card desabilitado ── */
-  .modulo-card.disabled {
-    opacity: .55;
+  .card.disabled {
+    opacity: .5;
     cursor: default;
     pointer-events: none;
-  }
-  .modulo-card.disabled:hover {
-    border-color: var(--borda);
-    box-shadow: var(--sombra);
-    transform: none;
-  }
-
-  /* ── Separador ── */
-  .sep {
-    border: none;
-    border-top: 1px solid var(--borda);
-    margin: 1.5rem 0;
   }
 
   /* ── Rodapé ── */
   .footer {
     text-align: center;
     padding: 1.5rem 2rem;
-    font-size: .72rem;
+    font-size: .7rem;
     color: var(--sub);
     border-top: 1px solid var(--borda);
     line-height: 1.6;
+    background: #fff;
   }
-  .footer a { color: var(--azm); text-decoration: none; }
-  .footer a:hover { text-decoration: underline; }
 
   /* ── Responsivo ── */
-  @media (max-width: 640px) {
-    .header { padding: 1rem 1.25rem; }
-    .header-logo { width: 36px; height: 36px; font-size: 1rem; }
-    .header h1 { font-size: 1.05rem; }
-    .main { padding: 1.25rem 1rem; }
-    .modulo-body { padding: 1rem 1.25rem; gap: 1rem; flex-wrap: wrap; }
-    .modulo-meta { flex-direction: row; align-items: center; }
+  @media (max-width: 1024px) {
+    .hero { padding: 2rem 2rem 1.5rem; }
+    .main { padding: 1.5rem 2rem 2rem; }
+    .grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
   }
-  @media (max-width: 400px) {
-    .modulo-body { flex-direction: column; align-items: flex-start; }
-    .modulo-meta { flex-direction: row; width: 100%; justify-content: space-between; }
+  @media (max-width: 768px) {
+    .header { padding: 0 1.25rem; }
+    .header .sub-h { display: none; }
+    .hero { padding: 1.5rem 1.25rem 1.25rem; }
+    .hero-text h2 { font-size: 1.3rem; }
+    .hero-kpis { gap: .75rem; }
+    .kpi { min-width: 80px; padding: .5rem .75rem; }
+    .kpi-val { font-size: 1.2rem; }
+    .main { padding: 1.25rem; }
+    .grid { grid-template-columns: 1fr; gap: 1rem; }
+  }
+  @media (max-width: 480px) {
+    .header { height: 56px; }
+    .header h1 { font-size: .95rem; }
+    .hero-kpis { width: 100%; }
+    .kpi { flex: 1; }
   }
 </style>
 </head>
@@ -236,157 +287,161 @@
 <div class="header">
   <div class="header-left">
     <div class="header-logo">SST</div>
-    <div>
+    <div style="display:flex;align-items:baseline;gap:0">
       <h1>Painel Gerencial SOST/SEG</h1>
-      <div class="sub">Hospital Universitário de Lagarto · EBSERH</div>
+      <span class="sub-h">HUL · EBSERH</span>
     </div>
   </div>
   <div class="header-right">
+    <div class="header-stat">
+      <span class="dot-h"></span>
+      7 módulos ativos
+    </div>
     <div class="dept">USOST · Engenharia de Segurança do Trabalho</div>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="hero-text">
+    <h2>Hospital Universitário de Lagarto</h2>
+    <p>Unidade de Saúde Ocupacional e Segurança do Trabalho</p>
+  </div>
+  <div class="hero-kpis">
+    <div class="kpi">
+      <div class="kpi-val">7</div>
+      <div class="kpi-label">Módulos</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-val">3</div>
+      <div class="kpi-label">NRs monitoradas</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-val" id="anoAtual">2026</div>
+      <div class="kpi-label">Ano vigente</div>
+    </div>
   </div>
 </div>
 
 <div class="main">
 
-  <div class="modulos-header">
-    <span class="modulos-titulo">Módulos</span>
-    <span class="modulos-count">7 ativos</span>
+  <div class="section-label">Módulos disponíveis</div>
+
+  <div class="grid">
+
+    <a class="card" href="painel_gerencial_sost.html">
+      <div class="card-top top-ativo"></div>
+      <div class="card-body">
+        <div class="card-header">
+          <div class="card-icon" style="background:#fef3c7">💰</div>
+          <span class="badge-status badge-ativo"><span class="badge-dot dot-ativo"></span> Ativo</span>
+        </div>
+        <div class="card-nome">Adicionais de Risco</div>
+        <div class="card-desc">Controle de insalubridade, periculosidade, revisitações e ações judiciais por empregado.</div>
+      </div>
+      <div class="card-footer">
+        <span class="card-link">Acessar <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L11.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 11-1.04-1.08l3.158-2.96H3.75A.75.75 0 013 10z" clip-rule="evenodd"/></svg></span>
+      </div>
+    </a>
+
+    <a class="card" href="painel_monitoramento.html">
+      <div class="card-top top-ativo"></div>
+      <div class="card-body">
+        <div class="card-header">
+          <div class="card-icon" style="background:#fce7f3">📊</div>
+          <span class="badge-status badge-ativo"><span class="badge-dot dot-ativo"></span> Ativo</span>
+        </div>
+        <div class="card-nome">Monitoramento de Laudos</div>
+        <div class="card-desc">Acompanhamento mensal de laudos de insalubridade grau máximo e periculosidade por radiação ionizante.</div>
+      </div>
+      <div class="card-footer">
+        <span class="card-link">Acessar <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L11.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 11-1.04-1.08l3.158-2.96H3.75A.75.75 0 013 10z" clip-rule="evenodd"/></svg></span>
+      </div>
+    </a>
+
+    <a class="card" href="painel_exposicao.html">
+      <div class="card-top top-ativo"></div>
+      <div class="card-body">
+        <div class="card-header">
+          <div class="card-icon" style="background:#ede9fe">☣️</div>
+          <span class="badge-status badge-ativo"><span class="badge-dot dot-ativo"></span> Ativo</span>
+        </div>
+        <div class="card-nome">Exposição Ocupacional</div>
+        <div class="card-desc">Monitoramento de exposição biológica (NR-15 Anexo 14) e radiação ionizante (NR-16), com índices e caracterização mensal.</div>
+      </div>
+      <div class="card-footer">
+        <span class="card-link">Acessar <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L11.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 11-1.04-1.08l3.158-2.96H3.75A.75.75 0 013 10z" clip-rule="evenodd"/></svg></span>
+      </div>
+    </a>
+
+    <a class="card" href="painel_nc.html">
+      <div class="card-top top-ativo"></div>
+      <div class="card-body">
+        <div class="card-header">
+          <div class="card-icon" style="background:#fee2e2">🗺️</div>
+          <span class="badge-status badge-ativo"><span class="badge-dot dot-ativo"></span> Ativo</span>
+        </div>
+        <div class="card-nome">Painel de Não-Conformidades</div>
+        <div class="card-desc">Mapa interativo e gestão de NCs por zona, agente de risco e faixa, com planta baixa do HUL.</div>
+      </div>
+      <div class="card-footer">
+        <span class="card-link">Acessar <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L11.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 11-1.04-1.08l3.158-2.96H3.75A.75.75 0 013 10z" clip-rule="evenodd"/></svg></span>
+      </div>
+    </a>
+
+    <a class="card" href="painel_acidentes.html">
+      <div class="card-top top-ativo"></div>
+      <div class="card-body">
+        <div class="card-header">
+          <div class="card-icon" style="background:#dbeafe">⚠️</div>
+          <span class="badge-status badge-ativo"><span class="badge-dot dot-ativo"></span> Ativo</span>
+        </div>
+        <div class="card-nome">Gestão de Acidentes</div>
+        <div class="card-desc">Indicadores de acidentes do trabalho conforme ABNT NBR 14280, com taxas TF/TG e análise de barreiras.</div>
+      </div>
+      <div class="card-footer">
+        <span class="card-link">Acessar <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L11.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 11-1.04-1.08l3.158-2.96H3.75A.75.75 0 013 10z" clip-rule="evenodd"/></svg></span>
+      </div>
+    </a>
+
+    <a class="card" href="painel_epi.html">
+      <div class="card-top top-ativo"></div>
+      <div class="card-body">
+        <div class="card-header">
+          <div class="card-icon" style="background:#e0e7ff">🧤</div>
+          <span class="badge-status badge-ativo"><span class="badge-dot dot-ativo"></span> Ativo</span>
+        </div>
+        <div class="card-nome">Painel de EPI</div>
+        <div class="card-desc">Controle de fornecimento de EPIs, alertas de validade conforme NR-6 e rastreabilidade por empregado e setor.</div>
+      </div>
+      <div class="card-footer">
+        <span class="card-link">Acessar <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L11.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 11-1.04-1.08l3.158-2.96H3.75A.75.75 0 013 10z" clip-rule="evenodd"/></svg></span>
+      </div>
+    </a>
+
+    <a class="card" href="painel_conformidade_epi.html">
+      <div class="card-top top-ativo"></div>
+      <div class="card-body">
+        <div class="card-header">
+          <div class="card-icon" style="background:#ede9fe">✅</div>
+          <span class="badge-status badge-ativo"><span class="badge-dot dot-ativo"></span> Ativo</span>
+        </div>
+        <div class="card-nome">Conformidade de EPI</div>
+        <div class="card-desc">Cruzamento de exposição biológica com retiradas de EPI: avaliação de PFF2 (NR-32) e óculos de segurança (NR-06) por empregado.</div>
+      </div>
+      <div class="card-footer">
+        <span class="card-link">Acessar <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L11.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 11-1.04-1.08l3.158-2.96H3.75A.75.75 0 013 10z" clip-rule="evenodd"/></svg></span>
+      </div>
+    </a>
+
   </div>
-
-  <!-- Card Ativo -->
-  <a class="modulo-card" href="painel_gerencial_sost.html">
-    <div class="modulo-barra barra-ativo"></div>
-    <div class="modulo-body">
-      <div class="modulo-icon icon-adic">💰</div>
-      <div class="modulo-info">
-        <div class="modulo-nome">Adicionais de Risco</div>
-        <div class="modulo-desc">Controle de insalubridade, periculosidade, revisitações e ações judiciais por empregado.</div>
-      </div>
-      <div class="modulo-meta">
-        <span class="badge-status badge-ativo"><span class="badge-dot dot-ativo"></span> Ativo</span>
-        <span class="modulo-seta">&#8250;</span>
-      </div>
-    </div>
-  </a>
-
-  <!-- Card Monitoramento de Laudos -->
-  <a class="modulo-card" href="painel_monitoramento.html">
-    <div class="modulo-barra barra-ativo"></div>
-    <div class="modulo-body">
-      <div class="modulo-icon" style="background:#fce7f3">📊</div>
-      <div class="modulo-info">
-        <div class="modulo-nome">Monitoramento de Laudos</div>
-        <div class="modulo-desc">Acompanhamento mensal de laudos de insalubridade grau maximo e periculosidade por radiacao ionizante.</div>
-      </div>
-      <div class="modulo-meta">
-        <span class="badge-status badge-ativo"><span class="badge-dot dot-ativo"></span> Ativo</span>
-        <span class="modulo-seta">&#8250;</span>
-      </div>
-    </div>
-  </a>
-
-  <!-- Card Exposição Ocupacional -->
-  <a class="modulo-card" href="painel_exposicao.html">
-    <div class="modulo-barra barra-ativo"></div>
-    <div class="modulo-body">
-      <div class="modulo-icon" style="background:#ede9fe">☣️</div>
-      <div class="modulo-info">
-        <div class="modulo-nome">Exposição Ocupacional</div>
-        <div class="modulo-desc">Monitoramento de exposição biológica (NR-15 Anexo 14) e radiação ionizante (NR-16), com índices e caracterização mensal.</div>
-      </div>
-      <div class="modulo-meta">
-        <span class="badge-status badge-ativo"><span class="badge-dot dot-ativo"></span> Ativo</span>
-        <span class="modulo-seta">&#8250;</span>
-      </div>
-    </div>
-  </a>
-
-  <!-- Card Painel de Não-Conformidades -->
-  <a class="modulo-card" href="painel_nc.html">
-    <div class="modulo-barra barra-ativo"></div>
-    <div class="modulo-body">
-      <div class="modulo-icon" style="background:#fee2e2">🗺️</div>
-      <div class="modulo-info">
-        <div class="modulo-nome">Painel de Não-Conformidades</div>
-        <div class="modulo-desc">Mapa interativo e gestão de NCs por zona, agente de risco e faixa, com planta baixa do HUL.</div>
-      </div>
-      <div class="modulo-meta">
-        <span class="badge-status badge-ativo"><span class="badge-dot dot-ativo"></span> Ativo</span>
-        <span class="modulo-seta">&#8250;</span>
-      </div>
-    </div>
-  </a>
-
-  <!-- Card Gestão de Acidentes -->
-  <a class="modulo-card" href="painel_acidentes.html">
-    <div class="modulo-barra barra-ativo"></div>
-    <div class="modulo-body">
-      <div class="modulo-icon" style="background:#dbeafe">⚠️</div>
-      <div class="modulo-info">
-        <div class="modulo-nome">Gestão de Acidentes</div>
-        <div class="modulo-desc">Indicadores de acidentes do trabalho conforme ABNT NBR 14280, com taxas TF/TG e análise de barreiras.</div>
-      </div>
-      <div class="modulo-meta">
-        <span class="badge-status badge-ativo"><span class="badge-dot dot-ativo"></span> Ativo</span>
-        <span class="modulo-seta">&#8250;</span>
-      </div>
-    </div>
-  </a>
-
-  <!-- Card Painel de EPI -->
-  <a class="modulo-card" href="painel_epi.html">
-    <div class="modulo-barra barra-ativo"></div>
-    <div class="modulo-body">
-      <div class="modulo-icon" style="background:#e0e7ff">🧤</div>
-      <div class="modulo-info">
-        <div class="modulo-nome">Painel de EPI</div>
-        <div class="modulo-desc">Controle de fornecimento de EPIs, alertas de validade conforme NR-6 e rastreabilidade por empregado e setor.</div>
-      </div>
-      <div class="modulo-meta">
-        <span class="badge-status badge-ativo"><span class="badge-dot dot-ativo"></span> Ativo</span>
-        <span class="modulo-seta">&#8250;</span>
-      </div>
-    </div>
-  </a>
-
-  <!-- Card Conformidade de EPI -->
-  <a class="modulo-card" href="painel_conformidade_epi.html">
-    <div class="modulo-barra barra-ativo"></div>
-    <div class="modulo-body">
-      <div class="modulo-icon" style="background:#ede9fe">✅</div>
-      <div class="modulo-info">
-        <div class="modulo-nome">Conformidade de EPI</div>
-        <div class="modulo-desc">Cruzamento de exposição biológica com retiradas de EPI: avaliação de PFF2 (NR-32) e óculos de segurança (NR-06) por empregado.</div>
-      </div>
-      <div class="modulo-meta">
-        <span class="badge-status badge-ativo"><span class="badge-dot dot-ativo"></span> Ativo</span>
-        <span class="modulo-seta">&#8250;</span>
-      </div>
-    </div>
-  </a>
-
-  <!-- Futuros módulos (desabilitados) -->
-  <!--
-  <div class="modulo-card disabled">
-    <div class="modulo-barra barra-breve"></div>
-    <div class="modulo-body">
-      <div class="modulo-icon icon-contr">📋</div>
-      <div class="modulo-info">
-        <div class="modulo-nome">Gestão de Contratadas</div>
-        <div class="modulo-desc">Terceirizadas, documentação e conformidade com normas regulamentadoras.</div>
-      </div>
-      <div class="modulo-meta">
-        <span class="badge-status badge-breve"><span class="badge-dot dot-breve"></span> Em breve</span>
-      </div>
-    </div>
-  </div>
-  -->
-
 </div>
 
 <div class="footer">
   Painel Gerencial SOST/SEG · USOST · Hospital Universitário de Lagarto · EBSERH
 </div>
 
+<script>
+  document.getElementById('anoAtual').textContent = new Date().getFullYear();
+</script>
 </body>
 </html>

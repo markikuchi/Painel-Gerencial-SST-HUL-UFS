@@ -849,9 +849,17 @@ function processarConformidade(){
     var key = ano + '_' + mes;
     var caracterizada = String(r.RESULTADO || '').trim().toUpperCase() === 'CARACTERIZADA';
     if(!expPorSiape[siape].meses[key])
-      expPorSiape[siape].meses[key] = {ano:ano, mes:mes, tevAtuacao:false, totalLinhas:0, linhasCaract:0};
+      expPorSiape[siape].meses[key] = {ano:ano, mes:mes, tevAtuacao:false, totalLinhas:0, linhasCaract:0, pltInf:0, plantoes:0};
     expPorSiape[siape].meses[key].totalLinhas++;
-    expPorSiape[siape].meses[key].tevAtuacao = true;
+    expPorSiape[siape].meses[key].plantoes++;
+    /* v3.3: usar PLANTAO_INF da planilha EXP_BIO para determinar tevAtuacao.
+       Cada linha EXP_BIO é um plantão. PLANTAO_INF indica se o plantão
+       teve exposição infectocontagiosa informatizada (equivalente a pltInf
+       no programa original que usa AGHUx).
+       tevAtuacao = true se o mês tem pelo menos 1 plantão com PLANTAO_INF > 0. */
+    var pltInf = parseInt(r.PLANTAO_INF) || 0;
+    expPorSiape[siape].meses[key].pltInf += pltInf;
+    if(pltInf > 0) expPorSiape[siape].meses[key].tevAtuacao = true;
     if(caracterizada) expPorSiape[siape].meses[key].linhasCaract++;
   });
 
@@ -893,20 +901,12 @@ function processarConformidade(){
     var expData = expPorSiape[siape];
     var mesesArr = [];
     if(expData){
-      /* v3.1e: descarta meses ANTES do primeiro CARACTERIZADA (análise não iniciou).
-         A partir do primeiro CARACTERIZADA, todos os meses entram (avaliados).
-         Ex.: Jan/Fev NAO CARACT antes de Mar CARACT = sem dados.
-              Abr NAO CARACT depois de Mar CARACT = avaliado normalmente. */
-      var allKeys = Object.keys(expData.meses).sort(function(a,b){
-        var ma=expData.meses[a], mb=expData.meses[b];
-        return (ma.ano*100+ma.mes)-(mb.ano*100+mb.mes);
-      });
-      var inicioIdx = -1;
-      for(var ki=0; ki<allKeys.length; ki++){
-        if(expData.meses[allKeys[ki]].linhasCaract > 0){ inicioIdx = ki; break; }
-      }
-      if(inicioIdx > 0) allKeys = allKeys.slice(inicioIdx);
-      else if(inicioIdx < 0) allKeys = [];
+      /* v3.2: TODOS os meses com registro em EXP_BIO entram no timeline.
+         tevAtuacao = true somente para meses CARACTERIZADA (alterado acima).
+         Meses NAO CARACTERIZADA ficam tevAtuacao=false → cinza (sem_atuacao).
+         Isso garante que empregados sem nenhum CARACTERIZADA apareçam
+         (antes o filtro inicioIdx<0 eliminava tudo → 0 meses). */
+      var allKeys = Object.keys(expData.meses);
       mesesArr = allKeys.map(function(k){
         var m = expData.meses[k];
         /* v3.1: usar último dia do mês como data de referência para avPFF2.
@@ -1053,7 +1053,12 @@ function renderTabela(){
 
   if(fAno || fMes) console.log('[ConfEPI] renderTabela filtros: ano="' + fAno + '" mes="' + fMes + '"');
 
-  /* Quando ano selecionado, recalcula PFF2 só p/ aquele ano */
+  /* v3.4: Status PFF2 sempre usa ano corrente como padrão.
+     Sem filtro de ano → usa ano atual (mesmo comportamento do modal).
+     Isso evita que empregados sem exposição no ano corrente
+     apareçam como "Reiterado" por conta de dados antigos. */
+  var anoCorrente = String(new Date().getFullYear());
+  var anoParaStatus = fAno || anoCorrente;
   var filtrados = [];
   RESULTADOS.forEach(function(r){
     if(fLot && r.lotacao !== fLot) return;
@@ -1061,8 +1066,8 @@ function renderTabela(){
     if(fBusca.length >= 2){
       if(CE.norm(r.nome).indexOf(fBusca)===-1 && CE.norm(r.siape).indexOf(fBusca)===-1 && CE.norm(r.lotacao).indexOf(fBusca)===-1) return;
     }
-    /* PFF2 status: sempre baseado no último mês (atual), filtrado por ano/mês se necessário */
-    var pff2Filtrado = statusPFF2Atual(r, fAno, fMes);
+    /* PFF2 status: sempre baseado no ano corrente (ou filtro), como o modal faz */
+    var pff2Filtrado = statusPFF2Atual(r, anoParaStatus, fMes);
     if(fAno || fMes){
       var temPeriodo = r.mesesExp && r.mesesExp.some(function(m){
         var okAno = !fAno || String(m.ano) === fAno;
@@ -1073,6 +1078,14 @@ function renderTabela(){
     }
     if(fPFF2 && pff2Filtrado.st !== fPFF2) return;
     filtrados.push({r:r, pff2Exibir: pff2Filtrado});
+  });
+  /* v3.4: re-ordena pelo status do ano exibido (não do geral) */
+  var ordemExib = {inconformes_reiterado:0, inconformes_recente:1, sem_epi:1, conforme:2, sem_atuacao:3};
+  filtrados.sort(function(a,b){
+    var sa = ordemExib[a.pff2Exibir.st] !== undefined ? ordemExib[a.pff2Exibir.st] : 9;
+    var sb2 = ordemExib[b.pff2Exibir.st] !== undefined ? ordemExib[b.pff2Exibir.st] : 9;
+    var d = sa - sb2;
+    return d !== 0 ? d : (a.r.nome||'').localeCompare(b.r.nome||'','pt-BR');
   });
   var tbody = document.getElementById('tbodyConf');
   var html = '';
@@ -1096,7 +1109,7 @@ function renderTabela(){
   if(fAno && fMes) subtitulo = ' · Avaliação de ' + MESES_NOME[parseInt(fMes)] + '/' + fAno;
   else if(fAno) subtitulo = ' · Avaliação do último mês de ' + fAno;
   else if(fMes) subtitulo = ' · Avaliação de ' + MESES_NOME[parseInt(fMes)] + ' (todos os anos)';
-  else subtitulo = ' · Status baseado no último mês avaliado';
+  else subtitulo = ' · Avaliação do ano ' + anoCorrente;
   document.getElementById('tblCount').textContent = 'Mostrando ' + filtrados.length + ' de ' + RESULTADOS.length + ' empregados' + subtitulo;
   if(fAno || fMes) console.log('[ConfEPI] renderTabela: ' + filtrados.length + '/' + RESULTADOS.length + ' exibidos com filtro ano=' + fAno + ' mes=' + fMes);
   }catch(e){ console.error('[ConfEPI] ERRO em renderTabela:', e.message, e.stack); }
