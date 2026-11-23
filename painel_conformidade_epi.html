@@ -1,0 +1,1603 @@
+<!DOCTYPE html>
+<!--
+  Painel de Conformidade de EPI v3.0
+  Cruzamento: Exposição Ocupacional (EXP_BIO) × Retiradas de EPI (EPI_REGISTROS)
+  Avaliação PFF2 (NR-32) + Óculos de Segurança (NR-06)
+  USOST · HU Lagarto · HU Brasil/EBSERH
+  Novembro 2026
+-->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conformidade de EPI · USOST/HUL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --az: #1a2744; --azm: #2c5282; --azc: #e8f0fe; --azl: #dbeafe;
+  --vr: #c0392b; --vrc: #fdf0ef; --vrb: #e74c3c;
+  --vd: #1a7f4b; --vdc: #e6f9ee; --vdm: #27ae60;
+  --am: #c2850c; --amc: #fef7e0; --amb: #f39c12;
+  --lj: #e67e22; --ljc: #fdf2e9;
+  --bg: #f4f6fb; --bd: #dfe3ec; --mt: #64748b;
+  --tx: #1e2a3a; --br: #ffffff;
+  --r: 10px; --sh: 0 1px 3px rgba(26,39,68,.06), 0 4px 16px rgba(26,39,68,.04);
+  --f: 'IBM Plex Sans',sans-serif; --m: 'IBM Plex Mono',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--f);background:var(--bg);color:var(--tx);font-size:14px;line-height:1.5;min-height:100vh;display:flex;flex-direction:column}
+
+.top-bar{height:3px;background:linear-gradient(90deg,var(--azm),var(--vd),var(--am))}
+
+.hdr{background:var(--az);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.hdr-back{color:rgba(255,255,255,.7);text-decoration:none;font-size:20px;padding:4px 8px;border-radius:6px;transition:.2s}
+.hdr-back:hover{color:#fff;background:rgba(255,255,255,.1)}
+.hdr-mid{flex:1;min-width:200px}
+.hdr-tit{font-size:17px;font-weight:700;letter-spacing:.3px}
+.hdr-sub{font-size:11px;opacity:.7;margin-top:2px}
+.hdr-right{display:flex;align-items:center;gap:8px}
+.hdr-ver{font-family:var(--m);font-size:10px;opacity:.5;background:rgba(255,255,255,.1);padding:2px 8px;border-radius:10px}
+.hdr-btn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;padding:6px 12px;border-radius:var(--r);cursor:pointer;font-size:12px;font-family:var(--f);transition:.2s;text-decoration:none}
+.hdr-btn:hover{background:rgba(255,255,255,.22)}
+
+.nav{background:var(--br);border-bottom:1px solid var(--bd);display:flex;gap:0;padding:0 24px;overflow-x:auto}
+.nav-tab{padding:10px 18px;font-size:13px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;color:var(--mt);transition:.2s;white-space:nowrap}
+.nav-tab:hover{color:var(--tx)}
+.nav-tab.active{color:var(--azm);border-bottom-color:var(--azm);font-weight:600}
+
+.container{flex:1;padding:20px 24px;max-width:1200px;width:100%;margin:0 auto}
+
+.loading{text-align:center;padding:60px 20px;color:var(--mt)}
+.loading .spinner{display:inline-block;width:32px;height:32px;border:3px solid var(--bd);border-top-color:var(--azm);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px}
+.kpi{background:var(--br);border:1px solid var(--bd);border-radius:var(--r);padding:16px 20px;box-shadow:var(--sh)}
+.kpi-val{font-size:28px;font-weight:700;line-height:1.2}
+.kpi-label{font-size:12px;font-weight:500;color:var(--mt);margin-top:2px}
+.kpi-sub{font-size:11px;color:var(--mt);margin-top:4px}
+.kpi-vd .kpi-val{color:var(--vd)} .kpi-vr .kpi-val{color:var(--vr)}
+.kpi-am .kpi-val{color:var(--am)} .kpi-az .kpi-val{color:var(--azm)} .kpi-mt .kpi-val{color:var(--mt)}
+
+.info-box{background:var(--azc);border:1px solid #c3d8f7;border-radius:var(--r);padding:12px 16px;margin-bottom:16px;font-size:12px;color:var(--az);line-height:1.6}
+.info-box b{font-weight:600}
+
+.filtros{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:flex-end}
+.filtros select,.filtros input{font-family:var(--f);font-size:13px;padding:7px 12px;border:1px solid var(--bd);border-radius:6px;background:var(--br);color:var(--tx);outline:none}
+.filtros select:focus,.filtros input:focus{border-color:var(--azm)}
+.filtros label{font-size:12px;font-weight:500;color:var(--mt)}
+
+/* Autocomplete Lotação */
+.autocomplete-wrap{position:relative}
+.autocomplete-wrap input{width:100%;min-width:300px}
+.autocomplete-list{position:absolute;top:100%;left:0;right:0;background:var(--br);border:1px solid var(--bd);border-top:none;border-radius:0 0 6px 6px;max-height:220px;overflow-y:auto;z-index:50;display:none;box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.autocomplete-list.open{display:block}
+.autocomplete-item{padding:7px 12px;font-size:12px;cursor:pointer;border-bottom:1px solid #f0f2f5}
+.autocomplete-item:hover,.autocomplete-item.active{background:var(--azc);color:var(--azm)}
+.autocomplete-item mark{background:#fef08a;color:inherit;font-weight:600;border-radius:2px;padding:0 1px}
+
+/* Busca empregado */
+.search-row{display:flex;gap:10px;margin-bottom:12px;align-items:center}
+.search-row input{flex:1;font-family:var(--f);font-size:14px;padding:9px 14px;border:1px solid var(--bd);border-radius:var(--r);outline:none;background:var(--br)}
+.search-row input:focus{border-color:var(--azm);box-shadow:0 0 0 3px rgba(44,82,130,.1)}
+
+.tbl-wrap{overflow-x:auto;border-radius:var(--r);border:1px solid var(--bd);background:var(--br);box-shadow:var(--sh)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#f8f9fc;font-weight:600;text-align:left;padding:10px 12px;border-bottom:2px solid var(--bd);font-size:12px;color:var(--mt);text-transform:uppercase;letter-spacing:.04em;position:sticky;top:0;z-index:1}
+td{padding:9px 12px;border-bottom:1px solid #f0f2f5;vertical-align:middle}
+tr:hover td{background:#f8faff}
+tr.row-click{cursor:pointer}
+
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:3px 10px;border-radius:12px;white-space:nowrap}
+.badge-conforme{background:var(--vdc);color:var(--vd)}
+.badge-inconformes_recente{background:var(--amc);color:#92400e}
+.badge-inconformes_reiterado{background:var(--vrc);color:var(--vr)}
+.badge-sem_atuacao{background:#f1f5f9;color:var(--mt)}
+.badge-sem_dados{background:#f1f5f9;color:#94a3b8}
+.badge-vencido{background:var(--vrc);color:var(--vr)}
+.badge-solicitar{background:var(--amc);color:#92400e}
+
+.count-info{font-size:12px;color:var(--mt);margin-top:8px}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:100;justify-content:center;align-items:flex-start;padding:30px 20px;overflow-y:auto}
+.modal-overlay.open{display:flex}
+.modal{background:var(--br);border-radius:12px;max-width:780px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.2);max-height:calc(100vh - 60px);overflow-y:auto}
+.modal-hdr{padding:16px 24px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;background:#f8f9fc}
+.modal-hdr h2{font-size:16px;font-weight:700;color:var(--az)}
+.modal-hdr-sub{font-size:12px;color:var(--mt);margin-top:2px}
+.modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--mt);padding:4px 8px;border-radius:6px}
+.modal-close:hover{background:#f1f5f9}
+.modal-body{padding:20px 24px}
+
+.emp-kpi-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:16px}
+.emp-kpi{text-align:center;padding:8px 6px;background:#f8f9fc;border-radius:6px;border:1px solid var(--bd)}
+.emp-kpi-val{font-size:18px;font-weight:700;font-family:var(--m)}
+.emp-kpi-label{font-size:9px;color:var(--mt);text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+.emp-kpi-vd .emp-kpi-val{color:var(--vd)} .emp-kpi-vd{background:var(--vdc);border-color:#b7e4c7}
+.emp-kpi-vr .emp-kpi-val{color:var(--vr)} .emp-kpi-vr{background:var(--vrc);border-color:#f5c6c3}
+
+/* Heatmap */
+.hm-wrap{overflow-x:auto;margin-bottom:16px}
+.hm-cell{width:28px;height:22px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;cursor:default}
+.hm-cell-conf{background:var(--vd);color:#fff}
+.hm-cell-inc{background:var(--vr);color:#fff}
+.hm-cell-sem{background:#e2e4e8;color:#aaa}
+.hm-cell-sd{background:transparent;border:1px dashed var(--bd)}
+.hm-hdr{font-size:9px;color:var(--mt);font-family:var(--m);text-align:center;display:flex;align-items:center;justify-content:center}
+.hm-legend{display:flex;gap:12px;margin-top:8px;flex-wrap:wrap}
+.hm-legend span{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--mt)}
+.hm-legend-dot{width:10px;height:10px;border-radius:2px;border:1px solid rgba(0,0,0,.08)}
+
+.m-sec{margin-bottom:18px;border:1px solid var(--bd);border-radius:8px;overflow:hidden}
+.m-sec-title{background:#f8f9fc;padding:10px 16px;font-size:12px;font-weight:600;color:var(--az);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--bd)}
+.m-sec-body{padding:14px 16px}
+.m-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f0f2f5;font-size:13px}
+.m-row:last-child{border-bottom:none}
+.m-dt{font-family:var(--m);font-size:12px;color:var(--mt)}
+.m-retiradas{font-size:12px;border-collapse:collapse;width:100%;margin-top:8px}
+.m-retiradas th{font-size:10px;font-weight:600;color:var(--mt);text-transform:uppercase;letter-spacing:.04em;padding:6px 8px;text-align:left;background:#f8f9fc;border-bottom:1px solid var(--bd)}
+.m-retiradas td{padding:5px 8px;border-bottom:1px solid #f0f2f5;font-size:12px}
+
+.view{display:none}
+.view.active{display:block}
+
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.chart-card{background:var(--br);border:1px solid var(--bd);border-radius:var(--r);padding:16px;box-shadow:var(--sh)}
+.chart-card h3{font-size:13px;font-weight:600;color:var(--az);margin-bottom:12px}
+
+.footer{text-align:center;padding:16px 24px;font-size:11px;color:var(--mt);border-top:1px solid var(--bd)}
+
+@media(max-width:768px){
+  .hdr{padding:12px 16px} .container{padding:16px} .nav{padding:0 16px}
+  .kpi-row{grid-template-columns:repeat(2,1fr)} .chart-grid{grid-template-columns:1fr}
+  .filtros{flex-direction:column} .emp-kpi-bar{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:480px){.kpi-row{grid-template-columns:1fr}}
+
+/* Impressão v2.6 — :has() auto-detecta modal aberto (Chrome 105+) */
+@media print {
+  body{background:#fff;font-size:11px}
+  .top-bar,.hdr-right,.nav,.filtros,.search-row,.footer,.count-info{display:none!important}
+  .hdr{background:#1a2744!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;padding:10px 16px}
+  .container{padding:10px 0;max-width:100%}
+  .info-box{padding:8px 12px;margin-bottom:10px;font-size:10px;break-inside:avoid}
+  .tbl-wrap{box-shadow:none;border:1px solid #ccc;overflow:visible}
+  table{font-size:10px}
+  th{background:#e8e8e8!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:9px;padding:6px 8px}
+  td{padding:5px 8px}
+  .badge{font-size:9px;padding:2px 6px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .badge-conforme{background:var(--vdc)!important} .badge-inconformes_recente{background:var(--amc)!important}
+  .badge-inconformes_reiterado{background:var(--vrc)!important}
+  .kpi{box-shadow:none;padding:10px;border:1px solid #ccc}
+  .kpi-val{font-size:22px}
+  .chart-card{break-inside:avoid;box-shadow:none;border:1px solid #ccc}
+  .view{display:block!important}
+  h3[style]{margin-top:12px!important}
+  /* Modal fechado: esconde overlay */
+  .modal-overlay{display:none!important}
+  /* Modal ABERTO: :has() detecta e imprime SÓ o modal — sem JS, sem timing */
+  body:has(.modal-overlay.open) .top-bar,
+  body:has(.modal-overlay.open) .hdr,
+  body:has(.modal-overlay.open) .nav,
+  body:has(.modal-overlay.open) .container,
+  body:has(.modal-overlay.open) .footer{display:none!important}
+  body:has(.modal-overlay.open) .modal-overlay.open{display:block!important;position:static;background:none;padding:0;overflow:visible}
+  body:has(.modal-overlay.open) .modal{max-width:100%;max-height:none;overflow:visible;box-shadow:none;border:none}
+  body:has(.modal-overlay.open) .modal-close{display:none!important}
+  body:has(.modal-overlay.open) .modal-hdr button{display:none!important}
+  body:has(.modal-overlay.open) .modal-hdr{background:#f0f2f5!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .hm-cell-conf{background:var(--vd)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .hm-cell-inc{background:var(--vr)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .hm-cell-sem{background:#e2e4e8!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .emp-kpi-vd{background:var(--vdc)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .emp-kpi-vr{background:var(--vrc)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+
+<div class="top-bar"></div>
+
+<div class="hdr">
+  <a href="index.html" class="hdr-back" title="Voltar ao Hub">&#8249;</a>
+  <div class="hdr-mid">
+    <div class="hdr-tit">Conformidade de EPI</div>
+    <div class="hdr-sub">Cruzamento Exposição Ocupacional × Retiradas de EPI · USOST/HUL</div>
+  </div>
+  <div class="hdr-right">
+    <span class="hdr-ver">v3.0</span>
+    <button class="hdr-btn" onclick="imprimirPainel()" title="Imprimir">🖨 Imprimir</button>
+    <button class="hdr-btn" onclick="carregarDados()">↻ Atualizar</button>
+  </div>
+</div>
+
+<div class="nav">
+  <div class="nav-tab active" data-view="tabelaConf">Tabela de Conformidade</div>
+  <div class="nav-tab" data-view="graficos">Gráficos</div>
+  <div class="nav-tab" data-view="visaoGeral">Visão Geral</div>
+</div>
+
+<div class="container">
+  <div id="loadingMsg" class="loading">
+    <div class="spinner"></div>
+    <p style="margin-top:12px">Carregando dados da planilha...</p>
+  </div>
+
+  <div id="conteudoGeral" style="display:none">
+
+    <!-- TABELA (primeira aba) -->
+    <div class="view active" id="tabelaConf">
+      <div class="info-box">
+        <b>Fundamento:</b> NR-32 item 32.2.4.3 (respirador PFF2 para exposição a agentes biológicos por via aérea),
+        NR-06 item 6.6.1 (rastreabilidade de EPI), POP.DGP.016 (procedimento interno de retirada).
+        Óculos de segurança: validade técnica de 5 anos (política institucional, policarbonato).
+        <br><b>Dados:</b> Cruzamento entre <b>EXP_BIO</b> (exposição biológica mensal) e <b>EPI_REGISTROS</b> (retiradas de EPI).
+        <br><b>Avaliação PFF2:</b> Status baseado no <b>último mês avaliado</b> de cada empregado. Histórico completo no detalhe individual.
+      </div>
+
+      <div class="search-row">
+        <input type="text" id="buscaInput" placeholder="Buscar por nome, SIAPE ou lotação..." oninput="renderTabela()">
+      </div>
+
+      <div class="filtros">
+        <div class="autocomplete-wrap" style="flex:1;min-width:300px;max-width:500px">
+          <label>Lotação</label><br>
+          <input type="text" id="filtroLotacao" placeholder="Todas as lotações..." oninput="abrirAutocompleteLot()" onfocus="abrirAutocompleteLot()" autocomplete="off">
+          <div class="autocomplete-list" id="lotacaoList"></div>
+        </div>
+        <div>
+          <label>Status PFF2</label><br>
+          <select id="filtroPFF2" onchange="renderTabela()">
+            <option value="">Todos</option>
+            <option value="conforme">Conforme</option>
+            <option value="inconformes_recente">Atuação sem EPI</option>
+            <option value="inconformes_reiterado">Reiterado sem EPI</option>
+            <option value="sem_atuacao">Sem atuação</option>
+          </select>
+        </div>
+        <div>
+          <label>Status Óculos</label><br>
+          <select id="filtroOculos" onchange="renderTabela()">
+            <option value="">Todos</option>
+            <option value="conforme">Conforme</option>
+            <option value="vencido">Vencido</option>
+            <option value="solicitar">Solicitar</option>
+          </select>
+        </div>
+        <div>
+          <label>Ano</label><br>
+          <select id="filtroAno" onchange="renderTabela()">
+            <option value="">Todos</option>
+          </select>
+        </div>
+        <div>
+          <label>Mês</label><br>
+          <select id="filtroMes" onchange="renderTabela()">
+            <option value="">Todos</option>
+            <option value="1">Janeiro</option>
+            <option value="2">Fevereiro</option>
+            <option value="3">Março</option>
+            <option value="4">Abril</option>
+            <option value="5">Maio</option>
+            <option value="6">Junho</option>
+            <option value="7">Julho</option>
+            <option value="8">Agosto</option>
+            <option value="9">Setembro</option>
+            <option value="10">Outubro</option>
+            <option value="11">Novembro</option>
+            <option value="12">Dezembro</option>
+          </select>
+        </div>
+        <div style="margin-left:auto">
+          <button class="hdr-btn" style="background:var(--az);color:#fff;padding:7px 14px" onclick="limparFiltros()">Limpar filtros</button>
+        </div>
+      </div>
+
+      <div class="tbl-wrap" style="max-height:calc(100vh - 340px);overflow-y:auto">
+        <table id="tblConformidade">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>SIAPE</th>
+              <th>Lotação</th>
+              <th>Meses c/ exp.</th>
+              <th>Mês ref.</th>
+              <th>PFF2</th>
+              <th>Óculos</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyConf"></tbody>
+        </table>
+      </div>
+      <div id="tblCount" class="count-info"></div>
+    </div>
+
+    <!-- GRÁFICOS -->
+    <div class="view" id="graficos">
+      <div class="chart-grid">
+        <div class="chart-card"><h3>Conformidade PFF2</h3><canvas id="chartPFF2"></canvas></div>
+        <div class="chart-card"><h3>Conformidade Óculos</h3><canvas id="chartOculos"></canvas></div>
+        <div class="chart-card"><h3>Conformidade PFF2 por Lotação</h3><canvas id="chartLotacao"></canvas></div>
+        <div class="chart-card"><h3>Exposição: meses com atuação por empregado</h3><canvas id="chartExposicao"></canvas></div>
+      </div>
+    </div>
+
+    <!-- VISÃO GERAL -->
+    <div class="view" id="visaoGeral">
+      <div id="kpiCards" class="kpi-row"></div>
+      <div id="infoAtualizacao" style="font-size:11px;color:var(--mt);margin-top:12px;text-align:right"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)fecharModal()">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div>
+        <h2 id="modalTitulo">Detalhe</h2>
+        <div class="modal-hdr-sub" id="modalSubtitulo"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button style="background:var(--azm);color:#fff;border:none;padding:7px 16px;border-radius:var(--r);cursor:pointer;font-size:12px;font-family:var(--f);font-weight:600;letter-spacing:.02em" onclick="imprimirModal()">🖨 Imprimir</button>
+        <button id="btnFichaInd" style="background:var(--vd);color:#fff;border:none;padding:7px 16px;border-radius:var(--r);cursor:pointer;font-size:12px;font-family:var(--f);font-weight:600;letter-spacing:.02em;display:none" onclick="gerarFichaIndividualPDF()">📄 Ficha PDF</button>
+        <button class="modal-close" onclick="fecharModal()">×</button>
+      </div>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<div class="footer">
+  Painel Gerencial SOST/SEG &middot; USOST &middot; Hospital Universitário de Lagarto &middot; EBSERH
+  <br><span id="infoAtualizacao" style="font-size:10px;color:#94a3b8"></span>
+  <br><span id="infoDiag" style="font-size:10px;color:#94a3b8;cursor:pointer" onclick="toggleDiag()" title="Clique para expandir diagnóstico">[Diagnóstico ▸]</span>
+  <div id="diagPanel" style="display:none;text-align:left;background:#1e2a3a;color:#94d4a8;font-family:var(--m);font-size:11px;padding:12px 16px;border-radius:6px;margin:8px auto;max-width:900px;white-space:pre-wrap;line-height:1.6"></div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   CONFORMIDADE DE EPI v3.0 — PAINEL GERENCIAL
+   v3.0:
+   - Busca EPI por SIAPE + NOME (como getRegs do programa original)
+   - Impressão via window.open (elimina dependência de CSS :has())
+   - Ficha individual PDF no modal
+   - Relatório PDF com KPIs e tabelas por unidade
+   v2.6:
+   - Impressão modal: CSS :has() auto-detecta (sem timing JS)
+   - Debug logging no console para diagnóstico de filtros/dados
+   v2.5:
+   - Contagem registros no heatmap (totalLinhas/linhasCaract)
+   v2.3:
+   - MES como texto (JANEIRO→1) via mesParaNum
+   - Busca integrada, autocomplete lotação, filtro de ano
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ConformidadeEPI v1.4.1 (inline) */
+var CE = (function(){
+  'use strict';
+  function norm(s){return s?String(s).trim().toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,''):'';}
+  function parseDtBR(s){if(!s)return null;var str=String(s).trim();var m=str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(m)return new Date(parseInt(m[3]),parseInt(m[2])-1,parseInt(m[1]));var iso=str.match(/^(\d{4})-(\d{2})-(\d{2})/);if(iso)return new Date(parseInt(iso[1]),parseInt(iso[2])-1,parseInt(iso[3]));return null;}
+  function fmtDt(s){var dt=parseDtBR(s);if(!dt)return s||'';return String(dt.getDate()).padStart(2,'0')+'/'+String(dt.getMonth()+1).padStart(2,'0')+'/'+dt.getFullYear();}
+  function ehPFF2(epi){var n=norm(epi);return n.indexOf('PFF')!==-1||n.indexOf('N95')!==-1||n.indexOf('RESPIRADOR')!==-1;}
+  function ehOculos(epi){return norm(epi).indexOf('OCUL')!==-1;}
+  function ehFaceShield(epi){var n=norm(epi);return n.indexOf('FACIAL')!==-1||n.indexOf('FACE')!==-1||n.indexOf('SHIELD')!==-1;}
+
+  function avPFF2(regs,mesRef,tevAtuacao,pltInf,exposicoesMes){
+    if(!tevAtuacao)return{st:'sem_atuacao',lb:'Sem atuação',det:'Nenhuma exposição registrada neste mês'};
+    var refIni=new Date(mesRef.ano,mesRef.mes-1,1);
+    var refFim=new Date(mesRef.ano,mesRef.mes,0,23,59,59);
+    var ultExp=(exposicoesMes&&exposicoesMes.length)?exposicoesMes[exposicoesMes.length-1]:null;
+    var refCheck=ultExp?parseDtBR(ultExp.data):refIni;
+    var limiteMin=new Date(refCheck.getTime()-30*24*3600*1000);
+    var limite6m=new Date(refCheck.getTime()-180*24*3600*1000);
+    var refTxt=ultExp?'último plantão com exposição em '+fmtDt(ultExp.data):'início do mês avaliado';
+    var ultPFF2=null;
+    (regs||[]).forEach(function(r){if(!ehPFF2(r.epi))return;var dt=parseDtBR(r.data);if(!dt||dt>refFim)return;if(!ultPFF2||dt>ultPFF2.dt)ultPFF2={dt:dt,data:r.data};});
+    var temAlgum=(regs||[]).some(function(r){return ehPFF2(r.epi);});
+    if(!ultPFF2){
+      if(!temAlgum)return{st:'inconformes_reiterado',lb:'Atuação reiterada sem EPI',det:'Nenhuma retirada de PFF2 registrada'};
+      return{st:'inconformes_reiterado',lb:'Atuação reiterada sem EPI',det:'Nenhuma retirada de PFF2 até o mês avaliado'};
+    }
+    if(ultPFF2.dt>=limiteMin){var noProprioMes=ultPFF2.dt>=refIni;var diasAnt=Math.round((refCheck-ultPFF2.dt)/(24*3600*1000));var det=noProprioMes?'Retirada no mês: '+ultPFF2.data:'Retirada '+diasAnt+'d antes do '+refTxt+': '+ultPFF2.data;return{st:'conforme',lb:'Conforme',det:det};}
+    var diasVenc=Math.round((refCheck-ultPFF2.dt)/(24*3600*1000));
+    if(ultPFF2.dt>=limite6m)return{st:'inconformes_recente',lb:'Atuação sem EPI',det:'PFF2 retirado há '+diasVenc+'d do '+refTxt+'. Último: '+ultPFF2.data};
+    return{st:'inconformes_reiterado',lb:'Atuação reiterada sem EPI',det:'PFF2 retirado há '+diasVenc+'d (>6 meses) do '+refTxt+'. Último: '+ultPFF2.data};
+  }
+
+  function avaliarMultiplosMeses(regs,meses){
+    if(!meses||!meses.length){
+      var temRegs = regs && regs.length > 0;
+      if(temRegs) return{st:'sem_atuacao',lb:'Sem atuação',det:'Registros de EPI existem, mas sem exposição nos dados disponíveis',mesesInconformes:[],mesesTotal:0,mesesComAtuacao:0,porMes:[]};
+      return{st:'sem_atuacao',lb:'Sem atuação',det:'Nenhum mês de exposição avaliado',mesesInconformes:[],mesesTotal:0,mesesComAtuacao:0,porMes:[]};
+    }
+    var gravidade={inconformes_reiterado:4,inconformes_recente:3,sem_atuacao:1,conforme:0};
+    var pior=null;var mesesInconformes=[];var mesesComAtuacao=0;var porMes=[];
+    meses.forEach(function(m){
+      var r=avPFF2(regs,{ano:m.ano,mes:m.mes},m.tevAtuacao,m.pltInf,m.exposicoes||[]);
+      porMes.push({ano:m.ano,mes:m.mes,resultado:r,tevAtuacao:m.tevAtuacao,totalLinhas:m.totalLinhas||0,linhasCaract:m.linhasCaract||0});
+      if(m.tevAtuacao)mesesComAtuacao++;
+      if(r.st==='inconformes_recente'||r.st==='inconformes_reiterado')mesesInconformes.push({ano:m.ano,mes:m.mes,det:r.det,nivel:r.st});
+      if(!pior||gravidade[r.st]>gravidade[pior.st])pior=r;
+    });
+    if(mesesInconformes.length){
+      var listaMeses=mesesInconformes.map(function(x){return String(x.mes).padStart(2,'0')+'/'+x.ano;}).join(', ');
+      return{st:pior.st,lb:pior.lb,det:'Inconformidade em: '+listaMeses,mesesInconformes:mesesInconformes,mesesTotal:meses.length,mesesComAtuacao:mesesComAtuacao,porMes:porMes};
+    }
+    pior.mesesInconformes=[];pior.mesesTotal=meses.length;pior.mesesComAtuacao=mesesComAtuacao;pior.porMes=porMes;
+    return pior;
+  }
+
+  function avOculos(regs){
+    var ult=null;
+    (regs||[]).forEach(function(r){var oc=ehOculos(r.epi),fs=ehFaceShield(r.epi);if(!oc&&!fs)return;var dt=parseDtBR(r.data);if(!dt)return;if(!ult||dt>ult.dt)ult={dt:dt,data:r.data,epi:r.epi,fs:fs,oc:oc};});
+    if(!ult)return{st:'solicitar',lb:'Solicitar EPI',det:'Nenhum registro de óculos — solicitar retirada'};
+    var anos=(new Date()-ult.dt)/(365.25*24*3600*1000);
+    if(anos>=5){var msg=(ult.fs&&!ult.oc)?'Face Shield vencido — solicitar óculos de segurança':'Vencido há '+anos.toFixed(1)+'a (último: '+ult.data+')';return{st:'vencido',lb:'Vencido',det:msg};}
+    return{st:'conforme',lb:'Conforme',det:'Último: '+ult.data+' ('+anos.toFixed(1)+'a)'};
+  }
+
+  return{norm:norm,parseDtBR:parseDtBR,fmtDt:fmtDt,ehPFF2:ehPFF2,ehOculos:ehOculos,ehFaceShield:ehFaceShield,avPFF2:avPFF2,avaliarMultiplosMeses:avaliarMultiplosMeses,avOculos:avOculos};
+})();
+
+/* DADOS GLOBAIS */
+var SHEET_ID = '1BAcopQ8Jacx4Q8ojBuU-2MpGH85NUKzi73xd6rmo2rQ';
+var MESES_NOME = ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+var MESES_AB = ['J','F','M','A','M','J','J','A','S','O','N','D'];
+/* Mapa de nome de mês → número (EXP_BIO armazena MES como texto) */
+var MESES_TEXTO = {JANEIRO:1,FEVEREIRO:2,MARCO:3,'MARÇO':3,ABRIL:4,MAIO:5,JUNHO:6,JULHO:7,AGOSTO:8,SETEMBRO:9,OUTUBRO:10,NOVEMBRO:11,DEZEMBRO:12};
+function mesParaNum(v){
+  if(!v) return 0;
+  var n = parseInt(String(v).replace(/\./g,''));
+  if(n >= 1 && n <= 12) return n;
+  var up = String(v).trim().toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  return MESES_TEXTO[up] || 0;
+}
+
+var DATA_BIO = [], DATA_EPI = [], DATA_CAD = [], RESULTADOS = [], CHARTS = {};
+var TODAS_LOTACOES = [];
+
+/* NAV */
+document.querySelectorAll('.nav-tab').forEach(function(tab){
+  tab.addEventListener('click', function(){
+    document.querySelectorAll('.nav-tab').forEach(function(t){t.classList.remove('active');});
+    document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.view).classList.add('active');
+  });
+});
+
+/* Converte valor gviz para string DD/MM/YYYY */
+function gvizDateToStr(v){
+  if(!v) return '';
+  if(v instanceof Date && !isNaN(v)){
+    var dd=('0'+v.getDate()).slice(-2);
+    var mm=('0'+(v.getMonth()+1)).slice(-2);
+    return dd+'/'+mm+'/'+v.getFullYear();
+  }
+  var s = String(v);
+  var mg = s.match(/Date\((\d{4}),\s*(\d{1,2}),\s*(\d{1,2})/i);
+  if(mg){
+    var dd=('0'+mg[3]).slice(-2);
+    var mm=('0'+(parseInt(mg[2])+1)).slice(-2);
+    return dd+'/'+mm+'/'+mg[1];
+  }
+  var mb = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(mb) return ('0'+mb[1]).slice(-2)+'/'+('0'+mb[2]).slice(-2)+'/'+mb[3];
+  var mi = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(mi) return mi[3]+'/'+mi[2]+'/'+mi[1];
+  return s;
+}
+
+/* GVIZ — usa cell.v (valor bruto) como primário */
+var _gvizId = 0;
+function fetchGviz(sheetName){
+  return new Promise(function(resolve, reject){
+    var cbName = '_gcb_' + (++_gvizId);
+    var url = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID +
+              '/gviz/tq?tqx=responseHandler:' + cbName +
+              '&sheet=' + encodeURIComponent(sheetName) +
+              '&tq=' + encodeURIComponent('SELECT * WHERE A IS NOT NULL');
+    window[cbName] = function(json){
+      delete window[cbName];
+      if(json.status === 'error'){ reject(new Error(json.errors ? json.errors[0].detailed_message : 'Erro gviz')); return; }
+      var table = json.table;
+      if(!table || !table.rows){ resolve([]); return; }
+      var colsRaw = table.cols.map(function(c){ return (c.label || c.id || '').trim(); });
+      /* Normaliza nomes de coluna para MAIÚSCULAS — evita falha se planilha usa "Ano" ao invés de "ANO" */
+      var cols = colsRaw.map(function(c){ return c.toUpperCase(); });
+      console.log('[ConfEPI] gviz ' + sheetName + ': cols=' + JSON.stringify(colsRaw) + ' → ' + JSON.stringify(cols) + ' rows=' + table.rows.length);
+      var rows = table.rows.map(function(r){
+        var obj = {};
+        r.c.forEach(function(cell, i){
+          if(!cols[i]) return;
+          obj[cols[i]] = cell ? (cell.v !== null && cell.v !== undefined ? cell.v : (cell.f || '')) : '';
+        });
+        return obj;
+      });
+      resolve(rows);
+    };
+    var s = document.createElement('script');
+    s.src = url;
+    s.onerror = function(){ delete window[cbName]; reject(new Error('Falha ao carregar aba ' + sheetName)); };
+    document.head.appendChild(s);
+  });
+}
+
+/*
+  Status PFF2 para a tabela principal:
+  - Sem filtro de ano: avalia SOMENTE o último mês com dados (situação atual)
+  - Com filtro de ano: avalia SOMENTE o último mês daquele ano
+  Visão Geral e Modal mantêm o histórico completo.
+*/
+function statusPFF2Atual(r, ano, mes){
+  var meses = r.mesesExp || [];
+  if(ano){
+    var anoNum = parseInt(ano);
+    meses = meses.filter(function(m){ return m.ano === anoNum; });
+  }
+  if(mes){
+    var mesNum = parseInt(mes);
+    meses = meses.filter(function(m){ return m.mes === mesNum; });
+  }
+  if(!meses.length) return {st:'sem_atuacao', lb:'Sem dados', det:'Sem dados de exposição', porMes:[], mesesTotal:0, mesesComAtuacao:0, mesRef:null};
+
+  /* Pega o último mês COM EXPOSIÇÃO (não qualquer mês) */
+  var mesesComExp = meses.filter(function(m){ return m.tevAtuacao; });
+  if(!mesesComExp.length){
+    return {st:'sem_atuacao', lb:'Sem atuação', det:'Nenhuma exposição caracterizada' + (ano ? ' em ' + ano : ''),
+      porMes:r.pff2.porMes, mesesTotal:meses.length, mesesComAtuacao:0, mesRef:null};
+  }
+
+  var ultimo = mesesComExp[mesesComExp.length - 1];
+  var resultado = CE.avPFF2(r.regsEPI, {ano:ultimo.ano, mes:ultimo.mes}, true, 0, ultimo.exposicoes || []);
+  resultado.mesRef = String(ultimo.mes).padStart(2,'0') + '/' + ultimo.ano;
+  resultado.mesesTotal = meses.length;
+  resultado.mesesComAtuacao = mesesComExp.length;
+  resultado.porMes = r.pff2.porMes;
+  return resultado;
+}
+
+/* Impressão v3.0: window.open + document.write (como o programa original — funciona sempre) */
+function _printStyles(){
+  return '*{box-sizing:border-box;margin:0;padding:0}'
+    +'body{font-family:"IBM Plex Sans",Arial,sans-serif;color:#1a1d23;background:#fff;font-size:9pt}'
+    +'@page{size:A4 landscape;margin:8mm 12mm}'
+    +'@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}'
+    +'tr:nth-child(even) td{background:#f7f8fa}'
+    +'.hm-cell{width:28px;height:22px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700}'
+    +'.badge{display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:600;padding:2px 8px;border-radius:12px;white-space:nowrap}'
+    +'.badge-conforme{background:#e6f9ee;color:#1a7f4b}'
+    +'.badge-inconformes_recente{background:#fef7e0;color:#92400e}'
+    +'.badge-inconformes_reiterado{background:#fdf0ef;color:#c0392b}'
+    +'.badge-sem_atuacao{background:#f1f5f9;color:#64748b}'
+    +'.badge-vencido{background:#fdf0ef;color:#c0392b}'
+    +'.badge-solicitar{background:#fef7e0;color:#92400e}';
+}
+function _printHeader(titulo, subtitulo){
+  var hoje=new Date();
+  var dtEmissao=hoje.toLocaleDateString('pt-BR')+', às '+hoje.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  return '<div style="height:3px;background:linear-gradient(90deg,#1a2744,#2c5282,#1a7f4b)"></div>'
+    +'<div style="background:#1a2744;color:#fff;padding:10px 16px;display:flex;justify-content:space-between;align-items:center">'
+    +'<div><div style="font-size:6pt;opacity:.45;letter-spacing:.12em;text-transform:uppercase;font-family:monospace">Hospital Universitário de Lagarto / UFS · HU Brasil / EBSERH</div>'
+    +'<div style="font-size:12pt;font-weight:700;margin-top:2px">'+esc(titulo)+'</div>'
+    +'<div style="font-size:8pt;opacity:.6;margin-top:1px">Unidade de Saúde Ocupacional e Segurança do Trabalho — USOST</div></div>'
+    +'<div style="text-align:right;font-family:monospace"><div style="font-size:6.5pt;opacity:.5">Emitido em</div>'
+    +'<div style="font-size:9pt;font-weight:600">'+dtEmissao+'</div></div></div>'
+    +(subtitulo?'<div style="background:#f0f2f5;border-bottom:2px solid #c0392b;padding:5px 16px;font-size:7.5pt;color:#1a2744">'+subtitulo+'</div>':'');
+}
+function _printFooter(){
+  var hoje=new Date();
+  var dtEmissao=hoje.toLocaleDateString('pt-BR')+', às '+hoje.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  return '<div style="margin-top:10px;border-top:1px solid #e2e4e8;padding-top:6px;display:flex;justify-content:space-between;font-size:6.5pt;color:#aaa;font-family:monospace">'
+    +'<span>USOST · HU Lagarto / UFS · HU Brasil / EBSERH</span>'
+    +'<span>Hub SST/HUL — uso interno — '+dtEmissao+'</span></div>';
+}
+
+function imprimirPainel(){
+  var fAno = document.getElementById('filtroAno').value;
+  var fMes = document.getElementById('filtroMes').value;
+  var fLot = document.getElementById('filtroLotacao').value;
+
+  /* Coleta os dados visíveis na tabela */
+  var filtrados = [];
+  RESULTADOS.forEach(function(r){
+    if(fLot && r.lotacao !== fLot) return;
+    var pff2F = statusPFF2Atual(r, fAno, fMes);
+    if(fAno || fMes){
+      var temPeriodo = r.mesesExp && r.mesesExp.some(function(m){
+        return (!fAno || String(m.ano) === fAno) && (!fMes || String(m.mes) === fMes);
+      });
+      if(!temPeriodo) return;
+    }
+    filtrados.push({r:r, pff2Exibir:pff2F});
+  });
+
+  /* Agrupa por lotação */
+  var porLot = {};
+  filtrados.forEach(function(item){
+    var lot = item.r.lotacao || 'Sem lotação';
+    if(!porLot[lot]) porLot[lot] = [];
+    porLot[lot].push(item);
+  });
+
+  /* KPIs */
+  var total = filtrados.length;
+  var comExp = filtrados.filter(function(it){return it.pff2Exibir.mesesComAtuacao > 0;}).length;
+  var confPFF2 = filtrados.filter(function(it){return it.pff2Exibir.st === 'conforme';}).length;
+  var incPFF2 = filtrados.filter(function(it){return it.pff2Exibir.st === 'inconformes_recente' || it.pff2Exibir.st === 'inconformes_reiterado';}).length;
+  var incOc = filtrados.filter(function(it){return it.r.oculos.st === 'vencido' || it.r.oculos.st === 'solicitar';}).length;
+  var pctConf = comExp > 0 ? Math.round(confPFF2/comExp*100) : 0;
+
+  var periodoTxt = '';
+  if(fAno && fMes) periodoTxt = MESES_NOME[parseInt(fMes)] + '/' + fAno;
+  else if(fAno) periodoTxt = 'Ano ' + fAno;
+  else periodoTxt = 'Todos os períodos';
+
+  function lblSt(st,tipo){
+    if(tipo==='pff2'){
+      if(st==='conforme') return '✓ Conforme';
+      if(st==='inconformes_reiterado') return '⚠⚠ Reiterado';
+      if(st==='inconformes_recente') return '⚠ Sem EPI';
+      if(st==='sem_atuacao') return '— Sem atuação';
+      return st;
+    }
+    if(st==='conforme') return '✓ Conforme';
+    if(st==='vencido') return '⚠ Vencido';
+    if(st==='solicitar') return '⚠ Solicitar';
+    return st;
+  }
+  function corSt(st,tipo){
+    if(tipo==='pff2'){
+      if(st==='conforme') return '#1a5c33';
+      if(st==='inconformes_reiterado') return '#8b1a1a';
+      if(st==='inconformes_recente') return '#c0392b';
+      return '#6b7280';
+    }
+    if(st==='conforme') return '#1a5c33';
+    return '#c0392b';
+  }
+
+  /* Tabelas por lotação */
+  var secoes = Object.keys(porLot).sort().map(function(lot){
+    var items = porLot[lot];
+    var linhas = items.map(function(item){
+      var r = item.r, p = item.pff2Exibir;
+      return '<tr>'
+        +'<td style="padding:5px 8px;border-bottom:1px solid #eaecf0;font-size:8pt"><b>'+esc(r.nome)+'</b><br><span style="font-size:7pt;color:#6b7280">'+esc(r.cargo||'')+'</span></td>'
+        +'<td style="padding:5px 8px;border-bottom:1px solid #eaecf0;font-size:7.5pt;font-family:monospace;text-align:center">'+esc(r.siape)+'</td>'
+        +'<td style="padding:5px 8px;border-bottom:1px solid #eaecf0;font-size:7.5pt;text-align:center;color:'+corSt(p.st,'pff2')+'"><b>'+lblSt(p.st,'pff2')+'</b>'+(p.mesRef?'<br><span style="font-size:6.5pt;color:#999">ref: '+p.mesRef+'</span>':'')+'</td>'
+        +'<td style="padding:5px 8px;border-bottom:1px solid #eaecf0;font-size:7.5pt;text-align:center;color:'+corSt(r.oculos.st,'oc')+'"><b>'+lblSt(r.oculos.st,'oc')+'</b></td>'
+        +'</tr>';
+    }).join('');
+
+    return '<div style="margin-bottom:16px;page-break-inside:avoid">'
+      +'<div style="background:#1a2744;color:#fff;padding:5px 12px;font-size:8pt;font-weight:700;letter-spacing:.05em;border-radius:2px 2px 0 0;display:flex;justify-content:space-between">'
+      +'<span>'+esc(lot).toUpperCase()+'</span><span style="opacity:.6;font-weight:400">'+items.length+' empregado(s)</span></div>'
+      +'<table style="width:100%;border-collapse:collapse;background:#fff">'
+      +'<thead><tr style="background:#2c3e6b;color:#fff">'
+      +'<th style="padding:4px 8px;text-align:left;font-size:7pt;width:40%">EMPREGADO / CARGO</th>'
+      +'<th style="padding:4px 8px;text-align:center;font-size:7pt;width:12%">SIAPE</th>'
+      +'<th style="padding:4px 8px;text-align:center;font-size:7pt;width:28%">PFF2 / RESPIRADOR</th>'
+      +'<th style="padding:4px 8px;text-align:center;font-size:7pt;width:20%">ÓCULOS / PROT. VISUAL</th>'
+      +'</tr></thead><tbody>'+linhas+'</tbody></table></div>';
+  }).join('');
+
+  var html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">'
+    +'<title>Relatório de Conformidade de EPI — '+periodoTxt+'</title>'
+    +'<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">'
+    +'<style>'+_printStyles()+'</style></head><body>'
+    +_printHeader('Relatório de Conformidade de EPI', '<b>Período:</b> '+periodoTxt+(fLot?' · <b>Lotação:</b> '+esc(fLot):''))
+    +'<div style="padding:12px 16px">'
+    +'<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px">'
+    +'<div style="border:1px solid #dde1e7;border-radius:4px;padding:8px;text-align:center"><div style="font-size:18pt;font-weight:700;font-family:monospace;color:#1a2744">'+total+'</div><div style="font-size:6.5pt;color:#6b7280;text-transform:uppercase">Avaliados</div></div>'
+    +'<div style="border:1px solid #b7e4c7;border-radius:4px;padding:8px;text-align:center;background:#eaf5ec"><div style="font-size:18pt;font-weight:700;font-family:monospace;color:#1a5c33">'+comExp+'</div><div style="font-size:6.5pt;color:#1a5c33;text-transform:uppercase">Com exposição</div></div>'
+    +'<div style="border:1px solid #b7e4c7;border-radius:4px;padding:8px;text-align:center;background:#eaf5ec"><div style="font-size:18pt;font-weight:700;font-family:monospace;color:#1a5c33">'+confPFF2+'</div><div style="font-size:6.5pt;color:#1a5c33;text-transform:uppercase">PFF2 Conforme</div></div>'
+    +'<div style="border:1px solid #f5c6c3;border-radius:4px;padding:8px;text-align:center;background:#fdf0ef"><div style="font-size:18pt;font-weight:700;font-family:monospace;color:#c0392b">'+incPFF2+'</div><div style="font-size:6.5pt;color:#c0392b;text-transform:uppercase">PFF2 Sem EPI</div></div>'
+    +'<div style="border:1px solid #f5c6c3;border-radius:4px;padding:8px;text-align:center;background:#fdf0ef"><div style="font-size:18pt;font-weight:700;font-family:monospace;color:#c0392b">'+incOc+'</div><div style="font-size:6.5pt;color:#c0392b;text-transform:uppercase">Óculos iconf.</div></div>'
+    +'</div>'
+    +'<div style="padding:8px 12px;background:#f0f2f5;border-left:3px solid #1a2744;font-size:7pt;color:#444;line-height:1.65;margin-bottom:14px">'
+    +'<b>NR-32 item 32.2.4.3</b> (respirador PFF2 para exposição a agentes biológicos por via aérea) · <b>NR-06 item 6.6.1</b> (rastreabilidade de EPI) · <b>POP.DGP.016</b> (procedimento interno). '
+    +'PFF2 conforme = retirada registrada até 30 dias antes do mês de referência. Óculos = validade técnica de 5 anos (policarbonato).'
+    +'</div>'
+    +secoes
+    +'</div>'
+    +_printFooter()
+    +'</body></html>';
+
+  var w = window.open('','_blank');
+  if(!w){alert('Popup bloqueado. Permita popups para este site.');return;}
+  w.document.write(html);
+  w.document.close();
+  setTimeout(function(){w.print();},800);
+}
+
+function imprimirModal(){
+  var titulo = document.getElementById('modalTitulo').textContent;
+  var subtitulo = document.getElementById('modalSubtitulo').textContent;
+  var body = document.getElementById('modalBody').innerHTML;
+
+  var html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">'
+    +'<title>Detalhe — '+esc(titulo)+'</title>'
+    +'<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">'
+    +'<style>'+_printStyles()
+    +'@page{size:A4 portrait;margin:10mm 12mm}'
+    +'.m-sec{margin-bottom:14px;border:1px solid #dfe3ec;border-radius:6px;overflow:hidden}'
+    +'.m-sec-title{background:#f8f9fc;padding:8px 14px;font-size:10px;font-weight:600;color:#1a2744;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid #dfe3ec}'
+    +'.m-sec-body{padding:12px 14px}'
+    +'.m-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f0f2f5;font-size:12px}'
+    +'.m-row:last-child{border-bottom:none}'
+    +'.m-dt{font-family:monospace;font-size:11px;color:#64748b}'
+    +'.m-retiradas{font-size:11px;border-collapse:collapse;width:100%;margin-top:6px}'
+    +'.m-retiradas th{font-size:9px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.04em;padding:5px 8px;text-align:left;background:#f8f9fc;border-bottom:1px solid #dfe3ec}'
+    +'.m-retiradas td{padding:4px 8px;border-bottom:1px solid #f0f2f5;font-size:11px}'
+    +'.emp-kpi-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:14px}'
+    +'.emp-kpi{text-align:center;padding:6px;background:#f8f9fc;border-radius:5px;border:1px solid #dfe3ec}'
+    +'.emp-kpi-val{font-size:16px;font-weight:700;font-family:monospace}'
+    +'.emp-kpi-label{font-size:8px;color:#64748b;text-transform:uppercase;letter-spacing:.04em;margin-top:1px}'
+    +'.emp-kpi-vd .emp-kpi-val{color:#1a7f4b}.emp-kpi-vd{background:#e6f9ee;border-color:#b7e4c7}'
+    +'.emp-kpi-vr .emp-kpi-val{color:#c0392b}.emp-kpi-vr{background:#fdf0ef;border-color:#f5c6c3}'
+    +'.hm-hdr{font-size:9px;color:#64748b;font-family:monospace;text-align:center;display:flex;align-items:center;justify-content:center}'
+    +'.hm-cell-conf{background:#1a7f4b;color:#fff}.hm-cell-inc{background:#c0392b;color:#fff}'
+    +'.hm-cell-sem{background:#e2e4e8;color:#aaa}.hm-cell-sd{background:transparent;border:1px dashed #dfe3ec}'
+    +'.hm-legend{display:flex;gap:10px;margin-top:6px;flex-wrap:wrap}'
+    +'.hm-legend span{display:flex;align-items:center;gap:4px;font-size:9px;color:#64748b}'
+    +'.hm-legend-dot{width:10px;height:10px;border-radius:2px;border:1px solid rgba(0,0,0,.08)}'
+    +'</style></head><body style="padding:0 12px">'
+    +_printHeader('Detalhe de Conformidade de EPI', '<b>'+esc(titulo)+'</b> · '+esc(subtitulo))
+    +'<div style="padding:14px 0">'
+    +body
+    +'</div>'
+    +_printFooter()
+    +'</body></html>';
+
+  var w = window.open('','_blank');
+  if(!w){alert('Popup bloqueado. Permita popups para este site.');return;}
+  w.document.write(html);
+  w.document.close();
+  setTimeout(function(){w.print();},800);
+}
+
+/* CARREGAR */
+function carregarDados(){
+  document.getElementById('loadingMsg').style.display = '';
+  document.getElementById('conteudoGeral').style.display = 'none';
+  Promise.all([fetchGviz('EXP_BIO'), fetchGviz('EPI_REGISTROS'), fetchGviz('EPI_CADASTRO')]).then(function(results){
+    var reSEI = /^\d{5}\.\d{5,6}\/\d{4}-\d{2}$/;
+    DATA_BIO = results[0].filter(function(r){
+      var nome = String(r.NOME || '').trim();
+      if(!nome || reSEI.test(nome)) return false;
+      if(!/[a-zA-ZÀ-ſ]/.test(nome)) return false;
+      var siape = String(r.SIAPE || '').replace(/\D/g,'');
+      if(siape.length > 0 && siape.length < 6) return false;
+      return true;
+    });
+    DATA_EPI = results[1].map(function(r){
+      r.DATA = gvizDateToStr(r.DATA);
+      return r;
+    });
+    DATA_CAD = results[2];
+
+    console.log('[ConfEPI] EXP_BIO linhas:', DATA_BIO.length,
+      DATA_BIO.length > 0 ? '| ANO=' + DATA_BIO[0].ANO + ' MES=' + DATA_BIO[0].MES + '(→' + mesParaNum(DATA_BIO[0].MES) + ')' : '');
+    /* Debug: verificar se há múltiplas linhas por pessoa/mês */
+    var debugContagem = {};
+    DATA_BIO.forEach(function(r){
+      var s = String(r.SIAPE||'').replace(/\D/g,'');
+      var k = s + '_' + r.ANO + '_' + r.MES;
+      debugContagem[k] = (debugContagem[k]||0) + 1;
+    });
+    var maxPorMes = Math.max.apply(null, Object.values(debugContagem).concat([0]));
+    console.log('[ConfEPI] Máx linhas EXP_BIO por pessoa/mês:', maxPorMes,
+      maxPorMes > 1 ? '(TEM múltiplos registros = plantões!)' : '(1 linha por mês)');
+    console.log('[ConfEPI] EPI_REGISTROS linhas:', DATA_EPI.length);
+    console.log('[ConfEPI] EPI_CADASTRO linhas:', DATA_CAD.length);
+
+    processarConformidade();
+    document.getElementById('loadingMsg').style.display = 'none';
+    document.getElementById('conteudoGeral').style.display = '';
+    popularFiltros();
+    renderTabela();
+    renderVisaoGeral();
+    renderGraficos();
+    document.getElementById('infoAtualizacao').textContent =
+      'Dados carregados em ' + new Date().toLocaleString('pt-BR') +
+      ' | Exposição: ' + DATA_BIO.length + ' registros | EPI: ' + DATA_EPI.length +
+      ' registros | Cadastro: ' + DATA_CAD.length + ' empregados';
+  }).catch(function(err){
+    document.getElementById('loadingMsg').innerHTML =
+      '<p style="color:var(--vr)">Erro ao carregar dados: ' + err.message + '</p>' +
+      '<p style="margin-top:8px;font-size:12px">Verifique se a planilha está publicada na web e as abas EXP_BIO, EPI_REGISTROS e EPI_CADASTRO existem.</p>' +
+      '<button class="hdr-btn" style="margin-top:12px;background:var(--az);color:#fff" onclick="carregarDados()">Tentar novamente</button>';
+  });
+}
+
+/* PROCESSAR CONFORMIDADE */
+function processarConformidade(){
+  /* v3.0: indexa EPI por SIAPE E por NOME normalizado (como getRegs do original).
+     Registros sem SIAPE NÃO são descartados — entram no índice por nome.
+     Na hora de buscar, mescla os dois índices e deduplica por epi+data+ca. */
+  var epiPorSiape = {};
+  var epiPorNome = {};
+  DATA_EPI.forEach(function(r){
+    var reg = { epi: r.EPI || r.CATEGORIA || '', data: r.DATA || '', ca: String(r.CA || ''), qtd: r.QTD || '', fonte: r.FONTE || '' };
+    var siape = String(r.SIAPE || '').replace(/\D/g,'');
+    if(siape){
+      if(!epiPorSiape[siape]) epiPorSiape[siape] = [];
+      epiPorSiape[siape].push(reg);
+    }
+    var nomeNorm = CE.norm(r.NOME || '');
+    if(nomeNorm){
+      if(!epiPorNome[nomeNorm]) epiPorNome[nomeNorm] = [];
+      epiPorNome[nomeNorm].push(reg);
+    }
+  });
+
+  var expPorSiape = {};
+  DATA_BIO.forEach(function(r){
+    var siape = String(r.SIAPE || '').replace(/\D/g,'');
+    if(!siape) return;
+    if(!expPorSiape[siape]) expPorSiape[siape] = {nome:'', lotacao:'', meses:{}};
+    expPorSiape[siape].nome = r.NOME || expPorSiape[siape].nome;
+    expPorSiape[siape].lotacao = r.LOTACAO || expPorSiape[siape].lotacao;
+    var ano = parseInt(String(r.ANO || '').replace(/\./g,'')), mes = mesParaNum(r.MES);
+    if(!ano || !mes || ano < 2020 || mes < 1 || mes > 12) return;
+    var key = ano + '_' + mes;
+    var caracterizada = String(r.RESULTADO || '').trim().toUpperCase() === 'CARACTERIZADA';
+    if(!expPorSiape[siape].meses[key])
+      expPorSiape[siape].meses[key] = {ano:ano, mes:mes, tevAtuacao:false, totalLinhas:0, linhasCaract:0};
+    expPorSiape[siape].meses[key].totalLinhas++;
+    expPorSiape[siape].meses[key].tevAtuacao = true;
+    if(caracterizada) expPorSiape[siape].meses[key].linhasCaract++;
+  });
+
+  var todosEmps = {};
+  Object.keys(expPorSiape).forEach(function(siape){
+    todosEmps[siape] = { nome: expPorSiape[siape].nome, siape: siape, cargo: '', lotacao: expPorSiape[siape].lotacao };
+  });
+  DATA_CAD.forEach(function(r){
+    var siape = String(r.SIAPE || '').replace(/\D/g,'');
+    if(!siape) return;
+    if(!todosEmps[siape]){
+      todosEmps[siape] = { nome: r.NOME || '', siape: siape, cargo: r.CARGO || '', lotacao: r.LOTACAO || '' };
+    } else {
+      if(!todosEmps[siape].cargo) todosEmps[siape].cargo = r.CARGO || '';
+      if(!todosEmps[siape].lotacao) todosEmps[siape].lotacao = r.LOTACAO || '';
+      if(!todosEmps[siape].nome) todosEmps[siape].nome = r.NOME || '';
+    }
+  });
+
+  RESULTADOS = [];
+  Object.keys(todosEmps).forEach(function(siape){
+    var emp = todosEmps[siape];
+    /* v3.0: mescla registros EPI por SIAPE e por NOME, deduplica (como getRegs do original) */
+    var porSiape = epiPorSiape[siape] || [];
+    var porNome = epiPorNome[CE.norm(emp.nome || '')] || [];
+    var regsEPI;
+    if(!porSiape.length) regsEPI = porNome;
+    else if(!porNome.length) regsEPI = porSiape;
+    else {
+      var vistos = {};
+      regsEPI = [];
+      porSiape.concat(porNome).forEach(function(r){
+        var k = CE.norm(r.epi) + '|' + r.data + '|' + (r.ca || '');
+        if(vistos[k]) return;
+        vistos[k] = true;
+        regsEPI.push(r);
+      });
+    }
+    var expData = expPorSiape[siape];
+    var mesesArr = [];
+    if(expData){
+      /* v3.1e: descarta meses ANTES do primeiro CARACTERIZADA (análise não iniciou).
+         A partir do primeiro CARACTERIZADA, todos os meses entram (avaliados).
+         Ex.: Jan/Fev NAO CARACT antes de Mar CARACT = sem dados.
+              Abr NAO CARACT depois de Mar CARACT = avaliado normalmente. */
+      var allKeys = Object.keys(expData.meses).sort(function(a,b){
+        var ma=expData.meses[a], mb=expData.meses[b];
+        return (ma.ano*100+ma.mes)-(mb.ano*100+mb.mes);
+      });
+      var inicioIdx = -1;
+      for(var ki=0; ki<allKeys.length; ki++){
+        if(expData.meses[allKeys[ki]].linhasCaract > 0){ inicioIdx = ki; break; }
+      }
+      if(inicioIdx > 0) allKeys = allKeys.slice(inicioIdx);
+      else if(inicioIdx < 0) allKeys = [];
+      mesesArr = allKeys.map(function(k){
+        var m = expData.meses[k];
+        /* v3.1: usar último dia do mês como data de referência para avPFF2.
+           No programa original, refCheck = data do último plantão no mês.
+           Como EXP_BIO não tem datas individuais, o último dia é a aproximação
+           mais conservadora (a favor da segurança — NR-06 / NR-32). */
+        var lastDay = new Date(m.ano, m.mes, 0).getDate();
+        var dtRef = String(lastDay).padStart(2,'0') + '/' + String(m.mes).padStart(2,'0') + '/' + m.ano;
+        return {ano:m.ano, mes:m.mes, tevAtuacao:m.tevAtuacao, exposicoes:[{data:dtRef}], totalLinhas:m.totalLinhas||0, linhasCaract:m.linhasCaract||0};
+      }).sort(function(a,b){return (a.ano*100+a.mes) - (b.ano*100+b.mes);});
+    }
+    var pff2 = CE.avaliarMultiplosMeses(regsEPI, mesesArr);
+    var oculos = CE.avOculos(regsEPI);
+    var temExposicao = mesesArr.some(function(m){return m.tevAtuacao;});
+    RESULTADOS.push({ nome: emp.nome, siape: emp.siape, cargo: emp.cargo, lotacao: emp.lotacao, pff2: pff2, oculos: oculos, regsEPI: regsEPI, mesesExp: mesesArr, temExposicao: temExposicao });
+  });
+
+  var comExp = RESULTADOS.filter(function(r){return r.temExposicao;}).length;
+  var comEPI = RESULTADOS.filter(function(r){return r.regsEPI.length > 0;}).length;
+  console.log('[ConfEPI] Processados:', RESULTADOS.length, 'empregados |', comExp, 'com exposição |', comEPI, 'com registros EPI');
+
+  var ordemPFF2 = {inconformes_reiterado:0, inconformes_recente:1, conforme:2, sem_atuacao:3};
+  RESULTADOS.sort(function(a,b){
+    var d = (ordemPFF2[a.pff2.st]!==undefined?ordemPFF2[a.pff2.st]:9) - (ordemPFF2[b.pff2.st]!==undefined?ordemPFF2[b.pff2.st]:9);
+    return d !== 0 ? d : (a.nome||'').localeCompare(b.nome||'','pt-BR');
+  });
+}
+
+/* VISÃO GERAL */
+function renderVisaoGeral(){
+  var comExp = RESULTADOS.filter(function(r){return r.temExposicao;});
+  var total = comExp.length;
+  var pff2Conf = comExp.filter(function(r){return r.pff2.st==='conforme';}).length;
+  var pff2Rec = comExp.filter(function(r){return r.pff2.st==='inconformes_recente';}).length;
+  var pff2Reit = comExp.filter(function(r){return r.pff2.st==='inconformes_reiterado';}).length;
+  var ocConf = RESULTADOS.filter(function(r){return r.oculos.st==='conforme';}).length;
+  var ocVenc = RESULTADOS.filter(function(r){return r.oculos.st==='vencido';}).length;
+  var ocSolic = RESULTADOS.filter(function(r){return r.oculos.st==='solicitar';}).length;
+  var pctConf = total ? Math.round(pff2Conf/total*100) : 0;
+
+  var html = '<div class="kpi-row">';
+  html += kpiCard(RESULTADOS.length, 'Empregados no Cadastro', 'Com dados de exposição ou EPI', 'az');
+  html += kpiCard(total, 'Com Exposição Biológica', 'Atuação com infectocontagiosos', 'am');
+  html += kpiCard(pctConf + '%', 'Conformidade PFF2', pff2Conf + ' de ' + total + ' conformes', pctConf >= 80 ? 'vd' : pctConf >= 50 ? 'am' : 'vr');
+  html += '</div>';
+  html += '<h3 style="font-size:13px;font-weight:600;color:var(--az);margin:16px 0 8px;text-transform:uppercase;letter-spacing:.04em">PFF2 — Detalhe (empregados com exposição)</h3>';
+  html += '<div class="kpi-row">';
+  html += kpiCard(pff2Conf, 'Conformes', 'PFF2 retirado na janela de 30 dias', 'vd');
+  html += kpiCard(pff2Rec, 'Atuação sem EPI', 'Sem retirada recente (< 6 meses)', 'am');
+  html += kpiCard(pff2Reit, 'Reiterado sem EPI', 'Sem retirada há mais de 6 meses', 'vr');
+  html += '</div>';
+  html += '<h3 style="font-size:13px;font-weight:600;color:var(--az);margin:16px 0 8px;text-transform:uppercase;letter-spacing:.04em">Óculos de Segurança — Detalhe</h3>';
+  html += '<div class="kpi-row">';
+  html += kpiCard(ocConf, 'Conformes', 'Validade técnica dentro de 5 anos', 'vd');
+  html += kpiCard(ocVenc, 'Vencidos', 'Validade técnica expirada (> 5 anos)', 'vr');
+  html += kpiCard(ocSolic, 'Solicitar Retirada', 'Sem registro de óculos', 'am');
+  html += '</div>';
+  document.getElementById('kpiCards').innerHTML = html;
+}
+
+function kpiCard(val, label, sub, cls){
+  return '<div class="kpi kpi-' + cls + '"><div class="kpi-val">' + val + '</div><div class="kpi-label">' + label + '</div><div class="kpi-sub">' + sub + '</div></div>';
+}
+
+/* FILTROS */
+function popularFiltros(){
+  var lotacoes = {};
+  var anos = {};
+  RESULTADOS.forEach(function(r){
+    if(r.lotacao) lotacoes[r.lotacao] = true;
+    /* Coleta anos de DUAS fontes: porMes e mesesExp (redundância) */
+    if(r.pff2 && r.pff2.porMes) r.pff2.porMes.forEach(function(pm){ if(pm.ano) anos[pm.ano] = true; });
+    if(r.mesesExp) r.mesesExp.forEach(function(m){ if(m.ano) anos[m.ano] = true; });
+  });
+  TODAS_LOTACOES = Object.keys(lotacoes).sort();
+
+  var anosKeys = Object.keys(anos).sort(function(a,b){return b-a;});
+  console.log('[ConfEPI] popularFiltros: anos=' + JSON.stringify(anosKeys) + ' lotações=' + TODAS_LOTACOES.length);
+
+  var selAno = document.getElementById('filtroAno');
+  selAno.innerHTML = '<option value="">Todos</option>';
+  anosKeys.forEach(function(a){
+    selAno.innerHTML += '<option value="' + a + '">' + a + '</option>';
+  });
+  console.log('[ConfEPI] filtroAno options:', selAno.options.length, '(incluindo "Todos")');
+}
+
+/* Autocomplete de Lotação */
+function abrirAutocompleteLot(){
+  var input = document.getElementById('filtroLotacao');
+  var list = document.getElementById('lotacaoList');
+  var q = CE.norm(input.value);
+  var html = '';
+  if(q.length === 0){
+    html = '<div class="autocomplete-item" onclick="selecionarLot(\'\')">Todas as lotações</div>';
+  }
+  var encontrados = TODAS_LOTACOES.filter(function(l){ return CE.norm(l).indexOf(q) !== -1; });
+  if(q.length === 0) encontrados = encontrados.slice(0, 15);
+  encontrados.forEach(function(l){
+    var display = l;
+    if(q.length > 0){
+      var idx = CE.norm(l).indexOf(q);
+      if(idx !== -1) display = esc(l.substring(0, idx)) + '<mark>' + esc(l.substring(idx, idx + q.length)) + '</mark>' + esc(l.substring(idx + q.length));
+      else display = esc(l);
+    } else {
+      display = esc(l);
+    }
+    html += '<div class="autocomplete-item" onclick="selecionarLot(\'' + esc(l).replace(/'/g,"\\'") + '\')">' + display + '</div>';
+  });
+  if(encontrados.length === 0 && q.length > 0){
+    html = '<div class="autocomplete-item" style="color:var(--mt);cursor:default">Nenhuma lotação encontrada</div>';
+  }
+  list.innerHTML = html;
+  list.classList.add('open');
+}
+function selecionarLot(val){
+  document.getElementById('filtroLotacao').value = val || '';
+  document.getElementById('lotacaoList').classList.remove('open');
+  renderTabela();
+}
+document.addEventListener('click', function(e){
+  if(!e.target.closest('.autocomplete-wrap')) document.getElementById('lotacaoList').classList.remove('open');
+});
+
+function limparFiltros(){
+  document.getElementById('buscaInput').value = '';
+  document.getElementById('filtroLotacao').value = '';
+  document.getElementById('filtroPFF2').value = '';
+  document.getElementById('filtroOculos').value = '';
+  document.getElementById('filtroAno').value = '';
+  document.getElementById('filtroMes').value = '';
+  renderTabela();
+}
+
+/* TABELA */
+function renderTabela(){
+  try{
+  var fLot = document.getElementById('filtroLotacao').value;
+  var fPFF2 = document.getElementById('filtroPFF2').value;
+  var fOc = document.getElementById('filtroOculos').value;
+  var fAno = document.getElementById('filtroAno').value;
+  var fMes = document.getElementById('filtroMes').value;
+  var fBusca = CE.norm(document.getElementById('buscaInput').value);
+
+  if(fAno || fMes) console.log('[ConfEPI] renderTabela filtros: ano="' + fAno + '" mes="' + fMes + '"');
+
+  /* Quando ano selecionado, recalcula PFF2 só p/ aquele ano */
+  var filtrados = [];
+  RESULTADOS.forEach(function(r){
+    if(fLot && r.lotacao !== fLot) return;
+    if(fOc && r.oculos.st !== fOc) return;
+    if(fBusca.length >= 2){
+      if(CE.norm(r.nome).indexOf(fBusca)===-1 && CE.norm(r.siape).indexOf(fBusca)===-1 && CE.norm(r.lotacao).indexOf(fBusca)===-1) return;
+    }
+    /* PFF2 status: sempre baseado no último mês (atual), filtrado por ano/mês se necessário */
+    var pff2Filtrado = statusPFF2Atual(r, fAno, fMes);
+    if(fAno || fMes){
+      var temPeriodo = r.mesesExp && r.mesesExp.some(function(m){
+        var okAno = !fAno || String(m.ano) === fAno;
+        var okMes = !fMes || String(m.mes) === fMes;
+        return okAno && okMes;
+      });
+      if(!temPeriodo) return;
+    }
+    if(fPFF2 && pff2Filtrado.st !== fPFF2) return;
+    filtrados.push({r:r, pff2Exibir: pff2Filtrado});
+  });
+  var tbody = document.getElementById('tbodyConf');
+  var html = '';
+  filtrados.forEach(function(item){
+    var r = item.r;
+    var pff2Show = item.pff2Exibir;
+    var mesesComExp = pff2Show.mesesComAtuacao || 0;
+    var mesesTotal = pff2Show.mesesTotal || 0;
+    html += '<tr class="row-click" onclick="abrirDetalhe(\'' + r.siape + '\')">';
+    html += '<td><b>' + esc(r.nome) + '</b></td>';
+    html += '<td style="font-family:var(--m);font-size:12px">' + esc(r.siape) + '</td>';
+    html += '<td style="font-size:12px">' + esc(r.lotacao) + '</td>';
+    html += '<td style="font-family:var(--m);font-size:12px;text-align:center">' + (mesesTotal > 0 ? mesesComExp + '/' + mesesTotal : '0') + '</td>';
+    html += '<td style="font-family:var(--m);font-size:11px;text-align:center;color:var(--mt)">' + (pff2Show.mesRef || '-') + '</td>';
+    html += '<td>' + badgePFF2(pff2Show) + '</td>';
+    html += '<td>' + badgeOculos(r.oculos) + '</td>';
+    html += '</tr>';
+  });
+  tbody.innerHTML = html;
+  var subtitulo = '';
+  if(fAno && fMes) subtitulo = ' · Avaliação de ' + MESES_NOME[parseInt(fMes)] + '/' + fAno;
+  else if(fAno) subtitulo = ' · Avaliação do último mês de ' + fAno;
+  else if(fMes) subtitulo = ' · Avaliação de ' + MESES_NOME[parseInt(fMes)] + ' (todos os anos)';
+  else subtitulo = ' · Status baseado no último mês avaliado';
+  document.getElementById('tblCount').textContent = 'Mostrando ' + filtrados.length + ' de ' + RESULTADOS.length + ' empregados' + subtitulo;
+  if(fAno || fMes) console.log('[ConfEPI] renderTabela: ' + filtrados.length + '/' + RESULTADOS.length + ' exibidos com filtro ano=' + fAno + ' mes=' + fMes);
+  }catch(e){ console.error('[ConfEPI] ERRO em renderTabela:', e.message, e.stack); }
+}
+
+function badgePFF2(pff2){
+  var labels = {conforme:'Conforme',inconformes_recente:'Sem EPI',inconformes_reiterado:'Reiterado',sem_atuacao:'Sem atuação'};
+  return '<span class="badge badge-' + pff2.st + '">' + (labels[pff2.st]||pff2.st) + '</span>';
+}
+function badgeOculos(oc){
+  var labels = {conforme:'Conforme',vencido:'Vencido',solicitar:'Solicitar'};
+  return '<span class="badge badge-' + oc.st + '">' + (labels[oc.st]||oc.st) + '</span>';
+}
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* ═══════════════════════════════════════════════════
+   DETALHE DO EMPREGADO (Modal)
+   Heatmap sem contagem de plantões (EXP_BIO é mensal)
+   ═══════════════════════════════════════════════════ */
+function abrirDetalhe(siape){
+  var r = RESULTADOS.find(function(x){ return x.siape === siape; });
+  if(!r) return;
+
+  document.getElementById('modalTitulo').textContent = r.nome;
+  document.getElementById('modalSubtitulo').textContent =
+    'SIAPE: ' + r.siape + ' · ' + (r.cargo || 'Cargo N/I') + ' · ' + (r.lotacao || 'Lotação N/I');
+
+  var html = '';
+  /* v3.1: só exibe o ano corrente no modal (ou ano selecionado no filtro) */
+  var anoPainel = document.getElementById('selAno');
+  var anoFiltro = (anoPainel && anoPainel.value) ? parseInt(anoPainel.value) : new Date().getFullYear();
+  var porMesAll = r.pff2.porMes || [];
+  var porMes = porMesAll.filter(function(pm){ return pm.ano === anoFiltro; });
+  var mesesDados = porMes.length;
+  var mesesComExp = porMes.filter(function(pm){return pm.tevAtuacao;}).length;
+  var mesesConformes = porMes.filter(function(pm){return pm.resultado.st==='conforme';}).length;
+  var mesesInc = porMes.filter(function(pm){return pm.resultado.st==='inconformes_recente'||pm.resultado.st==='inconformes_reiterado';}).length;
+  var taxa = mesesComExp > 0 ? Math.round(mesesConformes/mesesComExp*100) : 0;
+
+  /* KPI bar */
+  html += '<div class="emp-kpi-bar">';
+  html += '<div class="emp-kpi"><div class="emp-kpi-val">' + mesesDados + '</div><div class="emp-kpi-label">Meses dados</div></div>';
+  html += '<div class="emp-kpi"><div class="emp-kpi-val">' + mesesComExp + '</div><div class="emp-kpi-label">C/ exposição</div></div>';
+  html += '<div class="emp-kpi emp-kpi-vd"><div class="emp-kpi-val">' + mesesConformes + '</div><div class="emp-kpi-label">Conformes</div></div>';
+  if(mesesComExp > 0){
+    html += '<div class="emp-kpi ' + (taxa >= 80 ? 'emp-kpi-vd' : 'emp-kpi-vr') + '"><div class="emp-kpi-val">' + taxa + '%</div><div class="emp-kpi-label">Taxa conform.</div></div>';
+  } else {
+    html += '<div class="emp-kpi emp-kpi-vr"><div class="emp-kpi-val">' + mesesInc + '</div><div class="emp-kpi-label">Sem EPI</div></div>';
+  }
+  html += '</div>';
+
+  /* Heatmap mensal (sem contagem de plantões — EXP_BIO é avaliação mensal) */
+  if(porMes.length > 0){
+    var anosMap = {};
+    porMes.forEach(function(pm){ if(!anosMap[pm.ano]) anosMap[pm.ano] = {}; anosMap[pm.ano][pm.mes] = pm; });
+    var anosKeys = Object.keys(anosMap).sort();
+
+    html += '<div class="m-sec"><div class="m-sec-title">Histórico de Conformidade PFF2</div><div class="m-sec-body">';
+    html += '<div class="hm-wrap">';
+    html += '<div style="display:grid;grid-template-columns:44px repeat(12,1fr);gap:2px;margin-bottom:3px">';
+    html += '<div></div>';
+    MESES_AB.forEach(function(ab){ html += '<div class="hm-hdr">' + ab + '</div>'; });
+    html += '</div>';
+
+    anosKeys.forEach(function(ano){
+      html += '<div style="display:grid;grid-template-columns:44px repeat(12,1fr);gap:2px;margin-bottom:2px;align-items:start">';
+      html += '<div class="hm-hdr" style="font-weight:600;color:var(--az)">' + ano + '</div>';
+      for(var m=1; m<=12; m++){
+        var pm = anosMap[ano][m];
+        if(!pm){
+          html += '<div><div class="hm-cell hm-cell-sd"></div></div>';
+        } else {
+          var st = pm.resultado.st;
+          var cls = 'hm-cell-sem', ico = '';
+          if(st === 'conforme'){ cls = 'hm-cell-conf'; ico = '✓'; }
+          else if(st === 'inconformes_recente' || st === 'inconformes_reiterado'){ cls = 'hm-cell-inc'; ico = '✗'; }
+          var tt = MESES_NOME[m] + '/' + ano + ' — ' + pm.resultado.lb;
+          html += '<div><div class="hm-cell ' + cls + '" title="' + esc(tt) + '">' + ico + '</div></div>';
+        }
+      }
+      html += '</div>';
+    });
+
+    html += '<div class="hm-legend">';
+    html += '<span><div class="hm-legend-dot" style="background:var(--vd)"></div>Conforme</span>';
+    html += '<span><div class="hm-legend-dot" style="background:var(--vr)"></div>Sem EPI</span>';
+    html += '<span><div class="hm-legend-dot" style="background:#e2e4e8"></div>Sem exposição</span>';
+    html += '<span><div class="hm-legend-dot" style="background:transparent;border:1px dashed var(--bd)"></div>Sem dados</span>';
+    html += '</div>';
+    if(mesesComExp > 0)
+      html += '<div style="margin-top:8px;font-size:11px;color:var(--mt);text-align:right">Taxa nos meses com exposição: <b style="color:' + (taxa>=80?'var(--vd)':'var(--vr)') + '">' + taxa + '%</b></div>';
+    html += '</div></div>';
+  }
+
+  /* PFF2 — status e detalhe filtrados para o ano corrente (v3.1) */
+  var gravMap = {inconformes_reiterado:4, inconformes_recente:3, sem_atuacao:1, conforme:0};
+  var piorStAno = 'sem_atuacao';
+  var mesesIncAno = [];
+  porMes.forEach(function(pm){
+    var st = pm.resultado.st;
+    if((gravMap[st]||0) > (gravMap[piorStAno]||0)) piorStAno = st;
+    if(st === 'inconformes_recente' || st === 'inconformes_reiterado')
+      mesesIncAno.push(String(pm.mes).padStart(2,'0') + '/' + pm.ano);
+  });
+  var stLabels = {conforme:'Conforme',inconformes_recente:'Atuação sem EPI',inconformes_reiterado:'Atuação reiterada sem EPI',sem_atuacao:'Sem atuação'};
+  var pff2Ano = {st:piorStAno, lb:stLabels[piorStAno]||piorStAno};
+  var detAno = mesesIncAno.length ? 'Inconformidade em: ' + mesesIncAno.join(', ') : '';
+
+  html += '<div class="m-sec"><div class="m-sec-title">PFF2 / Respirador (NR-32)</div><div class="m-sec-body">';
+  html += '<div class="m-row"><span>Status ' + anoFiltro + '</span>' + badgePFF2(pff2Ano) + '</div>';
+  if(detAno) html += '<div class="m-row"><span>Detalhe</span><span class="m-dt">' + esc(detAno) + '</span></div>';
+  var regsPFF2 = r.regsEPI.filter(function(x){return CE.ehPFF2(x.epi);}).sort(function(a,b){return(CE.parseDtBR(b.data)||0)-(CE.parseDtBR(a.data)||0);});
+  if(regsPFF2.length){
+    html += '<div style="margin-top:10px;font-size:10px;color:var(--mt);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;font-weight:600">Retiradas de PFF2 (' + regsPFF2.length + ')</div>';
+    html += '<table class="m-retiradas"><thead><tr><th>Data</th><th>EPI</th><th>CA</th><th>Qtd</th></tr></thead><tbody>';
+    regsPFF2.forEach(function(reg){
+      html += '<tr><td style="font-family:var(--m)">' + CE.fmtDt(reg.data) + '</td><td>' + esc(reg.epi) + '</td><td style="font-family:var(--m)">' + esc(reg.ca) + '</td><td>' + esc(reg.qtd) + '</td></tr>';
+    });
+    html += '</tbody></table>';
+  } else {
+    html += '<div style="margin-top:8px;font-size:12px;color:var(--mt);font-style:italic">Nenhuma retirada de PFF2 registrada.</div>';
+  }
+  html += '</div></div>';
+
+  /* Óculos */
+  html += '<div class="m-sec"><div class="m-sec-title">Óculos / Proteção Visual (NR-06)</div><div class="m-sec-body">';
+  html += '<div class="m-row"><span>Status</span>' + badgeOculos(r.oculos) + '</div>';
+  if(r.oculos.det) html += '<div class="m-row"><span>Detalhe</span><span class="m-dt">' + esc(r.oculos.det) + '</span></div>';
+  var regsOculos = r.regsEPI.filter(function(x){return CE.ehOculos(x.epi)||CE.ehFaceShield(x.epi);}).sort(function(a,b){return(CE.parseDtBR(b.data)||0)-(CE.parseDtBR(a.data)||0);});
+  if(regsOculos.length){
+    html += '<div style="margin-top:10px;font-size:10px;color:var(--mt);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;font-weight:600">Histórico de retiradas (' + regsOculos.length + ')</div>';
+    html += '<table class="m-retiradas"><thead><tr><th>Data</th><th>EPI</th><th>CA</th></tr></thead><tbody>';
+    regsOculos.forEach(function(reg){
+      html += '<tr><td style="font-family:var(--m)">' + CE.fmtDt(reg.data) + '</td><td>' + esc(reg.epi) + '</td><td style="font-family:var(--m)">' + esc(reg.ca) + '</td></tr>';
+    });
+    html += '</tbody></table>';
+  } else {
+    html += '<div style="margin-top:8px;font-size:12px;color:var(--mt);font-style:italic">Nenhum registro de óculos/protetor facial.</div>';
+  }
+  html += '</div></div>';
+
+  /* Outros EPIs */
+  var regsOutros = r.regsEPI.filter(function(x){return !CE.ehPFF2(x.epi)&&!CE.ehOculos(x.epi)&&!CE.ehFaceShield(x.epi);}).sort(function(a,b){return(CE.parseDtBR(b.data)||0)-(CE.parseDtBR(a.data)||0);});
+  if(regsOutros.length){
+    html += '<div class="m-sec"><div class="m-sec-title">Outros EPIs registrados (' + regsOutros.length + ')</div><div class="m-sec-body">';
+    html += '<table class="m-retiradas"><thead><tr><th>Data</th><th>EPI</th><th>CA</th><th>Qtd</th></tr></thead><tbody>';
+    regsOutros.forEach(function(reg){
+      html += '<tr><td style="font-family:var(--m)">' + CE.fmtDt(reg.data) + '</td><td>' + esc(reg.epi) + '</td><td style="font-family:var(--m)">' + esc(reg.ca) + '</td><td>' + esc(reg.qtd) + '</td></tr>';
+    });
+    html += '</tbody></table></div></div>';
+  }
+
+  document.getElementById('modalBody').innerHTML = html;
+  document.getElementById('modalOverlay').classList.add('open');
+  /* v3.0: salva siape atual e mostra botão ficha PDF */
+  window._modalSiapeAtual = siape;
+  var btnFicha = document.getElementById('btnFichaInd');
+  if(btnFicha) btnFicha.style.display = '';
+}
+
+function fecharModal(){
+  document.getElementById('modalOverlay').classList.remove('open');
+  var btnFicha = document.getElementById('btnFichaInd');
+  if(btnFicha) btnFicha.style.display = 'none';
+}
+document.addEventListener('keydown', function(e){ if(e.key === 'Escape') fecharModal(); });
+
+/* v3.0: FICHA INDIVIDUAL PDF (portada do programa original) */
+function gerarFichaIndividualPDF(){
+  var siape = window._modalSiapeAtual;
+  if(!siape) return;
+  var r = RESULTADOS.find(function(x){ return x.siape === siape; });
+  if(!r) return;
+
+  var hoje = new Date();
+  var dtEmissao = hoje.toLocaleDateString('pt-BR') + ', às ' + hoje.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  /* v3.1: ficha PDF também filtra só o ano corrente */
+  var anoPainel = document.getElementById('selAno');
+  var anoFiltro = (anoPainel && anoPainel.value) ? parseInt(anoPainel.value) : new Date().getFullYear();
+  var porMesAll = r.pff2.porMes || [];
+  var porMes = porMesAll.filter(function(pm){ return pm.ano === anoFiltro; });
+  var mesesComExp = porMes.filter(function(pm){return pm.tevAtuacao;}).length;
+  var mesesConf = porMes.filter(function(pm){return pm.resultado && pm.resultado.st==='conforme';}).length;
+  var mesesInc = porMes.filter(function(pm){return pm.resultado && (pm.resultado.st==='inconformes_recente'||pm.resultado.st==='inconformes_reiterado');}).length;
+  var taxa = mesesComExp > 0 ? Math.round(mesesConf/mesesComExp*100) : null;
+  var taxaCor = taxa===null?'#6b7280':taxa>=80?'#1a5c33':'#c0392b';
+
+  var corStPFF2 = r.pff2.st==='conforme'?'#1a5c33':(r.pff2.st==='inconformes_reiterado'?'#8b1a1a':(r.pff2.st==='inconformes_recente'?'#c0392b':'#6b7280'));
+
+  /* Timeline heatmap */
+  var anosIdx = {};
+  porMes.forEach(function(pm){ if(!anosIdx[pm.ano]) anosIdx[pm.ano] = {}; anosIdx[pm.ano][pm.mes] = pm; });
+  var MESES_AB_FULL = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  var COR = {conforme:'#1a7f4b',inconformes_recente:'#c0392b',inconformes_reiterado:'#c0392b',sem_atuacao:'#e2e4e8'};
+
+  var tlHead = '<tr style="background:#f0f2f5"><td style="font-size:7pt;font-weight:700;padding:3px 8px;border-right:2px solid #dde1e7;color:#1a2744;width:50px">ANO</td>';
+  for(var mi=0;mi<12;mi++) tlHead += '<td style="font-size:7pt;text-align:center;padding:3px 2px;color:#6b7280;width:50px">'+MESES_AB_FULL[mi]+'</td>';
+  tlHead += '</tr>';
+
+  var tlRows = '';
+  Object.keys(anosIdx).sort().forEach(function(ano){
+    tlRows += '<tr><td style="font-size:8pt;font-weight:700;padding:4px 8px;border-right:2px solid #dde1e7;border-bottom:1px solid #eee;font-family:monospace;color:#1a2744">'+ano+'</td>';
+    for(var m=1;m<=12;m++){
+      var pm = anosIdx[ano][m];
+      if(!pm){
+        tlRows += '<td style="padding:3px 2px;text-align:center;border-bottom:1px solid #eee"></td>';
+      } else {
+        var st = pm.resultado ? pm.resultado.st : 'sem_atuacao';
+        var cor = COR[st] || '#e2e4e8';
+        var txtCol = (st==='conforme'||st==='inconformes_recente'||st==='inconformes_reiterado')?'#fff':'#aaa';
+        var ico = st==='conforme'?'&#10003;':(st==='inconformes_recente'||st==='inconformes_reiterado')?'&#10007;':'';
+        tlRows += '<td style="padding:3px 2px;text-align:center;border-bottom:1px solid #eee">'
+          +'<div style="width:38px;height:22px;background:'+cor+';border-radius:3px;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:7pt;color:'+txtCol+';font-weight:700">'+ico+'</div>'
+          +'</td>';
+      }
+    }
+    tlRows += '</tr>';
+  });
+
+  /* Histórico PFF2 */
+  var regsPFF2 = r.regsEPI.filter(function(x){return CE.ehPFF2(x.epi);}).sort(function(a,b){return(CE.parseDtBR(b.data)||0)-(CE.parseDtBR(a.data)||0);});
+  var TETO = 12;
+  var pff2Vis = regsPFF2.slice(0, TETO);
+  var omitidas = regsPFF2.length - pff2Vis.length;
+  var pff2Html = pff2Vis.length ? pff2Vis.map(function(x,idx){
+    return '<tr style="background:'+(idx%2?'#f7f8fa':'#fff')+'"><td style="font-size:8pt;padding:4px 8px;border-bottom:1px solid #eee">'+esc(x.epi)+'</td>'
+      +'<td style="font-size:8pt;padding:4px 8px;border-bottom:1px solid #eee;text-align:center;font-family:monospace">'+CE.fmtDt(x.data)+'</td>'
+      +'<td style="font-size:8pt;padding:4px 8px;border-bottom:1px solid #eee;text-align:center">'+(x.ca||'—')+'</td></tr>';
+  }).join('') : '<tr><td colspan="3" style="font-size:8pt;color:#6b7280;font-style:italic;padding:10px">Nenhuma retirada registrada.</td></tr>';
+  if(omitidas > 0) pff2Html += '<tr><td colspan="3" style="font-size:7pt;color:#6b7280;font-style:italic;padding:5px 8px">+ '+omitidas+' retirada(s) anterior(es)</td></tr>';
+
+  /* Histórico óculos */
+  var regsOc = r.regsEPI.filter(function(x){return CE.ehOculos(x.epi)||CE.ehFaceShield(x.epi);}).sort(function(a,b){return(CE.parseDtBR(b.data)||0)-(CE.parseDtBR(a.data)||0);});
+  var ocHtml = regsOc.length ? regsOc.map(function(x,idx){
+    var dtP = CE.parseDtBR(x.data);
+    var idade = dtP ? ((new Date()-dtP)/(365.25*24*3600*1000)).toFixed(1) : '—';
+    return '<tr style="background:'+(idx%2?'#f7f8fa':'#fff')+'"><td style="font-size:8pt;padding:4px 8px;border-bottom:1px solid #eee">'+esc(x.epi)+'</td>'
+      +'<td style="font-size:8pt;padding:4px 8px;border-bottom:1px solid #eee;text-align:center;font-family:monospace">'+CE.fmtDt(x.data)+'</td>'
+      +'<td style="font-size:8pt;padding:4px 8px;border-bottom:1px solid #eee;text-align:center">'+idade+' anos</td></tr>';
+  }).join('') : '<tr><td colspan="3" style="font-size:8pt;color:#6b7280;font-style:italic;padding:10px">Nenhum registro encontrado.</td></tr>';
+
+  var html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">'
+    +'<title>Ficha de Conformidade — '+esc(r.nome)+'</title>'
+    +'<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">'
+    +'<style>'+_printStyles()+'@page{size:A4 portrait;margin:10mm 12mm}</style></head><body>'
+    +_printHeader('Ficha Individual de Conformidade de EPI','')
+
+    /* Identificação */
+    +'<div style="margin:10px 16px;border:1px solid #dde1e7;border-radius:4px;overflow:hidden">'
+    +'<div style="background:#2c3e6b;color:#fff;padding:5px 12px;font-size:8pt;font-weight:700;letter-spacing:.05em">IDENTIFICAÇÃO</div>'
+    +'<div style="padding:10px 14px;display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+    +'<div style="grid-column:1/-1"><div style="font-size:6.5pt;color:#6b7280;text-transform:uppercase;letter-spacing:.4px">Empregado</div><div style="font-size:12pt;font-weight:700;color:#1a2744">'+esc(r.nome)+'</div></div>'
+    +'<div><div style="font-size:6.5pt;color:#6b7280;text-transform:uppercase">Cargo</div><div style="font-size:9pt">'+esc(r.cargo||'N/I')+'</div></div>'
+    +'<div><div style="font-size:6.5pt;color:#6b7280;text-transform:uppercase">Lotação</div><div style="font-size:9pt">'+esc(r.lotacao||'N/I')+'</div></div>'
+    +'<div><div style="font-size:6.5pt;color:#6b7280;text-transform:uppercase">SIAPE</div><div style="font-size:11pt;font-weight:700;font-family:monospace">'+esc(r.siape)+'</div></div>'
+    +'</div></div>'
+
+    /* KPIs */
+    +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0 16px 10px">'
+    +'<div style="border:1px solid #dde1e7;border-radius:4px;padding:8px;text-align:center"><div style="font-size:18pt;font-weight:700;font-family:monospace">'+porMes.length+'</div><div style="font-size:6.5pt;color:#6b7280;text-transform:uppercase">Meses dados</div></div>'
+    +'<div style="border:1px solid #dde1e7;border-radius:4px;padding:8px;text-align:center"><div style="font-size:18pt;font-weight:700;font-family:monospace">'+mesesComExp+'</div><div style="font-size:6.5pt;color:#6b7280;text-transform:uppercase">C/ exposição</div></div>'
+    +'<div style="border:1px solid #b7e4c7;border-radius:4px;padding:8px;text-align:center;background:#eaf5ec"><div style="font-size:18pt;font-weight:700;color:#1a5c33;font-family:monospace">'+mesesConf+'</div><div style="font-size:6.5pt;color:#1a5c33;text-transform:uppercase">Conformes</div></div>'
+    +'<div style="border:1px solid #f5c6c3;border-radius:4px;padding:8px;text-align:center;background:#fdf0ef"><div style="font-size:18pt;font-weight:700;color:'+taxaCor+';font-family:monospace">'+(taxa!==null?taxa+'%':'—')+'</div><div style="font-size:6.5pt;color:'+taxaCor+';text-transform:uppercase">Taxa conform.</div></div>'
+    +'</div>'
+
+    /* Timeline PFF2 */
+    +'<div style="margin:0 16px 10px;border:1px solid #dde1e7;border-radius:4px;overflow:hidden">'
+    +'<div style="background:#2c3e6b;color:#fff;padding:5px 12px;font-size:8pt;font-weight:700;letter-spacing:.05em">PFF2 / RESPIRADOR — HISTÓRICO DE CONFORMIDADE</div>'
+    +'<div style="padding:10px">'
+    +'<div style="margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #eee">'
+    +'<div style="font-size:6.5pt;color:#6b7280;text-transform:uppercase">Status geral</div>'
+    +'<div style="font-size:10pt;font-weight:700;margin-top:2px;color:'+corStPFF2+'">'+esc(r.pff2.lb||r.pff2.st)+'</div>'
+    +(r.pff2.det?'<div style="font-size:8pt;color:#555;margin-top:2px">'+esc(r.pff2.det)+'</div>':'')
+    +'</div>'
+    +'<table style="border-collapse:collapse;width:100%">'+tlHead+tlRows+'</table>'
+    +'<div style="display:flex;gap:14px;margin-top:8px">'
+    +'<div style="display:flex;align-items:center;gap:5px;font-size:7pt;color:#555"><div style="width:12px;height:12px;background:#1a7f4b;border-radius:1px"></div>Conforme</div>'
+    +'<div style="display:flex;align-items:center;gap:5px;font-size:7pt;color:#555"><div style="width:12px;height:12px;background:#c0392b;border-radius:1px"></div>Sem EPI</div>'
+    +'<div style="display:flex;align-items:center;gap:5px;font-size:7pt;color:#555"><div style="width:12px;height:12px;background:#e2e4e8;border-radius:1px;border:1px solid #ccc"></div>Sem exposição</div>'
+    +'</div></div></div>'
+
+    /* Retiradas PFF2 + Óculos lado a lado */
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 16px 10px">'
+    +'<div style="border:1px solid #dde1e7;border-radius:4px;overflow:hidden">'
+    +'<div style="background:#2c3e6b;color:#fff;padding:5px 12px;font-size:8pt;font-weight:700">RETIRADAS DE PFF2</div>'
+    +'<div style="padding:6px"><table style="width:100%;border-collapse:collapse"><thead><tr style="background:#f0f2f5"><th style="font-size:7pt;padding:4px 8px;text-align:left">EPI</th><th style="font-size:7pt;padding:4px 8px;text-align:center">Data</th><th style="font-size:7pt;padding:4px 8px;text-align:center">CA</th></tr></thead><tbody>'+pff2Html+'</tbody></table></div></div>'
+
+    +'<div style="border:1px solid #dde1e7;border-radius:4px;overflow:hidden">'
+    +'<div style="background:#2c3e6b;color:#fff;padding:5px 12px;font-size:8pt;font-weight:700">ÓCULOS / PROTEÇÃO VISUAL</div>'
+    +'<div style="padding:10px">'
+    +'<div style="margin-bottom:8px"><div style="font-size:6.5pt;color:#6b7280;text-transform:uppercase">Status</div>'
+    +'<div style="font-size:10pt;font-weight:700;margin-top:2px;color:'+(r.oculos.st==='conforme'?'#1a5c33':'#c0392b')+'">'+esc(r.oculos.lb||r.oculos.st)+'</div>'
+    +(r.oculos.det?'<div style="font-size:8pt;color:#555;margin-top:2px">'+esc(r.oculos.det)+'</div>':'')+'</div>'
+    +'<table style="width:100%;border-collapse:collapse"><thead><tr style="background:#f0f2f5"><th style="font-size:7pt;padding:4px 8px;text-align:left">EPI</th><th style="font-size:7pt;padding:4px 8px;text-align:center">Data</th><th style="font-size:7pt;padding:4px 8px;text-align:center">Idade</th></tr></thead><tbody>'+ocHtml+'</tbody></table>'
+    +'</div></div>'
+    +'</div>'
+
+    /* Nota metodológica */
+    +'<div style="margin:0 16px 10px;padding:8px 12px;background:#f0f2f5;border-left:3px solid #1a2744;font-size:7pt;color:#555;line-height:1.65">'
+    +'<b>NR-06 item 6.6.1 · NR-32 · POP.DGP.016/EBSERH:</b> PFF2 conforme = retirada registrada até 30 dias antes do mês de referência. '
+    +'Óculos conforme = última retirada há menos de 5 anos. Fonte: planilha EPI_REGISTROS e EXP_BIO (Google Sheets).'
+    +'</div>'
+
+    +'<div style="margin:0 16px">'+_printFooter()+'</div>'
+    +'</body></html>';
+
+  var w = window.open('','_blank');
+  if(!w){alert('Popup bloqueado. Permita popups para este site.');return;}
+  w.document.write(html);
+  w.document.close();
+  setTimeout(function(){w.print();},800);
+}
+
+/* GRÁFICOS */
+function renderGraficos(){
+  Object.keys(CHARTS).forEach(function(k){ if(CHARTS[k]) CHARTS[k].destroy(); });
+  var comExp = RESULTADOS.filter(function(r){return r.temExposicao;});
+
+  /* PFF2 */
+  var coresPFF2 = {conforme:'#1a7f4b',inconformes_recente:'#f39c12',inconformes_reiterado:'#c0392b'};
+  var labelsPFF2 = {conforme:'Conforme',inconformes_recente:'Sem EPI',inconformes_reiterado:'Reiterado'};
+  var pff2Counts = {};
+  comExp.forEach(function(r){ pff2Counts[r.pff2.st] = (pff2Counts[r.pff2.st]||0) + 1; });
+  CHARTS.pff2 = new Chart(document.getElementById('chartPFF2'), {
+    type: 'doughnut',
+    data: {labels:Object.keys(pff2Counts).map(function(k){return labelsPFF2[k]||k;}), datasets:[{data:Object.keys(pff2Counts).map(function(k){return pff2Counts[k];}), backgroundColor:Object.keys(pff2Counts).map(function(k){return coresPFF2[k]||'#999';}), borderWidth:0}]},
+    options: {responsive:true, plugins:{legend:{position:'bottom',labels:{font:{family:'IBM Plex Sans',size:11}}}}}
+  });
+
+  /* Óculos */
+  var coresOc = {conforme:'#1a7f4b',vencido:'#c0392b',solicitar:'#f39c12'};
+  var labelsOc = {conforme:'Conforme',vencido:'Vencido',solicitar:'Solicitar'};
+  var ocCounts = {};
+  RESULTADOS.forEach(function(r){ ocCounts[r.oculos.st] = (ocCounts[r.oculos.st]||0) + 1; });
+  CHARTS.oculos = new Chart(document.getElementById('chartOculos'), {
+    type: 'doughnut',
+    data: {labels:Object.keys(ocCounts).map(function(k){return labelsOc[k]||k;}), datasets:[{data:Object.keys(ocCounts).map(function(k){return ocCounts[k];}), backgroundColor:Object.keys(ocCounts).map(function(k){return coresOc[k]||'#999';}), borderWidth:0}]},
+    options: {responsive:true, plugins:{legend:{position:'bottom',labels:{font:{family:'IBM Plex Sans',size:11}}}}}
+  });
+
+  /* Conformidade por Lotação */
+  var lotMap = {};
+  comExp.forEach(function(r){
+    var lot = r.lotacao || 'N/I';
+    if(!lotMap[lot]) lotMap[lot] = {conf:0,inc:0,total:0};
+    lotMap[lot].total++;
+    if(r.pff2.st === 'conforme') lotMap[lot].conf++; else lotMap[lot].inc++;
+  });
+  var lotKeys = Object.keys(lotMap).sort(function(a,b){return lotMap[b].total - lotMap[a].total;}).slice(0,10);
+  CHARTS.lotacao = new Chart(document.getElementById('chartLotacao'), {
+    type: 'bar',
+    data: {
+      labels: lotKeys.map(function(k){return k.length > 25 ? k.substring(0,22) + '...' : k;}),
+      datasets: [
+        {label:'Conformes', data:lotKeys.map(function(k){return lotMap[k].conf;}), backgroundColor:'#1a7f4b', borderRadius:4},
+        {label:'Inconformes', data:lotKeys.map(function(k){return lotMap[k].inc;}), backgroundColor:'#c0392b', borderRadius:4}
+      ]
+    },
+    options: {responsive:true, plugins:{legend:{position:'bottom',labels:{font:{family:'IBM Plex Sans',size:11}}}}, scales:{x:{stacked:true,grid:{display:false},ticks:{font:{family:'IBM Plex Sans',size:10}}},y:{stacked:true,grid:{color:'#f0f2f5'},ticks:{font:{family:'IBM Plex Sans',size:11}}}}}
+  });
+
+  /* Exposição: distribuição de meses com atuação */
+  var faixas = {'0':0,'1-3':0,'4-6':0,'7-12':0,'13+':0};
+  RESULTADOS.forEach(function(r){
+    var mc = r.pff2.mesesComAtuacao || 0;
+    if(mc === 0) faixas['0']++;
+    else if(mc <= 3) faixas['1-3']++;
+    else if(mc <= 6) faixas['4-6']++;
+    else if(mc <= 12) faixas['7-12']++;
+    else faixas['13+']++;
+  });
+  CHARTS.exposicao = new Chart(document.getElementById('chartExposicao'), {
+    type: 'bar',
+    data: {labels:Object.keys(faixas), datasets:[{data:Object.values(faixas), backgroundColor:['#94a3b8','#60a5fa','#f59e0b','#ef4444','#991b1b'], borderRadius:4}]},
+    options: {responsive:true, plugins:{legend:{display:false}}, scales:{x:{grid:{display:false},title:{display:true,text:'Meses com exposição caracterizada',font:{family:'IBM Plex Sans',size:11}}},y:{grid:{color:'#f0f2f5'},title:{display:true,text:'Empregados',font:{family:'IBM Plex Sans',size:11}}}}}
+  });
+}
+
+/* DIAGNÓSTICO — painel visível na página */
+function toggleDiag(){
+  var p = document.getElementById('diagPanel');
+  var btn = document.getElementById('infoDiag');
+  if(p.style.display === 'none'){
+    p.style.display = 'block';
+    btn.textContent = '[Diagnóstico ▾]';
+    atualizarDiag();
+  } else {
+    p.style.display = 'none';
+    btn.textContent = '[Diagnóstico ▸]';
+  }
+}
+function atualizarDiag(){
+  var lines = [];
+  lines.push('═══ DIAGNÓSTICO CONFORMIDADE EPI v2.7 ═══');
+  lines.push('');
+  lines.push('▶ DADOS BRUTOS RECEBIDOS DO GOOGLE SHEETS');
+  lines.push('  EXP_BIO: ' + DATA_BIO.length + ' linhas');
+  lines.push('  EPI_REGISTROS: ' + DATA_EPI.length + ' linhas');
+  lines.push('  EPI_CADASTRO: ' + DATA_CAD.length + ' linhas');
+  lines.push('  RESULTADOS processados: ' + RESULTADOS.length + ' empregados');
+  /* Amostras BIO */
+  if(DATA_BIO.length > 0){
+    lines.push('');
+    lines.push('▶ AMOSTRA EXP_BIO (3 primeiras linhas)');
+    var colsEsperadas = ['NOME','SIAPE','ANO','MES','RESULTADO','LOTACAO'];
+    for(var i=0; i < Math.min(3, DATA_BIO.length); i++){
+      var r0 = DATA_BIO[i];
+      lines.push('  [' + i + '] NOME=' + JSON.stringify(r0.NOME));
+      lines.push('      SIAPE=' + JSON.stringify(r0.SIAPE) + ' (' + typeof r0.SIAPE + ')');
+      lines.push('      ANO=' + JSON.stringify(r0.ANO) + ' (' + typeof r0.ANO + ') → parseInt=' + parseInt(String(r0.ANO||'').replace(/\./g,'')));
+      lines.push('      MES=' + JSON.stringify(r0.MES) + ' (' + typeof r0.MES + ') → mesParaNum=' + mesParaNum(r0.MES));
+      lines.push('      RESULTADO=' + JSON.stringify(r0.RESULTADO));
+      lines.push('      LOTACAO=' + JSON.stringify(r0.LOTACAO));
+    }
+    var colsAusentes = colsEsperadas.filter(function(c){ return DATA_BIO[0][c] === undefined; });
+    if(colsAusentes.length) lines.push('  ⚠ COLUNAS AUSENTES: ' + colsAusentes.join(', ') + ' ← PROBLEMA!');
+    else lines.push('  ✓ Todas colunas presentes');
+    /* Chaves reais presentes no primeiro registro */
+    lines.push('  Chaves no obj: ' + Object.keys(DATA_BIO[0]).join(', '));
+  } else {
+    lines.push('');
+    lines.push('  ⚠ EXP_BIO VAZIO — nenhuma linha recebida!');
+  }
+  /* Amostras EPI */
+  if(DATA_EPI.length > 0){
+    lines.push('');
+    lines.push('▶ AMOSTRA EPI_REGISTROS (3 primeiras linhas)');
+    for(var j=0; j < Math.min(3, DATA_EPI.length); j++){
+      var e0 = DATA_EPI[j];
+      lines.push('  [' + j + '] ' + (e0.NOME||'?') + ' | SIAPE=' + (e0.SIAPE||'?') + ' | EPI=' + (e0.EPI||'?') + ' | DATA=' + (e0.DATA||'?'));
+    }
+    var colsEPI = ['NOME','SIAPE','EPI','DATA','CA'];
+    var colsAusentesEPI = colsEPI.filter(function(c){ return DATA_EPI[0][c] === undefined; });
+    if(colsAusentesEPI.length) lines.push('  ⚠ COLUNAS AUSENTES: ' + colsAusentesEPI.join(', '));
+    else lines.push('  ✓ Colunas principais presentes');
+    lines.push('  Chaves no obj: ' + Object.keys(DATA_EPI[0]).join(', '));
+  }
+  /* Anos */
+  var anosSet = {};
+  var anosPorPessoa = {};
+  RESULTADOS.forEach(function(r){
+    if(r.mesesExp) r.mesesExp.forEach(function(m){
+      if(m.ano) anosSet[m.ano] = true;
+      if(m.ano && r.siape){
+        if(!anosPorPessoa[r.siape]) anosPorPessoa[r.siape] = {nome:r.nome, anos:{}};
+        anosPorPessoa[r.siape].anos[m.ano] = true;
+      }
+    });
+  });
+  var anosFound = Object.keys(anosSet).sort();
+  lines.push('');
+  lines.push('▶ ANOS E FILTRO');
+  lines.push('  Anos encontrados: ' + (anosFound.length ? anosFound.join(', ') : '⚠ NENHUM ANO → filtro vazio!'));
+  var selAno = document.getElementById('filtroAno');
+  lines.push('  Opções filtro: ' + Array.from(selAno.options).map(function(o){return o.value||'(Todos)';}).join(', '));
+  /* Contagens por ano */
+  anosFound.forEach(function(ano){
+    var anoNum = parseInt(ano);
+    var comExpAno = RESULTADOS.filter(function(r){
+      return r.mesesExp && r.mesesExp.some(function(m){ return m.ano === anoNum && m.tevAtuacao; });
+    }).length;
+    lines.push('  Ano ' + ano + ': ' + comExpAno + ' empregados com exposição');
+  });
+  /* Contagens gerais */
+  var comExp = RESULTADOS.filter(function(r){return r.temExposicao;}).length;
+  var comEPI = RESULTADOS.filter(function(r){return r.regsEPI.length > 0;}).length;
+  var semNada = RESULTADOS.filter(function(r){return !r.temExposicao && r.regsEPI.length === 0;}).length;
+  lines.push('');
+  lines.push('▶ RESUMO');
+  lines.push('  Com exposição (alguma CARACTERIZADA): ' + comExp);
+  lines.push('  Com registros EPI: ' + comEPI);
+  lines.push('  Sem exposição NEM EPI (só cadastro): ' + semNada);
+  /* Status PFF2 */
+  var stCounts = {};
+  RESULTADOS.forEach(function(r){ stCounts[r.pff2.st] = (stCounts[r.pff2.st]||0) + 1; });
+  lines.push('');
+  lines.push('▶ STATUS PFF2 (visão geral)');
+  if(stCounts.conforme) lines.push('  Conforme: ' + stCounts.conforme);
+  if(stCounts.inconformes_recente) lines.push('  Atuação sem EPI: ' + stCounts.inconformes_recente);
+  if(stCounts.inconformes_reiterado) lines.push('  Reiterado sem EPI: ' + stCounts.inconformes_reiterado);
+  if(stCounts.sem_atuacao) lines.push('  Sem atuação: ' + stCounts.sem_atuacao);
+  /* Lista primeiros 10 empregados para conferência */
+  lines.push('');
+  lines.push('▶ CONFERÊNCIA RÁPIDA (primeiros 10 empregados)');
+  lines.push('  Compare com a planilha original:');
+  RESULTADOS.slice(0,10).forEach(function(r,idx){
+    var mesesStr = r.mesesExp ? r.mesesExp.filter(function(m){return m.tevAtuacao;}).map(function(m){
+      return String(m.mes).padStart(2,'0')+'/'+m.ano;
+    }).join(', ') : 'nenhum';
+    var epiCount = r.regsEPI.length;
+    var pff2Count = r.regsEPI.filter(function(e){ return CE.ehPFF2(e.epi); }).length;
+    lines.push('  ' + (idx+1) + '. ' + (r.nome||'?') + ' (' + r.siape + ')');
+    lines.push('     Meses c/ exp: ' + mesesStr);
+    lines.push('     Retiradas EPI: ' + epiCount + ' total, ' + pff2Count + ' PFF2');
+    lines.push('     Status: PFF2=' + r.pff2.st + ' | Óculos=' + r.oculos.st);
+  });
+
+  document.getElementById('diagPanel').textContent = lines.join('\n');
+}
+
+carregarDados();
+</script>
+</body>
+</html>
